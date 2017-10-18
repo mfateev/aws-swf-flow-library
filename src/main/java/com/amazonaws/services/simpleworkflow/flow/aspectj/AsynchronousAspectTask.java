@@ -40,7 +40,7 @@ class AsynchronousAspectTask extends Task {
             throw new RuntimeException("@Asynchronous annotation is allowed only for methods with void or Promise return types: " 
             		+ pjp.getStaticPart().getSignature().getName());
         }
-        
+        System.err.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Hacked !!!!!!!!!!!!!!!!!");        
         if (result != null) {
         	returnValue.chain((Promise)result);
         } else {
