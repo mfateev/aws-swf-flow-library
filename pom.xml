@@ -3,8 +3,8 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.amazonaws</groupId>
-  <artifactId>aws-java-sdk-swf-libraries</artifactId>
-  <version>1.11.22-SNAPSHOT</version>
+  <artifactId>swf-flow-library</artifactId>
+  <version>2.0.0</version>
   <packaging>jar</packaging>
   <name>Java Libraries for Amazon Simple WorkFlow</name>
   <description>This artifact contains the higher level libraries that can be used in Amazon Simple WorkFlow Service</description>
@@ -35,7 +35,7 @@
     <spring.version>3.0.7.RELEASE</spring.version>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
-    <aspectj.version>1.8.5</aspectj.version>
+    <aspectj.version>1.8.11</aspectj.version>
     <aws.java.sdk.version>1.11.58</aws.java.sdk.version>
     <freemarker.version>2.3.21</freemarker.version>
   </properties>
@@ -81,12 +81,6 @@
       <version>${spring.version}</version>
       <optional>true</optional>
     </dependency>
-    <dependency>
-      <groupId>org.aspectj</groupId>
-      <artifactId>aspectjrt</artifactId>
-      <version>${aspectj.version}</version>
-      <optional>true</optional>
-    </dependency>
    <!-- JUnit is needed to compile the support classes for the workflow service -->
     <dependency>
       <groupId>junit</groupId>
@@ -125,20 +119,14 @@
                     <source>${maven.compiler.source}</source>
                     <target>${maven.compiler.target}</target>
                     <showWeaveInfo>true</showWeaveInfo>
-                    <sources>
+                    <!--sources>
                         <source>
                             <basedir>${source.dir}</basedir>
                             <includes>
                                 <include>**/*.java</include>
                             </includes>
                         </source>
-                    </sources>
-                    <aspectLibraries>
-                        <aspectLibrary>
-                            <groupId>com.amazonaws</groupId>
-                            <artifactId>aws-java-sdk-swf-libraries</artifactId>
-                        </aspectLibrary>
-                    </aspectLibraries>
+                    </sources-->
         </configuration>
       </plugin>
       <plugin>
