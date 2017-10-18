@@ -35,7 +35,7 @@ import com.amazonaws.services.simpleworkflow.flow.core.Promise;
 public class AsynchronousAspect {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    @Around("call(@com.amazonaws.services.simpleworkflow.flow.annotations.Asynchronous * *(..)) && @annotation(asynchronousAnnotation)")
+    @Around("execution(@com.amazonaws.services.simpleworkflow.flow.annotations.Asynchronous * *(..)) && @annotation(asynchronousAnnotation)")
     public Object makeAsynchronous(ProceedingJoinPoint pjp, Asynchronous asynchronousAnnotation) throws Throwable {
         final Signature signature = pjp.getStaticPart().getSignature();
         if (signature instanceof MethodSignature) {
