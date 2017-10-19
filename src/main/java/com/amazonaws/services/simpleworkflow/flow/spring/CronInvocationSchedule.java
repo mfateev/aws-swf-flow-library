@@ -28,6 +28,13 @@ public class CronInvocationSchedule implements InvocationSchedule {
             nextInvocationTime = cronSequenceGenerator.next(startTime);
         }
         else {
+            // Due to rounding of time by cronSequenceGenerator nextInvocationTime can be less
+            // than a second apart from lastInvocation time leading to multiple invocations
+            // for the same scheduled time.
+            // Work around this limitation by adding a second to the lastInvocationTime in this case.
+            if (lastInvocationTime.getTime() - currentTime.getTime() < SECOND) {
+                lastInvocationTime.setTime(lastInvocationTime.getTime() + SECOND);
+            }
             nextInvocationTime = cronSequenceGenerator.next(lastInvocationTime);
         }
         long resultMilliseconds = nextInvocationTime.getTime() - currentTime.getTime();
