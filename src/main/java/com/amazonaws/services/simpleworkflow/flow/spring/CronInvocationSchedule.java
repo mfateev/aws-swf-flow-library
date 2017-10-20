@@ -44,7 +44,8 @@ public class CronInvocationSchedule implements InvocationSchedule {
         if (currentTime.getTime() + resultMilliseconds >= expiration.getTime()) {
             return FlowConstants.NONE;
         }
-        return resultMilliseconds / SECOND;
+        // Round to the next second to not fire earlier
+        return (long)Math.ceil((double)resultMilliseconds / SECOND);
     }
 
 }
