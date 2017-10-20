@@ -14,6 +14,8 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
+import com.uber.cadence.PollForActivityTaskResponse;
+import com.uber.cadence.WorkflowService.Iface;
 import java.util.concurrent.CancellationException;
 
 import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
@@ -48,10 +50,10 @@ class ActivityExecutionContextImpl extends ActivityExecutionContext {
      * @param task
      *            The {@link ActivityTask} this ActivityExecutionContextImpl
      *            will be used for.
-     * 
+     *
      * @see ActivityExecutionContext
      */
-    public ActivityExecutionContextImpl(AmazonSimpleWorkflow service, String domain, ActivityTask task) {
+    public ActivityExecutionContextImpl(Iface service, String domain, PollForActivityTaskResponse task) {
         this.domain = domain;
         this.service = service;
         this.task = task;

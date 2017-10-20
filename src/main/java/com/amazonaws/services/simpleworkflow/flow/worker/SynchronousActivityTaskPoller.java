@@ -14,35 +14,39 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
+import com.uber.cadence.ActivityType;
+import com.uber.cadence.EntityNotExistsError;
+import com.uber.cadence.PollForActivityTaskRequest;
+import com.uber.cadence.PollForActivityTaskResponse;
+import com.uber.cadence.RespondActivityTaskCanceledRequest;
+import com.uber.cadence.RespondActivityTaskCompletedRequest;
+import com.uber.cadence.RespondActivityTaskFailedRequest;
+import com.uber.cadence.TaskList;
+import com.uber.cadence.WorkflowService;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.management.ManagementFactory;
+import java.nio.charset.Charset;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
 import com.amazonaws.services.simpleworkflow.flow.ActivityExecutionContext;
 import com.amazonaws.services.simpleworkflow.flow.ActivityFailureException;
 import com.amazonaws.services.simpleworkflow.flow.common.WorkflowExecutionUtils;
 import com.amazonaws.services.simpleworkflow.flow.generic.ActivityImplementation;
 import com.amazonaws.services.simpleworkflow.flow.generic.ActivityImplementationFactory;
-import com.amazonaws.services.simpleworkflow.model.ActivityTask;
-import com.amazonaws.services.simpleworkflow.model.ActivityType;
-import com.amazonaws.services.simpleworkflow.model.PollForActivityTaskRequest;
-import com.amazonaws.services.simpleworkflow.model.RespondActivityTaskCanceledRequest;
-import com.amazonaws.services.simpleworkflow.model.RespondActivityTaskCompletedRequest;
-import com.amazonaws.services.simpleworkflow.model.RespondActivityTaskFailedRequest;
-import com.amazonaws.services.simpleworkflow.model.TaskList;
-import com.amazonaws.services.simpleworkflow.model.UnknownResourceException;
+import org.apache.thrift.TException;
 
 public class SynchronousActivityTaskPoller implements TaskPoller {
 
     private static final Log log = LogFactory.getLog(SynchronousActivityTaskPoller.class);
 
-    private AmazonSimpleWorkflow service;
+    private final Charset UTF8_CHARSET = Charset.forName("UTF-8");
+
+    private WorkflowService.Iface service;
 
     private String domain;
 
@@ -52,13 +56,13 @@ public class SynchronousActivityTaskPoller implements TaskPoller {
 
     private String identity;
 
-    private SynchronousRetrier reportCompletionRetrier;
+    private SynchronousRetrier<TException> reportCompletionRetrier;
 
-    private SynchronousRetrier reportFailureRetrier;
+    private SynchronousRetrier<TException> reportFailureRetrier;
 
     private boolean initialized;
 
-    public SynchronousActivityTaskPoller(AmazonSimpleWorkflow service, String domain, String taskListToPoll,
+    public SynchronousActivityTaskPoller(WorkflowService.Iface service, String domain, String taskListToPoll,
             ActivityImplementationFactory activityImplementationFactory) {
         this();
         this.service = service;
@@ -75,11 +79,11 @@ public class SynchronousActivityTaskPoller implements TaskPoller {
         identity = identity.substring(0, length);
     }
 
-    public AmazonSimpleWorkflow getService() {
+    public WorkflowService.Iface getService() {
         return service;
     }
 
-    public void setService(AmazonSimpleWorkflow service) {
+    public void setService(WorkflowService.Iface service) {
         this.service = service;
     }
 
@@ -120,7 +124,7 @@ public class SynchronousActivityTaskPoller implements TaskPoller {
     }
 
     public void setReportCompletionRetryParameters(ExponentialRetryParameters reportCompletionRetryParameters) {
-        this.reportCompletionRetrier = new SynchronousRetrier(reportCompletionRetryParameters, UnknownResourceException.class);
+        this.reportCompletionRetrier = new SynchronousRetrier(reportCompletionRetryParameters, EntityNotExistsError.class);
     }
 
     public ExponentialRetryParameters getReportFailureRetryParameters() {
@@ -128,7 +132,7 @@ public class SynchronousActivityTaskPoller implements TaskPoller {
     }
 
     public void setReportFailureRetryParameters(ExponentialRetryParameters reportFailureRetryParameters) {
-        this.reportFailureRetrier = new SynchronousRetrier(reportFailureRetryParameters, UnknownResourceException.class);
+        this.reportFailureRetrier = new SynchronousRetrier(reportFailureRetryParameters, EntityNotExistsError.class);
     }
 
     public String getTaskListToPoll() {
@@ -140,7 +144,7 @@ public class SynchronousActivityTaskPoller implements TaskPoller {
      * 
      * @return null if poll timed out
      */
-    public ActivityTask poll() {
+    public PollForActivityTaskResponse poll() throws TException {
         if (!initialized) {
             checkRequiredProperty(service, "service");
             checkRequiredProperty(domain, "domain");
@@ -151,11 +155,13 @@ public class SynchronousActivityTaskPoller implements TaskPoller {
         PollForActivityTaskRequest pollRequest = new PollForActivityTaskRequest();
         pollRequest.setDomain(domain);
         pollRequest.setIdentity(identity);
-        pollRequest.setTaskList(new TaskList().withName(taskListToPoll));
+        TaskList taskList = new TaskList();
+        taskList.setName(taskListToPoll);
+        pollRequest.setTaskList(taskList);
         if (log.isDebugEnabled()) {
             log.debug("poll request begin: " + pollRequest);
         }
-        ActivityTask result = service.pollForActivityTask(pollRequest);
+        PollForActivityTaskResponse result = service.PollForActivityTask(pollRequest);
         if (result == null || result.getTaskToken() == null) {
             if (log.isDebugEnabled()) {
                 log.debug("poll request returned no task");
@@ -176,7 +182,7 @@ public class SynchronousActivityTaskPoller implements TaskPoller {
      */
     @Override
     public boolean pollAndProcessSingleTask() throws Exception {
-        ActivityTask task = poll();
+        PollForActivityTaskResponse task = poll();
         if (task == null) {
             return false;
         }
@@ -184,8 +190,8 @@ public class SynchronousActivityTaskPoller implements TaskPoller {
         return true;
     }
 
-    protected void execute(final ActivityTask task) throws Exception {
-        String output = null;
+    protected void execute(final PollForActivityTaskResponse task) throws Exception {
+        byte[] output = null;
         ActivityType activityType = task.getActivityType();
         try {
             ActivityExecutionContext context = new ActivityExecutionContextImpl(service, domain, task);
@@ -208,7 +214,7 @@ public class SynchronousActivityTaskPoller implements TaskPoller {
                         + task.getWorkflowExecution().getWorkflowId() + ", activity=" + activityType
                         + ", activityInstanceId=" + task.getActivityId(), e);
             }
-            respondActivityTaskFailedWithRetry(task.getTaskToken(), e.getReason(), e.getDetails());
+            respondActivityTaskFailedWithRetry(task.getTaskToken(), e.getReason(), e.getDetails().getBytes(UTF8_CHARSET));
         }
         catch (Exception e) {
             if (log.isErrorEnabled()) {
@@ -219,76 +225,64 @@ public class SynchronousActivityTaskPoller implements TaskPoller {
             String reason = e.getMessage();
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
-            String details = sw.toString();
+            byte[] details = sw.toString().getBytes(UTF8_CHARSET);
             respondActivityTaskFailedWithRetry(task.getTaskToken(), reason, details);
         }
     }
 
-    protected void respondActivityTaskFailedWithRetry(final String taskToken, final String reason, final String details) {
+    protected void respondActivityTaskFailedWithRetry(final byte[] taskToken, final String reason, final byte[] details)
+        throws TException {
         if (reportFailureRetrier == null) {
             respondActivityTaskFailed(taskToken, reason, details);
         }
         else {
-            reportFailureRetrier.retry(new Runnable() {
-
-                @Override
-                public void run() {
+            reportFailureRetrier.retry(() -> {
                     respondActivityTaskFailed(taskToken, reason, details);
-                }
             });
         }
     }
 
-    protected void respondActivityTaskFailed(String taskToken, String reason, String details) {
+    protected void respondActivityTaskFailed(byte[] taskToken, String reason, byte[] details)
+        throws TException {
         RespondActivityTaskFailedRequest failedResponse = new RespondActivityTaskFailedRequest();
         failedResponse.setTaskToken(taskToken);
         failedResponse.setReason(WorkflowExecutionUtils.truncateReason(reason));
         failedResponse.setDetails(details);
-        service.respondActivityTaskFailed(failedResponse);
+        service.RespondActivityTaskFailed(failedResponse);
     }
 
-    protected void respondActivityTaskCanceledWithRetry(final String taskToken, final String details) {
+    protected void respondActivityTaskCanceledWithRetry(final byte[] taskToken, final byte[] details)
+        throws TException {
         if (reportFailureRetrier == null) {
             respondActivityTaskCanceled(taskToken, details);
         }
         else {
-            reportFailureRetrier.retry(new Runnable() {
-
-                @Override
-                public void run() {
-                    respondActivityTaskCanceled(taskToken, details);
-                }
-            });
+            reportFailureRetrier.retry(() -> respondActivityTaskCanceled(taskToken, details));
         }
     }
 
-    protected void respondActivityTaskCanceled(String taskToken, String details) {
+    protected void respondActivityTaskCanceled(byte[] taskToken, byte[] details) throws TException {
         RespondActivityTaskCanceledRequest canceledResponse = new RespondActivityTaskCanceledRequest();
         canceledResponse.setTaskToken(taskToken);
         canceledResponse.setDetails(details);
-        service.respondActivityTaskCanceled(canceledResponse);
+        service.RespondActivityTaskCanceled(canceledResponse);
     }
 
-    protected void respondActivityTaskCompletedWithRetry(final String taskToken, final String output) {
+    protected void respondActivityTaskCompletedWithRetry(final byte[] taskToken, final byte[] output)
+        throws TException {
         if (reportCompletionRetrier == null) {
             respondActivityTaskCompleted(taskToken, output);
         }
         else {
-            reportCompletionRetrier.retry(new Runnable() {
-
-                @Override
-                public void run() {
-                    respondActivityTaskCompleted(taskToken, output);
-                }
-            });
+            reportCompletionRetrier.retry(() -> respondActivityTaskCompleted(taskToken, output));
         }
     }
 
-    protected void respondActivityTaskCompleted(String taskToken, String output) {
+    protected void respondActivityTaskCompleted(byte[] taskToken, byte[] output) throws TException {
         RespondActivityTaskCompletedRequest completedReponse = new RespondActivityTaskCompletedRequest();
         completedReponse.setTaskToken(taskToken);
         completedReponse.setResult(output);
-        service.respondActivityTaskCompleted(completedReponse);
+        service.RespondActivityTaskCompleted(completedReponse);
     }
 
     protected void checkRequiredProperty(Object value, String name) {

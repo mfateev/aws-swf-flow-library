@@ -62,6 +62,6 @@ public abstract class ActivityImplementation {
      *         {@link ActivityWorker#respondActivityTaskCompleted(String, Map)}
      *         to return result in asynchronous case.
      */
-    public abstract String execute(ActivityExecutionContext context) throws ActivityFailureException, CancellationException;
+    public abstract byte[] execute(ActivityExecutionContext context) throws ActivityFailureException, CancellationException;
 
 }

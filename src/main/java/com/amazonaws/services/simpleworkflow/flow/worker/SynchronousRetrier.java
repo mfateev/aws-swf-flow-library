@@ -17,13 +17,17 @@ package com.amazonaws.services.simpleworkflow.flow.worker;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public class SynchronousRetrier {
+public class SynchronousRetrier<T extends Throwable> {
     
     private static final Log log = LogFactory.getLog(SynchronousRetrier.class);
 
     private final ExponentialRetryParameters retryParameters;
 
     private final Class<?>[] exceptionsToNotRetry;
+
+    interface Retryable<T extends Throwable> {
+        void run() throws T;
+    }
 
     public SynchronousRetrier(ExponentialRetryParameters retryParameters, Class<?>... exceptionsToNotRetry) {
         if (retryParameters.getBackoffCoefficient() < 0) {
@@ -50,7 +54,7 @@ public class SynchronousRetrier {
         return exceptionsToNotRetry;
     }
 
-    public void retry(Runnable r) {
+    public void retry(Retryable<T> r) throws T {
         int attempt = 0;
         long startTime = System.currentTimeMillis();
         BackoffThrottler throttler = new BackoffThrottler(retryParameters.getInitialInterval(),
@@ -68,17 +72,17 @@ public class SynchronousRetrier {
                 Thread.currentThread().interrupt();
                 return;
             }
-            catch (RuntimeException e) {
+            catch (Exception e) {
                 throttler.failure();
                 for (Class<?> exceptionToNotRetry : exceptionsToNotRetry) {
                     if (exceptionToNotRetry.isAssignableFrom(e.getClass())) {
-                        throw e;
+                        rethrow(e);
                     }
                 }
                 long elapsed = System.currentTimeMillis() - startTime;
                 if (attempt > retryParameters.getMaximumRetries()
                         || (elapsed >= retryParameters.getExpirationInterval() && attempt > retryParameters.getMinimumRetries())) {
-                    throw e;
+                    rethrow(e);
                 }
                 log.warn("Retrying after failure", e);
             }
@@ -86,4 +90,11 @@ public class SynchronousRetrier {
         while (!success);
     }
 
+    private void rethrow(Exception e) throws T {
+        if (e instanceof RuntimeException) {
+            throw (RuntimeException)e;
+        } else {
+            throw (T)e;
+        }
+    }
 }
