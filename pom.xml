@@ -1,13 +1,17 @@
 <?xml version="1.0"?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.amazonaws</groupId>
   <artifactId>swf-flow-library</artifactId>
   <version>2.0.0</version>
   <packaging>jar</packaging>
   <name>Java Libraries for Amazon Simple WorkFlow</name>
-  <description>This artifact contains the higher level libraries that can be used in Amazon Simple WorkFlow Service</description>
+  <description>This artifact contains the higher level libraries that can be used in Amazon Simple
+    WorkFlow Service
+  </description>
   <url>https://github.com/aws/aws-swf-flow-library</url>
   <licenses>
     <license>
@@ -42,6 +46,17 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.apache.thrift</groupId>
+      <artifactId>libthrift</artifactId>
+      <version>0.10.0</version>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
       <groupId>com.amazonaws</groupId>
       <artifactId>aws-java-sdk</artifactId>
       <version>${aws.java.sdk.version}</version>
@@ -52,11 +67,11 @@
       <version>${freemarker.version}</version>
       <optional>true</optional>
     </dependency>
-      <dependency>
-        <groupId>org.aspectj</groupId>
-        <artifactId>aspectjrt</artifactId>
-        <version>${aspectj.version}</version>
-      </dependency>
+    <dependency>
+      <groupId>org.aspectj</groupId>
+      <artifactId>aspectjrt</artifactId>
+      <version>${aspectj.version}</version>
+    </dependency>
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-beans</artifactId>
@@ -81,7 +96,7 @@
       <version>${spring.version}</version>
       <optional>true</optional>
     </dependency>
-   <!-- JUnit is needed to compile the support classes for the workflow service -->
+    <!-- JUnit is needed to compile the support classes for the workflow service -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -93,16 +108,31 @@
 
   <build>
     <plugins>
+      <plugin><!-- newer official org.apache.thrift:thrift-maven-plugin:0.9.3 is broken -->
+        <groupId>org.apache.thrift.tools</groupId>
+        <artifactId>maven-thrift-plugin</artifactId>
+        <version>0.1.11</version>
+        <configuration>
+          <generator>java:private-members</generator>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>compile</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.2</version>
-          <configuration>
-             <compilerVersion>${java.version}</compilerVersion>
-             <source>${java.version}</source>
-             <target>${java.version}</target>
-          </configuration>
-        </plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.2</version>
+        <configuration>
+          <compilerVersion>${java.version}</compilerVersion>
+          <source>${java.version}</source>
+          <target>${java.version}</target>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>aspectj-maven-plugin</artifactId>
@@ -115,18 +145,18 @@
           </execution>
         </executions>
         <configuration>
-                    <complianceLevel>${java.version}</complianceLevel>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
-                    <showWeaveInfo>true</showWeaveInfo>
-                    <!--sources>
-                        <source>
-                            <basedir>${source.dir}</basedir>
-                            <includes>
-                                <include>**/*.java</include>
-                            </includes>
-                        </source>
-                    </sources-->
+          <complianceLevel>${java.version}</complianceLevel>
+          <source>${maven.compiler.source}</source>
+          <target>${maven.compiler.target}</target>
+          <showWeaveInfo>true</showWeaveInfo>
+          <!--sources>
+              <source>
+                  <basedir>${source.dir}</basedir>
+                  <includes>
+                      <include>**/*.java</include>
+                  </includes>
+              </source>
+          </sources-->
         </configuration>
       </plugin>
       <plugin>
