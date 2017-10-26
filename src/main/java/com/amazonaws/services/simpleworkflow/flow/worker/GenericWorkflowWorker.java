@@ -20,15 +20,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
-import com.amazonaws.services.simpleworkflow.flow.WorkflowTypeRegistrationOptions;
-import com.amazonaws.services.simpleworkflow.flow.common.FlowConstants;
-import com.amazonaws.services.simpleworkflow.flow.common.FlowHelpers;
-import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinitionFactory;
 import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinitionFactoryFactory;
-import com.amazonaws.services.simpleworkflow.model.RegisterWorkflowTypeRequest;
-import com.amazonaws.services.simpleworkflow.model.TaskList;
-import com.amazonaws.services.simpleworkflow.model.TypeAlreadyExistsException;
-import com.amazonaws.services.simpleworkflow.model.WorkflowType;
 
 public class GenericWorkflowWorker extends GenericWorker {
 
@@ -85,7 +77,6 @@ public class GenericWorkflowWorker extends GenericWorker {
 
     @Override
     public void registerTypesToPoll() {
-        registerWorkflowTypes(service, domain, getTaskListToPoll(), workflowDefinitionFactoryFactory);
     }
 
     @Override
@@ -93,55 +84,4 @@ public class GenericWorkflowWorker extends GenericWorker {
         return this.getClass().getSimpleName() + "[super=" + super.toString() + ", workflowDefinitionFactoryFactory="
                 + workflowDefinitionFactoryFactory + "]";
     }
-
-    public static void registerWorkflowTypes(AmazonSimpleWorkflow service, String domain, String defaultTaskList,
-            WorkflowDefinitionFactoryFactory workflowDefinitionFactoryFactory) {
-        for (WorkflowType typeToRegister : workflowDefinitionFactoryFactory.getWorkflowTypesToRegister()) {
-            WorkflowDefinitionFactory workflowDefinitionFactory = workflowDefinitionFactoryFactory.getWorkflowDefinitionFactory(typeToRegister);
-            WorkflowTypeRegistrationOptions registrationOptions = workflowDefinitionFactory.getWorkflowRegistrationOptions();
-            if (registrationOptions != null) {
-                WorkflowType workflowType = workflowDefinitionFactory.getWorkflowType();
-                try {
-                    registerWorkflowType(service, domain, workflowType, registrationOptions, defaultTaskList);
-                }
-                catch (TypeAlreadyExistsException ex) {
-                    if (log.isTraceEnabled()) {
-                        log.trace("Workflow Type already registered: " + workflowType);
-                    }
-                }
-            }
-        }
-    }
-
-    public static void registerWorkflowType(AmazonSimpleWorkflow service, String domain, WorkflowType workflowType,
-            WorkflowTypeRegistrationOptions registrationOptions, String defaultTaskList) {
-        RegisterWorkflowTypeRequest registerWorkflow = new RegisterWorkflowTypeRequest();
-
-        registerWorkflow.setDomain(domain);
-        registerWorkflow.setName(workflowType.getName());
-        registerWorkflow.setVersion(workflowType.getVersion());
-        String taskList = registrationOptions.getDefaultTaskList();
-        if (taskList == null) {
-            taskList = defaultTaskList;
-        }
-        else if (taskList.equals(FlowConstants.NO_DEFAULT_TASK_LIST)) {
-            taskList = null;
-        }
-        if (taskList != null && !taskList.isEmpty()) {
-            registerWorkflow.setDefaultTaskList(new TaskList().withName(taskList));
-        }
-        registerWorkflow.setDefaultChildPolicy(registrationOptions.getDefaultChildPolicy().toString());
-        registerWorkflow.setDefaultTaskStartToCloseTimeout(FlowHelpers.secondsToDuration(registrationOptions.getDefaultTaskStartToCloseTimeoutSeconds()));
-        registerWorkflow.setDefaultExecutionStartToCloseTimeout(FlowHelpers.secondsToDuration(registrationOptions.getDefaultExecutionStartToCloseTimeoutSeconds()));
-        registerWorkflow.setDefaultTaskPriority(FlowHelpers.taskPriorityToString(registrationOptions.getDefaultTaskPriority()));
-        registerWorkflow.setDefaultLambdaRole(registrationOptions.getDefaultLambdaRole());
-
-        String description = registrationOptions.getDescription();
-        if (description != null) {
-            registerWorkflow.setDescription(description);
-        }
-
-        service.registerWorkflowType(registerWorkflow);
-    }
-
 }

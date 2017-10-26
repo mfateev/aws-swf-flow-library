@@ -18,8 +18,8 @@ import java.util.List;
 
 import com.amazonaws.services.simpleworkflow.flow.StartWorkflowOptions;
 import com.amazonaws.services.simpleworkflow.flow.common.FlowConstants;
-import com.amazonaws.services.simpleworkflow.model.ChildPolicy;
-import com.amazonaws.services.simpleworkflow.model.WorkflowType;
+import com.uber.cadence.ChildPolicy;
+import com.uber.cadence.WorkflowType;
 
 public class StartChildWorkflowExecutionParameters implements Cloneable {
 
@@ -27,7 +27,7 @@ public class StartChildWorkflowExecutionParameters implements Cloneable {
 
     private long executionStartToCloseTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
 
-    private String input;
+    private byte[] input;
 
     private List<String> tagList;
 
@@ -74,15 +74,15 @@ public class StartChildWorkflowExecutionParameters implements Cloneable {
         return this;
     }
 
-    public String getInput() {
+    public byte[] getInput() {
         return input;
     }
 
-    public void setInput(String input) {
+    public void setInput(byte[] input) {
         this.input = input;
     }
 
-    public StartChildWorkflowExecutionParameters withInput(String input) {
+    public StartChildWorkflowExecutionParameters withInput(byte[] input) {
         this.input = input;
         return this;
     }

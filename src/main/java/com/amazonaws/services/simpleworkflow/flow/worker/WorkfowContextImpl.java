@@ -22,9 +22,7 @@ import com.amazonaws.services.simpleworkflow.flow.generic.ContinueAsNewWorkflowE
 import com.amazonaws.services.simpleworkflow.model.ChildPolicy;
 import com.amazonaws.services.simpleworkflow.model.DecisionTask;
 import com.amazonaws.services.simpleworkflow.model.HistoryEvent;
-import com.amazonaws.services.simpleworkflow.model.WorkflowExecution;
 import com.amazonaws.services.simpleworkflow.model.WorkflowExecutionStartedEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.WorkflowType;
 
 
 class WorkfowContextImpl implements WorkflowContext {
@@ -38,12 +36,12 @@ class WorkfowContextImpl implements WorkflowContext {
     }
     
     @Override
-    public WorkflowExecution getWorkflowExecution() {
+    public com.uber.cadence.WorkflowExecution getWorkflowExecution() {
         return decisionTask.getWorkflowExecution();
     }
 
     @Override
-    public WorkflowType getWorkflowType() {
+    public com.uber.cadence.WorkflowType getWorkflowType() {
         return decisionTask.getWorkflowType();
     }
 
@@ -67,7 +65,7 @@ class WorkfowContextImpl implements WorkflowContext {
     }
 
     @Override
-    public WorkflowExecution getParentWorkflowExecution() {
+    public com.uber.cadence.WorkflowExecution getParentWorkflowExecution() {
         WorkflowExecutionStartedEventAttributes attributes = getWorkflowStartedEventAttributes();
         return attributes.getParentWorkflowExecution();
     }
@@ -79,7 +77,7 @@ class WorkfowContextImpl implements WorkflowContext {
     }
 
     @Override
-    public ChildPolicy getChildPolicy() {
+    public com.uber.cadence.ChildPolicy getChildPolicy() {
         WorkflowExecutionStartedEventAttributes attributes = getWorkflowStartedEventAttributes();
         return ChildPolicy.fromValue(attributes.getChildPolicy());
     }

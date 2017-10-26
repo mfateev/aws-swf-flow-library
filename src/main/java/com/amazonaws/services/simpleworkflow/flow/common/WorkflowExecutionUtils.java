@@ -14,6 +14,19 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.common;
 
+import com.uber.cadence.Decision;
+import com.uber.cadence.EventType;
+import com.uber.cadence.GetWorkflowExecutionHistoryRequest;
+import com.uber.cadence.GetWorkflowExecutionHistoryResponse;
+import com.uber.cadence.History;
+import com.uber.cadence.HistoryEvent;
+import com.uber.cadence.StartWorkflowExecutionRequest;
+import com.uber.cadence.WorkflowExecution;
+import com.uber.cadence.WorkflowExecutionCloseStatus;
+import com.uber.cadence.WorkflowExecutionCompletedEventAttributes;
+import com.uber.cadence.WorkflowExecutionContinuedAsNewEventAttributes;
+import com.uber.cadence.WorkflowExecutionInfo;
+import com.uber.cadence.WorkflowService.Iface;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
@@ -29,21 +42,7 @@ import java.util.concurrent.TimeoutException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper.DefaultTyping;
-
-import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
-import com.amazonaws.services.simpleworkflow.model.CloseStatus;
-import com.amazonaws.services.simpleworkflow.model.Decision;
-import com.amazonaws.services.simpleworkflow.model.DescribeWorkflowExecutionRequest;
-import com.amazonaws.services.simpleworkflow.model.EventType;
-import com.amazonaws.services.simpleworkflow.model.ExecutionStatus;
-import com.amazonaws.services.simpleworkflow.model.GetWorkflowExecutionHistoryRequest;
-import com.amazonaws.services.simpleworkflow.model.History;
-import com.amazonaws.services.simpleworkflow.model.HistoryEvent;
-import com.amazonaws.services.simpleworkflow.model.WorkflowExecution;
-import com.amazonaws.services.simpleworkflow.model.WorkflowExecutionCompletedEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.WorkflowExecutionContinuedAsNewEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.WorkflowExecutionDetail;
-import com.amazonaws.services.simpleworkflow.model.WorkflowExecutionInfo;
+import org.apache.thrift.TException;
 
 /**
  * Convenience methods to be used by unit tests and during development.
@@ -60,14 +59,14 @@ public class WorkflowExecutionUtils {
      * 
      * @param workflowExecution
      *            result of
-     *            {@link AmazonSimpleWorkflow#startWorkflowInstance(com.amazonaws.services.simpleworkflow.model.StartWorkflowInstanceRequest)}
+     *            {@link Iface#StartWorkflowExecution(StartWorkflowExecutionRequest)}
      * @return workflow instance result.
      * @throws InterruptedException
      *             if thread is interrupted
      * @throws RuntimeException
      *             if workflow instance ended up in any state but completed
      */
-    public static WorkflowExecutionCompletedEventAttributes waitForWorkflowExecutionResult(AmazonSimpleWorkflow service,
+    public static WorkflowExecutionCompletedEventAttributes waitForWorkflowExecutionResult(Iface service,
             String domain, WorkflowExecution workflowExecution) throws InterruptedException {
         try {
             return waitForWorkflowExecutionResult(service, domain, workflowExecution, 0);
@@ -85,7 +84,7 @@ public class WorkflowExecutionUtils {
      * 
      * @param workflowExecution
      *            result of
-     *            {@link AmazonSimpleWorkflow#startWorkflowInstance(com.amazonaws.services.simpleworkflow.model.StartWorkflowInstanceRequest)}
+     *            {@link Iface#StartWorkflowExecution(StartWorkflowExecutionRequest)}
      * @return workflow instance result.
      * @throws InterruptedException
      *             if thread is interrupted
@@ -94,11 +93,11 @@ public class WorkflowExecutionUtils {
      * @throws RuntimeException
      *             if workflow instance ended up in any state but completed
      */
-    public static WorkflowExecutionCompletedEventAttributes waitForWorkflowExecutionResult(AmazonSimpleWorkflow service,
+    public static WorkflowExecutionCompletedEventAttributes waitForWorkflowExecutionResult(Iface service,
             String domain, WorkflowExecution workflowExecution, long timeoutSeconds)
             throws InterruptedException, TimeoutException {
-        if (!waitForWorkflowInstanceCompletion(service, domain, workflowExecution, timeoutSeconds).equals(
-                CloseStatus.COMPLETED.toString())) {
+        if (waitForWorkflowInstanceCompletion(service, domain, workflowExecution, timeoutSeconds) !=
+            WorkflowExecutionCloseStatus.COMPLETED) {
             String historyDump = WorkflowExecutionUtils.prettyPrintHistory(service, domain, workflowExecution);
             throw new RuntimeException("Workflow instance is not in completed state:\n" + historyDump);
         }
@@ -107,14 +106,14 @@ public class WorkflowExecutionUtils {
 
     /**
      * Returns result of workflow instance execution. result of
-     * {@link AmazonSimpleWorkflow#startWorkflowInstance(com.amazonaws.services.simpleworkflow.model.StartWorkflowInstanceRequest)}
+     * {@link Iface#StartWorkflowExecution(StartWorkflowExecutionRequest)}
      * 
      * @throws IllegalStateException
      *             if workflow is still running
      * @throws RuntimeException
      *             if workflow instance ended up in any state but completed
      */
-    public static WorkflowExecutionCompletedEventAttributes getWorkflowExecutionResult(AmazonSimpleWorkflow service,
+    public static WorkflowExecutionCompletedEventAttributes getWorkflowExecutionResult(Iface service,
             String domain, WorkflowExecution workflowExecution) {
         HistoryEvent closeEvent = getInstanceCloseEvent(service, domain, workflowExecution);
         if (closeEvent == null) {
@@ -126,13 +125,14 @@ public class WorkflowExecutionUtils {
         throw new RuntimeException("Workflow end state is not completed: " + prettyPrintHistoryEvent(closeEvent));
     }
 
-    public static HistoryEvent getInstanceCloseEvent(AmazonSimpleWorkflow service, String domain,
+    public static HistoryEvent getInstanceCloseEvent(Iface service, String domain,
             WorkflowExecution workflowExecution) {
 
-        WorkflowExecutionInfo executionInfo = describeWorkflowInstance(service, domain, workflowExecution);
-        if (executionInfo == null || executionInfo.getExecutionStatus().equals(ExecutionStatus.OPEN.toString())) {
-            return null;
-        }
+        // TODO: Uncomment as soon as describe is added by Cadence
+//        WorkflowExecutionInfo executionInfo = describeWorkflowInstance(service, domain, workflowExecution);
+//        if (executionInfo == null || !executionInfo.isSetCloseStatus()) {
+//            return null;
+//        }
 
         List<HistoryEvent> events = getHistory(service, domain, workflowExecution);
         HistoryEvent result = null;
@@ -194,13 +194,9 @@ public class WorkflowExecutionUtils {
     public static String getId(HistoryEvent historyEvent) {
         String id = null;
         if (historyEvent != null) {
-            if (historyEvent.getEventType().equals(EventType.StartChildWorkflowExecutionFailed.toString())) {
+            if (historyEvent.getEventType() == EventType.StartChildWorkflowExecutionFailed) {
                 id = historyEvent.getStartChildWorkflowExecutionFailedEventAttributes().getWorkflowId();
-            } else if (historyEvent.getEventType().equals(EventType.ScheduleActivityTaskFailed.toString())) {
-                id = historyEvent.getScheduleActivityTaskFailedEventAttributes().getActivityId();
-            } else if (historyEvent.getEventType().equals(EventType.StartTimerFailed.toString())) {
-                id = historyEvent.getStartTimerFailedEventAttributes().getTimerId();
-            } 
+            }
         }
         
         return id;
@@ -209,18 +205,12 @@ public class WorkflowExecutionUtils {
     public static String getFailureCause(HistoryEvent historyEvent) {
         String failureCause = null;
         if (historyEvent != null) {
-            if (historyEvent.getEventType().equals(EventType.StartChildWorkflowExecutionFailed.toString())) {
-                failureCause = historyEvent.getStartChildWorkflowExecutionFailedEventAttributes().getCause();
-            } else if (historyEvent.getEventType().equals(EventType.SignalExternalWorkflowExecutionFailed.toString())) {
-                failureCause = historyEvent.getSignalExternalWorkflowExecutionFailedEventAttributes().getCause();
-            } else if (historyEvent.getEventType().equals(EventType.ScheduleActivityTaskFailed.toString())) {
-                failureCause = historyEvent.getScheduleActivityTaskFailedEventAttributes().getCause();
-            } else if (historyEvent.getEventType().equals(EventType.StartTimerFailed.toString())) {
-                failureCause = historyEvent.getStartTimerFailedEventAttributes().getCause();
-            } else if (historyEvent.getEventType().equals(EventType.ContinueAsNewWorkflowExecutionFailed.toString())) {
-                failureCause = historyEvent.getContinueAsNewWorkflowExecutionFailedEventAttributes().getCause();
-            } else if (historyEvent.getEventType().equals(EventType.RecordMarkerFailed.toString())) {
-            	failureCause = historyEvent.getRecordMarkerFailedEventAttributes().getCause();
+            if (historyEvent.getEventType() == EventType.StartChildWorkflowExecutionFailed) {
+                failureCause = historyEvent.getStartChildWorkflowExecutionFailedEventAttributes().getCause().toString();
+//            } else if (historyEvent.getEventType() == EventType.SignalExternalWorkflowExecutionFailed) {
+//                failureCause = historyEvent.getSignalExternalWorkflowExecutionFailedEventAttributes().getCause();
+            } else {
+                failureCause = "Cannot extract failure cause from " + historyEvent.getEventType();
             }
         }
         
@@ -234,10 +224,10 @@ public class WorkflowExecutionUtils {
      * 
      * @param workflowExecution
      *            result of
-     *            {@link AmazonSimpleWorkflow#startWorkflowInstance(com.amazonaws.services.simpleworkflow.model.StartWorkflowInstanceRequest)}
+     *            {@link Iface#StartWorkflowExecution(StartWorkflowExecutionRequest)}
      * @return instance close status
      */
-    public static String waitForWorkflowInstanceCompletion(AmazonSimpleWorkflow service, String domain,
+    public static WorkflowExecutionCloseStatus waitForWorkflowInstanceCompletion(Iface service, String domain,
             WorkflowExecution workflowExecution) throws InterruptedException {
         try {
             return waitForWorkflowInstanceCompletion(service, domain, workflowExecution, 0);
@@ -254,13 +244,13 @@ public class WorkflowExecutionUtils {
      * 
      * @param workflowExecution
      *            result of
-     *            {@link AmazonSimpleWorkflow#startWorkflowInstance(com.amazonaws.services.simpleworkflow.model.StartWorkflowInstanceRequest)}
+     *            {@link Iface#StartWorkflowExecution(StartWorkflowExecutionRequest)}
      * @param timeoutSeconds
      *            maximum time to wait for completion. 0 means wait forever.
      * @return instance close status
      * @throws TimeoutException
      */
-    public static String waitForWorkflowInstanceCompletion(AmazonSimpleWorkflow service, String domain,
+    public static WorkflowExecutionCloseStatus waitForWorkflowInstanceCompletion(Iface service, String domain,
             WorkflowExecution workflowExecution, long timeoutSeconds) 
                 throws InterruptedException, TimeoutException {
         long start = System.currentTimeMillis();
@@ -276,13 +266,13 @@ public class WorkflowExecutionUtils {
             }
             executionInfo = describeWorkflowInstance(service, domain, workflowExecution);
         }
-        while (executionInfo.getExecutionStatus().equals(ExecutionStatus.OPEN.toString()));
+        while (!executionInfo.isSetCloseStatus());
         return executionInfo.getCloseStatus();
     }
 
     /**
      * Like
-     * {@link #waitForWorkflowInstanceCompletion(AmazonSimpleWorkflow, String, WorkflowExecution, long)}
+     * {@link #waitForWorkflowInstanceCompletion(Iface, String, WorkflowExecution, long)}
      * , except will wait for continued generations of the original workflow
      * execution too.
      * 
@@ -294,26 +284,27 @@ public class WorkflowExecutionUtils {
      * @throws InterruptedException
      * @throws TimeoutException
      * 
-     * @see #waitForWorkflowInstanceCompletion(AmazonSimpleWorkflow, String,
+     * @see #waitForWorkflowInstanceCompletion(Iface, String,
      *      WorkflowExecution, long)
      */
-    public static String waitForWorkflowInstanceCompletionAcrossGenerations(AmazonSimpleWorkflow service, String domain,
+    public static WorkflowExecutionCloseStatus waitForWorkflowInstanceCompletionAcrossGenerations(Iface service, String domain,
             WorkflowExecution workflowExecution, long timeoutSeconds) throws InterruptedException, TimeoutException {
 
         WorkflowExecution lastExecutionToRun = workflowExecution;
         long millisecondsAtFirstWait = System.currentTimeMillis();
-        String lastExecutionToRunCloseStatus = waitForWorkflowInstanceCompletion(service, domain, lastExecutionToRun,
+        WorkflowExecutionCloseStatus lastExecutionToRunCloseStatus = waitForWorkflowInstanceCompletion(service, domain, lastExecutionToRun,
                 timeoutSeconds);
 
         // keep waiting if the instance continued as new
-        while (lastExecutionToRunCloseStatus.equals(CloseStatus.CONTINUED_AS_NEW.toString())) {
+        while (lastExecutionToRunCloseStatus == WorkflowExecutionCloseStatus.CONTINUED_AS_NEW) {
             // get the new execution's information
             HistoryEvent closeEvent = getInstanceCloseEvent(service, domain, lastExecutionToRun);
             WorkflowExecutionContinuedAsNewEventAttributes continuedAsNewAttributes = closeEvent.getWorkflowExecutionContinuedAsNewEventAttributes();
 
-            WorkflowExecution newGenerationExecution = new WorkflowExecution().withWorkflowId(lastExecutionToRun.getWorkflowId()).withRunId(
-                    continuedAsNewAttributes.getNewExecutionRunId());
-            
+            WorkflowExecution newGenerationExecution = new WorkflowExecution();
+            newGenerationExecution.setRunId(continuedAsNewAttributes.getNewExecutionRunId());
+            newGenerationExecution.setWorkflowId(lastExecutionToRun.getWorkflowId());
+
             // and wait for it
             long currentTime = System.currentTimeMillis();
             long millisecondsSinceFirstWait = currentTime - millisecondsAtFirstWait;
@@ -328,7 +319,7 @@ public class WorkflowExecutionUtils {
 
     /**
      * Like
-     * {@link #waitForWorkflowInstanceCompletionAcrossGenerations(AmazonSimpleWorkflow, String, WorkflowExecution, long)}
+     * {@link #waitForWorkflowInstanceCompletionAcrossGenerations(Iface, String, WorkflowExecution, long)}
      * , but with no timeout.
      * 
      * @param service
@@ -337,7 +328,7 @@ public class WorkflowExecutionUtils {
      * @return
      * @throws InterruptedException
      */
-    public static String waitForWorkflowInstanceCompletionAcrossGenerations(AmazonSimpleWorkflow service, String domain,
+    public static WorkflowExecutionCloseStatus waitForWorkflowInstanceCompletionAcrossGenerations(Iface service, String domain,
             WorkflowExecution workflowExecution) throws InterruptedException {
         try {
             return waitForWorkflowInstanceCompletionAcrossGenerations(service, domain, workflowExecution, 0L);
@@ -347,24 +338,24 @@ public class WorkflowExecutionUtils {
         }
     }
 
-    public static WorkflowExecutionInfo describeWorkflowInstance(AmazonSimpleWorkflow service, String domain,
-            WorkflowExecution workflowExecution) {
-        DescribeWorkflowExecutionRequest describeRequest = new DescribeWorkflowExecutionRequest();
-        describeRequest.setDomain(domain);
-        describeRequest.setExecution(workflowExecution);
-        WorkflowExecutionDetail executionDetail = service.describeWorkflowExecution(describeRequest);
-        WorkflowExecutionInfo instanceMetadata = executionDetail.getExecutionInfo();
-        return instanceMetadata;
-    }
+    //TODO: Apparently Cadence doesn't support this method. Here is issue to add it:
+    // https://github.com/uber/cadence/issues/384
+//    public static WorkflowExecutionInfo describeWorkflowInstance(Iface service, String domain,
+//            WorkflowExecution workflowExecution) {
+//        DescribeWorkflowExecutionRequest describeRequest = new DescribeWorkflowExecutionRequest();
+//        describeRequest.setDomain(domain);
+//        describeRequest.setExecution(workflowExecution);
+//        WorkflowExecutionDetail executionDetail = service.describeWorkflowExecution(describeRequest);
+//        WorkflowExecutionInfo instanceMetadata = executionDetail.getExecutionInfo();
+//        return instanceMetadata;
+//    }
 
     /**
      * Returns workflow instance history in a human readable format.
      * 
      * @param workflowExecution
-     *            result of
-     *            {@link AmazonSimpleWorkflow#startWorkflowInstance(com.amazonaws.services.simpleworkflow.model.StartWorkflowInstanceRequest)}
      */
-    public static String prettyPrintHistory(AmazonSimpleWorkflow service, String domain, WorkflowExecution workflowExecution) {
+    public static String prettyPrintHistory(Iface service, String domain, WorkflowExecution workflowExecution) {
         return prettyPrintHistory(service, domain, workflowExecution, true);
     }
 
@@ -372,32 +363,30 @@ public class WorkflowExecutionUtils {
      * Returns workflow instance history in a human readable format.
      * 
      * @param workflowExecution
-     *            result of
-     *            {@link AmazonSimpleWorkflow#startWorkflowInstance(com.amazonaws.services.simpleworkflow.model.StartWorkflowInstanceRequest)}
      * @param showWorkflowTasks
      *            when set to false workflow task events (decider events) are
      *            not included
      */
-    public static String prettyPrintHistory(AmazonSimpleWorkflow service, String domain, WorkflowExecution workflowExecution,
+    public static String prettyPrintHistory(Iface service, String domain, WorkflowExecution workflowExecution,
             boolean showWorkflowTasks) {
         List<HistoryEvent> events = getHistory(service, domain, workflowExecution);
         return prettyPrintHistory(events, showWorkflowTasks);
     }
 
-    public static List<HistoryEvent> getHistory(AmazonSimpleWorkflow service, String domain,
+    public static List<HistoryEvent> getHistory(Iface service, String domain,
             WorkflowExecution workflowExecution) {
         List<HistoryEvent> events = new ArrayList<HistoryEvent>();
-        String nextPageToken = null;
+        byte[] nextPageToken = null;
         do {
-            History history = getHistoryPage(nextPageToken, service, domain, workflowExecution);
-            events.addAll(history.getEvents());
+            GetWorkflowExecutionHistoryResponse history = getHistoryPage(nextPageToken, service, domain, workflowExecution);
+            events.addAll(history.getHistory().getEvents());
             nextPageToken = history.getNextPageToken();
         }
         while (nextPageToken != null);
         return events;
     }
 
-    public static History getHistoryPage(String nextPageToken, AmazonSimpleWorkflow service, String domain,
+    public static GetWorkflowExecutionHistoryResponse getHistoryPage(byte[] nextPageToken, Iface service, String domain,
             WorkflowExecution workflowExecution) {
 
         GetWorkflowExecutionHistoryRequest getHistoryRequest = new GetWorkflowExecutionHistoryRequest();
@@ -405,7 +394,12 @@ public class WorkflowExecutionUtils {
         getHistoryRequest.setExecution(workflowExecution);
         getHistoryRequest.setNextPageToken(nextPageToken);
 
-        History history = service.getWorkflowExecutionHistory(getHistoryRequest);
+        GetWorkflowExecutionHistoryResponse history = null;
+        try {
+            history = service.GetWorkflowExecutionHistory(getHistoryRequest);
+        } catch (TException e) {
+            throw new RuntimeException(e);
+        }
         if (history == null) {
             throw new IllegalArgumentException("unknown workflow execution: " + workflowExecution);
         }
@@ -429,7 +423,7 @@ public class WorkflowExecutionUtils {
         result.append("{");
         boolean first = true;
         for (HistoryEvent event : events) {
-            if (!showWorkflowTasks && event.getEventType().startsWith("WorkflowTask")) {
+            if (!showWorkflowTasks && event.getEventType().toString().startsWith("WorkflowTask")) {
                 continue;
             }
             if (first) {
@@ -470,7 +464,7 @@ public class WorkflowExecutionUtils {
      *            event to pretty print
      */
     public static String prettyPrintHistoryEvent(HistoryEvent event) {
-        String eventType = event.getEventType();
+        String eventType = event.getEventType().toString();
         StringBuffer result = new StringBuffer();
         result.append(eventType);
         result.append(prettyPrintObject(event, "getType", true, "    ", false));

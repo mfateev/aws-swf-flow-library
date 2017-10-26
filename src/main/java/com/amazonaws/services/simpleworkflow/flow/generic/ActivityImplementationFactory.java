@@ -19,7 +19,7 @@ import com.uber.cadence.ActivityType;
 public abstract class ActivityImplementationFactory {
 
     public abstract Iterable<ActivityType> getActivityTypesToRegister();
-    
+
     public abstract ActivityImplementation getActivityImplementation(ActivityType activityType);
     
 }

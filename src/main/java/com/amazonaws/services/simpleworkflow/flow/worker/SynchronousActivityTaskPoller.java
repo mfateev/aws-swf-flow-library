@@ -44,8 +44,6 @@ public class SynchronousActivityTaskPoller implements TaskPoller {
 
     private static final Log log = LogFactory.getLog(SynchronousActivityTaskPoller.class);
 
-    private final Charset UTF8_CHARSET = Charset.forName("UTF-8");
-
     private WorkflowService.Iface service;
 
     private String domain;

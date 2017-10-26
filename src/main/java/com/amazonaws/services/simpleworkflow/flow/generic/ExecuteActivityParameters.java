@@ -16,14 +16,14 @@ package com.amazonaws.services.simpleworkflow.flow.generic;
 
 import com.amazonaws.services.simpleworkflow.flow.ActivitySchedulingOptions;
 import com.amazonaws.services.simpleworkflow.flow.common.FlowConstants;
-import com.amazonaws.services.simpleworkflow.model.ActivityType;
+import com.uber.cadence.ActivityType;
 
 public class ExecuteActivityParameters implements Cloneable {
     private String activityId;
     private ActivityType activityType;
     private String control;
     private long heartbeatTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
-    private String input;
+    private byte[] input;
     private long scheduleToCloseTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
     private long scheduleToStartTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
     private long startToCloseTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
@@ -160,7 +160,7 @@ public class ExecuteActivityParameters implements Cloneable {
      *
      * @return The value of the Input property for this object.
      */
-    public String getInput() {
+    public byte[] getInput() {
         return input;
     }
     
@@ -172,7 +172,7 @@ public class ExecuteActivityParameters implements Cloneable {
      *
      * @param input The new value for the Input property for this object.
      */
-    public void setInput(String input) {
+    public void setInput(byte[] input) {
         this.input = input;
     }
     
@@ -189,7 +189,7 @@ public class ExecuteActivityParameters implements Cloneable {
      * @return A reference to this updated object so that method calls can be chained 
      *         together. 
      */
-    public ExecuteActivityParameters withInput(String input) {
+    public ExecuteActivityParameters withInput(byte[] input) {
         this.input = input;
         return this;
     }    

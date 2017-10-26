@@ -18,13 +18,12 @@ import java.util.List;
 
 import com.amazonaws.services.simpleworkflow.flow.StartWorkflowOptions;
 import com.amazonaws.services.simpleworkflow.flow.common.FlowConstants;
-import com.amazonaws.services.simpleworkflow.model.ChildPolicy;
-
+import com.uber.cadence.ChildPolicy;
 
 public class ContinueAsNewWorkflowExecutionParameters {
     private String workflowTypeVersion;
     private long executionStartToCloseTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
-    private String input;
+    private byte[] input;
     private List<String> tagList;
     private String taskList;
     private long taskStartToCloseTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
@@ -64,15 +63,15 @@ public class ContinueAsNewWorkflowExecutionParameters {
         return this;
     }
 
-    public String getInput() {
+    public byte[] getInput() {
         return input;
     }
 
-    public void setInput(String input) {
+    public void setInput(byte[] input) {
         this.input = input;
     }
     
-    public ContinueAsNewWorkflowExecutionParameters withInput(String input) {
+    public ContinueAsNewWorkflowExecutionParameters withInput(byte[] input) {
         this.input = input;
         return this;
     } 
@@ -167,7 +166,7 @@ public class ContinueAsNewWorkflowExecutionParameters {
                 continueAsNewWorkflowExecutionParameters.setTaskList(taskList);
             }
             
-            ChildPolicy childPolicy = options.getChildPolicy();
+            com.uber.cadence.ChildPolicy childPolicy = options.getChildPolicy();
             if (childPolicy != null) {
                 continueAsNewWorkflowExecutionParameters.setChildPolicy(childPolicy);
             }

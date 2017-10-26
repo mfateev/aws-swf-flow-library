@@ -43,10 +43,9 @@ import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinition;
 import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinitionFactory;
 import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinitionFactoryFactory;
 import com.amazonaws.services.simpleworkflow.flow.worker.LambdaFunctionClient;
-import com.amazonaws.services.simpleworkflow.model.StartChildWorkflowExecutionFailedCause;
-import com.amazonaws.services.simpleworkflow.model.UnknownResourceException;
-import com.amazonaws.services.simpleworkflow.model.WorkflowExecution;
-import com.amazonaws.services.simpleworkflow.model.WorkflowType;
+import com.uber.cadence.ChildWorkflowExecutionFailedCause;
+import com.uber.cadence.WorkflowExecution;
+import com.uber.cadence.WorkflowType;
 
 public class TestGenericWorkflowClient implements GenericWorkflowClient {
 
@@ -140,7 +139,7 @@ public class TestGenericWorkflowClient implements GenericWorkflowClient {
             workflowExecutions.remove(this.childExecution.getWorkflowId());
         }
 
-        public void signalRecieved(final String signalName, final String details) {
+        public void signalRecieved(final String signalName, final byte[] details) {
             if (getState() != State.TRYING) {
                 throw new SignalExternalWorkflowException(0, childExecution, "UNKNOWN_EXTERNAL_WORKFLOW_EXECUTION");
             }
@@ -239,7 +238,7 @@ public class TestGenericWorkflowClient implements GenericWorkflowClient {
             }
             factory = factoryFactory.getWorkflowDefinitionFactory(workflowType);
             if (factory == null) {
-                String cause = StartChildWorkflowExecutionFailedCause.WORKFLOW_TYPE_DOES_NOT_EXIST.toString();
+                String cause = "Unknown worklfow type";
                 throw new StartChildWorkflowFailedException(0, childExecution, workflowType, cause);
             }
             TestWorkflowContext workflowContext = new TestWorkflowContext();
@@ -257,7 +256,7 @@ public class TestGenericWorkflowClient implements GenericWorkflowClient {
             workflowContext.setRootTryCatch(tryCatch);
             ChildWorkflowTryCatchFinally currentRun = workflowExecutions.get(workflowId);
             if (currentRun != null) {
-                String cause = StartChildWorkflowExecutionFailedCause.WORKFLOW_ALREADY_RUNNING.toString();
+                String cause = ChildWorkflowExecutionFailedCause.WORKFLOW_ALREADY_RUNNING.toString();
                 throw new StartChildWorkflowFailedException(0, childExecution, workflowType, cause);
             }
             workflowExecutions.put(workflowId, tryCatch);
@@ -268,7 +267,7 @@ public class TestGenericWorkflowClient implements GenericWorkflowClient {
         }
         catch (Throwable e) {
             // This cause is chosen to represent internal error for sub-workflow creation
-            String cause = StartChildWorkflowExecutionFailedCause.OPEN_CHILDREN_LIMIT_EXCEEDED.toString();
+            String cause = "Unknown";
             StartChildWorkflowFailedException failure = new StartChildWorkflowFailedException(0, childExecution, workflowType,
                     cause);
             failure.initCause(e);
@@ -317,9 +316,10 @@ public class TestGenericWorkflowClient implements GenericWorkflowClient {
     }
 
     @Override
-    public Promise<String> startChildWorkflow(String workflow, String version, String input) {
+    public Promise<String> startChildWorkflow(String workflow, byte[] input) {
         StartChildWorkflowExecutionParameters parameters = new StartChildWorkflowExecutionParameters();
-        WorkflowType workflowType = new WorkflowType().withName(workflow).withVersion(version);
+        WorkflowType workflowType = new WorkflowType();
+        workflowType.setName(workflow);
         parameters.setWorkflowType(workflowType);
         parameters.setInput(input);
         Settable<StartChildWorkflowReply> reply = new Settable<StartChildWorkflowReply>();
@@ -329,12 +329,12 @@ public class TestGenericWorkflowClient implements GenericWorkflowClient {
     }
 
     @Override
-    public Promise<String> startChildWorkflow(final String workflow, final String version, final Promise<String> input) {
+    public Promise<String> startChildWorkflow(final String workflow, final Promise<byte[]> input) {
         return new Functor<String>(input) {
 
             @Override
             protected Promise<String> doExecute() throws Throwable {
-                return startChildWorkflow(workflow, version, input.get());
+                return startChildWorkflow(workflow, input.get());
             }
         };
     }
@@ -364,11 +364,12 @@ public class TestGenericWorkflowClient implements GenericWorkflowClient {
         }
         final ChildWorkflowTryCatchFinally childTryCatch = workflowExecutions.get(workflowId);
         if (childTryCatch == null) {
-            throw new UnknownResourceException("Unknown excution: " + execution.toString());
+            // TODO: Consider checked EntityNotExistsError
+            throw new RuntimeException("Unknown excution: " + execution.toString());
         }
         String openExecutionRunId = childTryCatch.getWorkflowExecution().getRunId();
         if (execution.getRunId() != null && !openExecutionRunId.equals(execution.getRunId())) {
-            throw new UnknownResourceException("Unknown Execution (runId doesn't match)");
+            throw new RuntimeException("Unknown Execution (runId doesn't match)");
         }
         childTryCatch.cancel(new CancellationException());
     }
@@ -380,11 +381,11 @@ public class TestGenericWorkflowClient implements GenericWorkflowClient {
         }
         final ChildWorkflowTryCatchFinally childTryCatch = workflowExecutions.get(workflowId);
         if (childTryCatch == null) {
-            throw new UnknownResourceException(execution.toString());
+            throw new RuntimeException(execution.toString());
         }
         String openExecutionRunId = childTryCatch.getWorkflowExecution().getRunId();
         if (execution.getRunId() != null && !openExecutionRunId.equals(execution.getRunId())) {
-            throw new UnknownResourceException("Unknown Execution (runId doesn't match)");
+            throw new RuntimeException("Unknown Execution (runId doesn't match)");
         }
         return childTryCatch.getWorkflowState();
     }

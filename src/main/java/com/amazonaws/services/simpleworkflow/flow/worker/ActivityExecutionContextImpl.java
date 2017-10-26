@@ -14,16 +14,17 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
+import com.amazonaws.services.simpleworkflow.model.ActivityTask;
 import com.uber.cadence.PollForActivityTaskResponse;
+import com.uber.cadence.RecordActivityTaskHeartbeatRequest;
+import com.uber.cadence.RecordActivityTaskHeartbeatResponse;
+import com.uber.cadence.WorkflowExecution;
 import com.uber.cadence.WorkflowService.Iface;
 import java.util.concurrent.CancellationException;
 
 import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
 import com.amazonaws.services.simpleworkflow.flow.ActivityExecutionContext;
-import com.amazonaws.services.simpleworkflow.model.ActivityTask;
-import com.amazonaws.services.simpleworkflow.model.ActivityTaskStatus;
-import com.amazonaws.services.simpleworkflow.model.RecordActivityTaskHeartbeatRequest;
-import com.amazonaws.services.simpleworkflow.model.WorkflowExecution;
+import org.apache.thrift.TException;
 
 /**
  * Base implementation of an {@link ActivityExecutionContext}.
@@ -35,11 +36,11 @@ import com.amazonaws.services.simpleworkflow.model.WorkflowExecution;
  */
 class ActivityExecutionContextImpl extends ActivityExecutionContext {
 
-    private final AmazonSimpleWorkflow service;
+    private final Iface service;
 
     private final String domain;
     
-    private final ActivityTask task;
+    private final PollForActivityTaskResponse task;
 
     /**
      * Create an ActivityExecutionContextImpl with the given attributes.
@@ -69,9 +70,13 @@ class ActivityExecutionContextImpl extends ActivityExecutionContext {
         // allowing more frequent calls of this method.
         RecordActivityTaskHeartbeatRequest r = new RecordActivityTaskHeartbeatRequest();
         r.setTaskToken(task.getTaskToken());
-        r.setDetails(details);
-        ActivityTaskStatus status;
-        status = service.recordActivityTaskHeartbeat(r);
+        r.setDetails(details.getBytes(TaskPoller.UTF8_CHARSET));
+        RecordActivityTaskHeartbeatResponse status;
+        try {
+            status = service.RecordActivityTaskHeartbeat(r);
+        } catch (TException e) {
+            throw new RuntimeException(e);
+        }
         if (status.isCancelRequested()) {
             throw new CancellationException();
         }
@@ -81,7 +86,7 @@ class ActivityExecutionContextImpl extends ActivityExecutionContext {
      * @see ActivityExecutionContext#getTask()
      */
     @Override
-    public ActivityTask getTask() {
+    public PollForActivityTaskResponse getTask() {
         return task;
     }
 
@@ -89,13 +94,13 @@ class ActivityExecutionContextImpl extends ActivityExecutionContext {
      * @see ActivityExecutionContext#getService()
      */
     @Override
-    public AmazonSimpleWorkflow getService() {
+    public Iface getService() {
         return service;
     }
 
     @Override
     public String getTaskToken() {
-        return task.getTaskToken();
+        return new String(task.getTaskToken(), TaskPoller.UTF8_CHARSET);
     }
 
     @Override

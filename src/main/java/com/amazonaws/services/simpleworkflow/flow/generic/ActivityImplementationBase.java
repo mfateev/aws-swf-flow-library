@@ -14,6 +14,7 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.generic;
 
+import com.uber.cadence.PollForActivityTaskResponse;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 
@@ -42,7 +43,7 @@ public abstract class ActivityImplementationBase extends ActivityImplementation 
     @Override
     public String execute(ActivityExecutionContext context) 
             throws ActivityFailureException, CancellationException {
-        ActivityTask task = context.getTask();
+        PollForActivityTaskResponse task = context.getTask();
         return execute(task.getInput(), context);
     }
 
@@ -73,7 +74,7 @@ public abstract class ActivityImplementationBase extends ActivityImplementation 
      *             {@link DataConverter#failureToTaskFailed(Throwable)}.
      */
 
-    protected abstract String execute(String input, ActivityExecutionContext context) 
+    protected abstract String execute(byte[] input, ActivityExecutionContext context)
             throws ActivityFailureException, CancellationException;
 
 }

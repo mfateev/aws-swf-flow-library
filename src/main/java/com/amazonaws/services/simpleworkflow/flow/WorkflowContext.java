@@ -17,18 +17,15 @@ package com.amazonaws.services.simpleworkflow.flow;
 import java.util.List;
 
 import com.amazonaws.services.simpleworkflow.flow.generic.ContinueAsNewWorkflowExecutionParameters;
-import com.amazonaws.services.simpleworkflow.model.ChildPolicy;
-import com.amazonaws.services.simpleworkflow.model.WorkflowExecution;
-import com.amazonaws.services.simpleworkflow.model.WorkflowType;
 
 
 public interface WorkflowContext {
 
-    WorkflowExecution getWorkflowExecution();
+    com.uber.cadence.WorkflowExecution getWorkflowExecution();
     
-    WorkflowExecution getParentWorkflowExecution();
+    com.uber.cadence.WorkflowExecution getParentWorkflowExecution();
     
-    WorkflowType getWorkflowType();
+    com.uber.cadence.WorkflowType getWorkflowType();
     
     boolean isCancelRequested();
     
@@ -38,7 +35,7 @@ public interface WorkflowContext {
 
     List<String> getTagList();
 
-    ChildPolicy getChildPolicy();
+    com.uber.cadence.ChildPolicy getChildPolicy();
 
     String getContinuedExecutionRunId();
 

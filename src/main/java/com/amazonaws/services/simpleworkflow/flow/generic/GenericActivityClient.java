@@ -26,7 +26,7 @@ public interface GenericActivityClient {
      *            schedule an activity for execution
      * @return Promise to the result returned by the activity
      */
-    public abstract Promise<String> scheduleActivityTask(ExecuteActivityParameters parameters);
+    Promise<byte[]> scheduleActivityTask(ExecuteActivityParameters parameters);
 
     /**
      * Used to dynamically schedule an activity for execution
@@ -37,7 +37,7 @@ public interface GenericActivityClient {
      *            A map of all input parameters to that activity
      * @return Promise to a result returned by the activity
      */
-    public abstract Promise<String> scheduleActivityTask(String activity, String version, String input);
+    Promise<byte[]> scheduleActivityTask(String activity, byte[] input);
 
     /**
      * Used to dynamically schedule an activity using its name
@@ -49,6 +49,6 @@ public interface GenericActivityClient {
      *            activity
      * @return a Value which contains a Map of results returned by the activity
      */
-    public abstract Promise<String> scheduleActivityTask(final String activity, final String version, final Promise<String> input);
+    Promise<byte[]> scheduleActivityTask(final String activity, final Promise<byte[]> input);
 
 }

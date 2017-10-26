@@ -14,8 +14,7 @@
  */
 package com.amazonaws.services.simpleworkflow.flow;
 
-import com.amazonaws.services.simpleworkflow.model.SignalExternalWorkflowExecutionFailedCause;
-import com.amazonaws.services.simpleworkflow.model.WorkflowExecution;
+import com.uber.cadence.WorkflowExecution;
 
 /**
  * Exception used to communicate failure of a signal.
@@ -23,7 +22,9 @@ import com.amazonaws.services.simpleworkflow.model.WorkflowExecution;
 @SuppressWarnings("serial")
 public class SignalExternalWorkflowException extends DecisionException {
 
-    private SignalExternalWorkflowExecutionFailedCause failureCause;
+//    private SignalExternalWorkflowExecutionFailedCause failureCause;
+
+    private String failureCause;
 
     private WorkflowExecution signaledExecution;
     
@@ -38,18 +39,18 @@ public class SignalExternalWorkflowException extends DecisionException {
     public SignalExternalWorkflowException(long eventId, WorkflowExecution signaledExecution, String cause) {
         super(cause + " for signaledExecution=\"" + signaledExecution, eventId);
         this.signaledExecution = signaledExecution;
-        this.failureCause = SignalExternalWorkflowExecutionFailedCause.valueOf(cause);
+        this.failureCause = cause;
     }
 
     public WorkflowExecution getSignaledExecution() {
         return signaledExecution;
     }
     
-    public void setFailureCause(SignalExternalWorkflowExecutionFailedCause failureCause) {
+    public void setFailureCause(String failureCause) {
         this.failureCause = failureCause;
     }
 
-    public SignalExternalWorkflowExecutionFailedCause getFailureCause() {
+    public String getFailureCause() {
         return failureCause;
     }
     

@@ -34,7 +34,7 @@ public class StartWorkflowOptions {
 
     private ChildPolicy childPolicy;
     
-    public ChildPolicy getChildPolicy() {
+    public com.uber.cadence.ChildPolicy getChildPolicy() {
         return childPolicy;
     }
     

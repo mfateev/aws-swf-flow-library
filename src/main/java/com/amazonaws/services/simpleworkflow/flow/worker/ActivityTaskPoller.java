@@ -14,6 +14,8 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
+import com.uber.cadence.PollForActivityTaskResponse;
+import com.uber.cadence.WorkflowService.Iface;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Semaphore;
@@ -25,8 +27,6 @@ import org.apache.commons.logging.LogFactory;
 
 import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
 import com.amazonaws.services.simpleworkflow.flow.generic.ActivityImplementationFactory;
-import com.amazonaws.services.simpleworkflow.model.ActivityTask;
-import com.amazonaws.services.simpleworkflow.model.WorkflowExecution;
 
 public class ActivityTaskPoller extends SynchronousActivityTaskPoller {
 
@@ -46,7 +46,7 @@ public class ActivityTaskPoller extends SynchronousActivityTaskPoller {
 
     public ActivityTaskPoller(AmazonSimpleWorkflow service, String domain, String pollTaskList,
             ActivityImplementationFactory activityImplementationFactory, ThreadPoolExecutor taskExecutorService) {
-        super(service, domain, pollTaskList, activityImplementationFactory);
+        super((Iface) service, domain, pollTaskList, activityImplementationFactory);
         setTaskExecutorService(taskExecutorService);
     }
 
@@ -78,7 +78,7 @@ public class ActivityTaskPoller extends SynchronousActivityTaskPoller {
             }
             // we will release the semaphore in a finally clause
             semaphoreNeedsRelease = true;
-            final ActivityTask task = poll();
+            final PollForActivityTaskResponse task = poll();
             if (task == null) {
                 return false;
             }
@@ -116,8 +116,8 @@ public class ActivityTaskPoller extends SynchronousActivityTaskPoller {
         return true;
     }
 
-    private Exception wrapFailure(final ActivityTask task, Throwable failure) {
-        WorkflowExecution execution = task.getWorkflowExecution();
+    private Exception wrapFailure(final PollForActivityTaskResponse task, Throwable failure) {
+        com.uber.cadence.WorkflowExecution execution = task.getWorkflowExecution();
 
         RuntimeException e2 = new RuntimeException(
                 "Failure taskId=\"" + task.getStartedEventId() + "\" workflowExecutionRunId=\"" + execution.getRunId()

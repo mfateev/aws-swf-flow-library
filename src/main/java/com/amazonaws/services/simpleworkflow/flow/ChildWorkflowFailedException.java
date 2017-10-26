@@ -14,8 +14,9 @@
  */
 package com.amazonaws.services.simpleworkflow.flow;
 
-import com.amazonaws.services.simpleworkflow.model.WorkflowExecution;
-import com.amazonaws.services.simpleworkflow.model.WorkflowType;
+
+import com.uber.cadence.WorkflowExecution;
+import com.uber.cadence.WorkflowType;
 
 @SuppressWarnings("serial")
 public class ChildWorkflowFailedException extends ChildWorkflowException {
@@ -31,7 +32,7 @@ public class ChildWorkflowFailedException extends ChildWorkflowException {
     }
 
     public ChildWorkflowFailedException(long eventId, WorkflowExecution workflowExecution, WorkflowType workflowType,
-            String reason, String details) {
+                                        String reason, String details) {
         super(createMessage(workflowExecution, workflowType, reason), eventId, workflowExecution, workflowType);
         this.details = details;
     }
@@ -45,7 +46,7 @@ public class ChildWorkflowFailedException extends ChildWorkflowException {
     }
     
     private static String createMessage(WorkflowExecution workflowExecution, WorkflowType workflowType, String reason) {
-        return "name=" + workflowType.getName() + ", version=" + workflowType.getVersion() + ", workflowId="
+        return "name=" + workflowType.getName() + ", workflowId="
                 + workflowExecution.getWorkflowId() + ", runId=" + workflowExecution.getRunId() + ": " + reason;
     }
 }

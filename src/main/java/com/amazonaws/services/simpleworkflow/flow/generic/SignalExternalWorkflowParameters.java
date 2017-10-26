@@ -16,7 +16,7 @@ package com.amazonaws.services.simpleworkflow.flow.generic;
 
 public class SignalExternalWorkflowParameters implements Cloneable {
 
-    private String input;
+    private byte[] input;
     
     private String runId;
     
@@ -27,15 +27,15 @@ public class SignalExternalWorkflowParameters implements Cloneable {
     public SignalExternalWorkflowParameters() {
     }
     
-    public String getInput() {
+    public byte[] getInput() {
         return input;
     }
     
-    public void setInput(String input) {
+    public void setInput(byte[] input) {
         this.input = input;
     }
     
-    public SignalExternalWorkflowParameters withInput(String input) {
+    public SignalExternalWorkflowParameters withInput(byte[] input) {
         this.input = input;
         return this;
     }

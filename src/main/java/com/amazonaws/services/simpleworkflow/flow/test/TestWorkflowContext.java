@@ -19,10 +19,9 @@ import java.util.List;
 import com.amazonaws.services.simpleworkflow.flow.WorkflowContext;
 import com.amazonaws.services.simpleworkflow.flow.core.TryCatchFinally;
 import com.amazonaws.services.simpleworkflow.flow.generic.ContinueAsNewWorkflowExecutionParameters;
-import com.amazonaws.services.simpleworkflow.model.ChildPolicy;
-import com.amazonaws.services.simpleworkflow.model.WorkflowExecution;
-import com.amazonaws.services.simpleworkflow.model.WorkflowType;
-
+import com.uber.cadence.ChildPolicy;
+import com.uber.cadence.WorkflowExecution;
+import com.uber.cadence.WorkflowType;
 
 public class TestWorkflowContext implements WorkflowContext {
 
@@ -39,7 +38,7 @@ public class TestWorkflowContext implements WorkflowContext {
     private String lambdaRole;
     private TryCatchFinally rootTryCatch;
     
-    public WorkflowExecution getWorkflowExecution() {
+    public com.uber.cadence.WorkflowExecution getWorkflowExecution() {
         return workflowExecution;
     }
     

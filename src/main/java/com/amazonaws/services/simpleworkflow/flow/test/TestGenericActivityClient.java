@@ -14,39 +14,33 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.test;
 
+import com.uber.cadence.ActivityType;
+import com.uber.cadence.PollForActivityTaskResponse;
+import com.uber.cadence.WorkflowExecution;
+import com.uber.cadence.WorkflowService.Iface;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
-import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
 import com.amazonaws.services.simpleworkflow.flow.ActivityExecutionContext;
 import com.amazonaws.services.simpleworkflow.flow.ActivityFailureException;
 import com.amazonaws.services.simpleworkflow.flow.ActivityTaskFailedException;
-import com.amazonaws.services.simpleworkflow.flow.ActivityTaskTimedOutException;
 import com.amazonaws.services.simpleworkflow.flow.DecisionContext;
 import com.amazonaws.services.simpleworkflow.flow.DecisionContextProvider;
 import com.amazonaws.services.simpleworkflow.flow.DecisionContextProviderImpl;
-import com.amazonaws.services.simpleworkflow.flow.ScheduleActivityTaskFailedException;
-import com.amazonaws.services.simpleworkflow.flow.common.FlowConstants;
 import com.amazonaws.services.simpleworkflow.flow.core.*;
 import com.amazonaws.services.simpleworkflow.flow.generic.*;
-import com.amazonaws.services.simpleworkflow.flow.worker.ActivityTypeRegistrationOptions;
-import com.amazonaws.services.simpleworkflow.model.ActivityTask;
-import com.amazonaws.services.simpleworkflow.model.ActivityTaskTimeoutType;
-import com.amazonaws.services.simpleworkflow.model.ActivityType;
-import com.amazonaws.services.simpleworkflow.model.ScheduleActivityTaskFailedCause;
-import com.amazonaws.services.simpleworkflow.model.WorkflowExecution;
 
 public class TestGenericActivityClient implements GenericActivityClient {
 
     private final class TestActivityExecutionContext extends ActivityExecutionContext {
 
-        private final ActivityTask activityTask;
+        private final PollForActivityTaskResponse activityTask;
 
         private final WorkflowExecution workflowExecution;
 
-        private TestActivityExecutionContext(ActivityTask activityTask, WorkflowExecution workflowExecution) {
+        private TestActivityExecutionContext(PollForActivityTaskResponse activityTask, WorkflowExecution workflowExecution) {
             this.activityTask = activityTask;
             this.workflowExecution = workflowExecution;
         }
@@ -57,22 +51,22 @@ public class TestGenericActivityClient implements GenericActivityClient {
         }
 
         @Override
-        public ActivityTask getTask() {
+        public PollForActivityTaskResponse getTask() {
             return activityTask;
         }
 
         @Override
-        public AmazonSimpleWorkflow getService() {
+        public Iface getService() {
             throw new UnsupportedOperationException("not implemented");
         }
 
         @Override
-        public String getTaskToken() {
+        public byte[] getTaskToken() {
             return activityTask.getTaskToken();
         }
 
         @Override
-        public WorkflowExecution getWorkflowExecution() {
+        public com.uber.cadence.WorkflowExecution getWorkflowExecution() {
             return workflowExecution;
         }
 
@@ -88,10 +82,6 @@ public class TestGenericActivityClient implements GenericActivityClient {
      */
     protected final Map<String, ActivityImplementationFactory> factories = new HashMap<String, ActivityImplementationFactory>();
 
-    protected final Map<ActivityType, ActivityTypeRegistrationOptions> registrationOptions = new HashMap<ActivityType, ActivityTypeRegistrationOptions>();
-
-    protected final Map<ActivityType, String> workerTaskLists = new HashMap<ActivityType, String>();
-
     protected final DecisionContextProvider decisionContextProvider;
 
     public TestGenericActivityClient(DecisionContextProvider decisionContextProvider) {
@@ -104,20 +94,13 @@ public class TestGenericActivityClient implements GenericActivityClient {
 
     public void addFactory(String taskListToListen, ActivityImplementationFactory factory) {
         factories.put(taskListToListen, factory);
-        Iterable<ActivityType> typesToRegister = factory.getActivityTypesToRegister();
-        for (ActivityType activityType : typesToRegister) {
-            ActivityImplementation implementation = factory.getActivityImplementation(activityType);
-            ActivityTypeRegistrationOptions ro = implementation.getRegistrationOptions();
-            registrationOptions.put(activityType, ro);
-            workerTaskLists.put(activityType, taskListToListen);
-        }
     }
 
     @Override
-    public Promise<String> scheduleActivityTask(final ExecuteActivityParameters parameters) {
+    public Promise<byte[]> scheduleActivityTask(final ExecuteActivityParameters parameters) {
         final ActivityType activityType = parameters.getActivityType();
-        final Settable<String> result = new Settable<String>();
-        final ActivityTask activityTask = new ActivityTask();
+        final Settable<byte[]> result = new Settable<>();
+        final PollForActivityTaskResponse activityTask = new PollForActivityTaskResponse();
         String activityId = parameters.getActivityId();
         if (activityId == null) {
             activityId = decisionContextProvider.getDecisionContext().getWorkflowClient().generateUniqueId();
@@ -126,42 +109,28 @@ public class TestGenericActivityClient implements GenericActivityClient {
         activityTask.setActivityType(activityType);
         activityTask.setInput(parameters.getInput());
         activityTask.setStartedEventId(0L);
-        activityTask.setTaskToken("dummyTaskToken");
+        activityTask.setTaskToken("dummyTaskToken".getBytes());
         DecisionContext decisionContext = decisionContextProvider.getDecisionContext();
         final WorkflowExecution workflowExecution = decisionContext.getWorkflowContext().getWorkflowExecution();
         activityTask.setWorkflowExecution(workflowExecution);
         String taskList = parameters.getTaskList();
-        if (taskList == null) {
-            ActivityTypeRegistrationOptions ro = registrationOptions.get(activityType);
-            if (ro == null) {
-                String cause = ScheduleActivityTaskFailedCause.ACTIVITY_TYPE_DOES_NOT_EXIST.toString();
-                throw new ScheduleActivityTaskFailedException(0, activityType, activityId, cause);
-            }
-            taskList = ro.getDefaultTaskList();
-            if (FlowConstants.NO_DEFAULT_TASK_LIST.equals(taskList)) {
-                String cause = ScheduleActivityTaskFailedCause.DEFAULT_TASK_LIST_UNDEFINED.toString();
-                throw new ScheduleActivityTaskFailedException(0, activityType, activityId, cause);
-            }
-            else if (taskList == null) {
-                taskList = workerTaskLists.get(activityType);
-            }
+        if (taskList == null || taskList.isEmpty()) {
+                throw new IllegalArgumentException("empty or null task list");
         }
         ActivityImplementationFactory factory = factories.get(taskList);
         // Nobody listens on the specified task list. So in case of a real service it causes 
         // ScheduleToStart timeout.
         //TODO: Activity heartbeats and passing details to the exception.
         if (factory == null) {
-            String timeoutType = ActivityTaskTimeoutType.SCHEDULE_TO_START.toString();
-            throw new ActivityTaskTimedOutException(0, activityType, activityId, timeoutType, null);
+            throw new IllegalStateException("No listener registered for " + taskList + " task list");
         }
         final ActivityImplementation impl = factory.getActivityImplementation(activityType);
         if (impl == null) {
-            String cause = ScheduleActivityTaskFailedCause.ACTIVITY_TYPE_DOES_NOT_EXIST.toString();
-            throw new ScheduleActivityTaskFailedException(0, activityType, activityId, cause);
+            throw new IllegalStateException("Unknown activity type: " + activityType);
         }
         ActivityExecutionContext executionContext = new TestActivityExecutionContext(activityTask, workflowExecution);
         try {
-            String activityResult = impl.execute(executionContext);
+            byte[] activityResult = impl.execute(executionContext);
             result.set(activityResult);
         }
         catch (Throwable e) {
@@ -180,24 +149,23 @@ public class TestGenericActivityClient implements GenericActivityClient {
     }
 
     @Override
-    public Promise<String> scheduleActivityTask(String activity, String version, String input) {
+    public Promise<byte[]> scheduleActivityTask(String activity, byte[] input) {
         ExecuteActivityParameters parameters = new ExecuteActivityParameters();
         ActivityType activityType = new ActivityType();
         activityType.setName(activity);
-        activityType.setVersion(version);
         parameters.setActivityType(activityType);
         parameters.setInput(input);
         return scheduleActivityTask(parameters);
     }
 
     @Override
-    public Promise<String> scheduleActivityTask(final String activity, final String version, final Promise<String> input) {
-        final Settable<String> result = new Settable<String>();
+    public Promise<byte[]> scheduleActivityTask(final String activity, final Promise<byte[]> input) {
+        final Settable<byte[]> result = new Settable<>();
         new Task(input) {
 
             @Override
             protected void doExecute() throws Throwable {
-                result.chain(scheduleActivityTask(activity, version, input.get()));
+                result.chain(scheduleActivityTask(activity, input.get()));
             }
         };
         return result;

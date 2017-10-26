@@ -20,7 +20,6 @@ import java.util.concurrent.CancellationException;
 
 import com.amazonaws.services.simpleworkflow.flow.ActivityTaskFailedException;
 import com.amazonaws.services.simpleworkflow.flow.ActivityTaskTimedOutException;
-import com.amazonaws.services.simpleworkflow.flow.ScheduleActivityTaskFailedException;
 import com.amazonaws.services.simpleworkflow.flow.common.FlowHelpers;
 import com.amazonaws.services.simpleworkflow.flow.core.ExternalTask;
 import com.amazonaws.services.simpleworkflow.flow.core.ExternalTaskCancellationHandler;
@@ -79,7 +78,7 @@ class GenericActivityClientImpl implements GenericActivityClient {
     }
 
     @Override
-    public Promise<String> scheduleActivityTask(final ExecuteActivityParameters parameters) {
+    public Promise<byte[]> scheduleActivityTask(final ExecuteActivityParameters parameters) {
         final OpenRequestInfo<String, ActivityType> context = new OpenRequestInfo<String, ActivityType>(
                 parameters.getActivityType());
         final ScheduleActivityTaskDecisionAttributes attributes = new ScheduleActivityTaskDecisionAttributes();

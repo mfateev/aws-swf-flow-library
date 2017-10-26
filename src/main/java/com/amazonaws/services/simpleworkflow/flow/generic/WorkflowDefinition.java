@@ -49,7 +49,7 @@ public abstract class WorkflowDefinition {
      * @throws WorkflowException
      *             Prefer throwing {@link WorkflowException}.
      */
-    public abstract Promise<String> execute(String input) throws WorkflowException;
+    public abstract Promise<String> execute(byte[] input) throws WorkflowException;
 
     /**
      * Asynchronous method that implements signals handling logic. This method
@@ -61,7 +61,7 @@ public abstract class WorkflowDefinition {
      *             Prefer throwing {@link WorkflowException}.
      * @throws Exception
      */
-    public abstract void signalRecieved(String signalName, String input) throws WorkflowException;
+    public abstract void signalRecieved(String signalName, byte[] input) throws WorkflowException;
 
     /**
      * Return state that is inserted decision completion through

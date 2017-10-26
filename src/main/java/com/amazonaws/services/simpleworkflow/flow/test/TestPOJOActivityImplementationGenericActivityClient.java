@@ -31,7 +31,7 @@ public class TestPOJOActivityImplementationGenericActivityClient implements Gene
         genericClient.addFactory(worker.getTaskList(), worker.getFactory());
     }
 
-    public Promise<String> scheduleActivityTask(ExecuteActivityParameters parameters) {
+    public Promise<byte[]> scheduleActivityTask(ExecuteActivityParameters parameters) {
         return genericClient.scheduleActivityTask(parameters);
     }
 

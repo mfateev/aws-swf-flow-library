@@ -15,7 +15,7 @@
 package com.amazonaws.services.simpleworkflow.flow.generic;
 
 import com.amazonaws.services.simpleworkflow.flow.core.Promise;
-import com.amazonaws.services.simpleworkflow.model.WorkflowExecution;
+import com.uber.cadence.WorkflowExecution;
 
 public interface GenericWorkflowClient {
 
@@ -26,21 +26,21 @@ public interface GenericWorkflowClient {
      *         {@link StartChildWorkflowReply#getResult()} becomes ready upon
      *         child completion.
      */
-    public Promise<StartChildWorkflowReply> startChildWorkflow(StartChildWorkflowExecutionParameters parameters);
+    Promise<StartChildWorkflowReply> startChildWorkflow(StartChildWorkflowExecutionParameters parameters);
 
-    public Promise<String> startChildWorkflow(String workflow, String version, String input);
+    Promise<String> startChildWorkflow(String workflow, byte[] input);
 
-    public Promise<String> startChildWorkflow(String workflow, String version, Promise<String> input);
+    Promise<String> startChildWorkflow(String workflow, Promise<byte[]> input);
 
-    public Promise<Void> signalWorkflowExecution(SignalExternalWorkflowParameters signalParameters);
+    Promise<Void> signalWorkflowExecution(SignalExternalWorkflowParameters signalParameters);
 
-    public void requestCancelWorkflowExecution(WorkflowExecution execution);
+    void requestCancelWorkflowExecution(WorkflowExecution execution);
 
-    public void continueAsNewOnCompletion(ContinueAsNewWorkflowExecutionParameters parameters);
+    void continueAsNewOnCompletion(ContinueAsNewWorkflowExecutionParameters parameters);
 
     /**
      * Deterministic unique Id generator
      */
-    public String generateUniqueId();
+    String generateUniqueId();
 
 }

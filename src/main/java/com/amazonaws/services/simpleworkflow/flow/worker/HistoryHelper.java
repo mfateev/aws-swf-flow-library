@@ -14,6 +14,9 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
+import com.uber.cadence.EventType;
+import com.uber.cadence.HistoryEvent;
+import com.uber.cadence.PollForDecisionTaskResponse;
 import java.util.Iterator;
 import java.util.List;
 
@@ -21,9 +24,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.amazonaws.services.simpleworkflow.flow.common.WorkflowExecutionUtils;
-import com.amazonaws.services.simpleworkflow.model.DecisionTask;
-import com.amazonaws.services.simpleworkflow.model.EventType;
-import com.amazonaws.services.simpleworkflow.model.HistoryEvent;
 
 class HistoryHelper {
 
@@ -31,19 +31,19 @@ class HistoryHelper {
 
     class EventsIterator implements Iterator<HistoryEvent> {
 
-        private final Iterator<DecisionTask> decisionTasks;
+        private final Iterator<PollForDecisionTaskResponse> decisionTasks;
 
-        private DecisionTask decisionTask;
+        private PollForDecisionTaskResponse decisionTask;
 
         private List<HistoryEvent> events;
 
         private int index;
 
-        public EventsIterator(Iterator<DecisionTask> decisionTasks) {
+        public EventsIterator(Iterator<PollForDecisionTaskResponse> decisionTasks) {
             this.decisionTasks = decisionTasks;
             if (decisionTasks.hasNext()) {
                 decisionTask = decisionTasks.next();
-                events = decisionTask.getEvents();
+                events = decisionTask.getHistory().getEvents();
                 if (historyLog.isTraceEnabled()) {
                     historyLog.trace(WorkflowExecutionUtils.prettyPrintHistory(events, true));
                 }
@@ -62,7 +62,7 @@ class HistoryHelper {
         public HistoryEvent next() {
             if (index == events.size()) {
                 decisionTask = decisionTasks.next();
-                events = decisionTask.getEvents();
+                events = decisionTask.getHistory().getEvents();
                 if (historyLog.isTraceEnabled()) {
                     historyLog.trace(WorkflowExecutionUtils.prettyPrintHistory(events, true));
                 }
@@ -71,7 +71,7 @@ class HistoryHelper {
             return events.get(index++);
         }
 
-        public DecisionTask getDecisionTask() {
+        public PollForDecisionTaskResponse getDecisionTask() {
             return decisionTask;
         }
 
@@ -84,7 +84,7 @@ class HistoryHelper {
             while (true) {
                 for (; i < events.size(); i++) {
                     HistoryEvent event = events.get(i);
-                    EventType eventType = EventType.fromValue(event.getEventType());
+                    EventType eventType = event.getEventType();
                     if (eventType.equals(EventType.DecisionTaskTimedOut)) {
                         return true;
                     }
@@ -96,7 +96,7 @@ class HistoryHelper {
                     return false;
                 }
                 decisionTask = decisionTasks.next();
-                List<HistoryEvent> nextPageEvents = decisionTask.getEvents();
+                List<HistoryEvent> nextPageEvents = decisionTask.getHistory().getEvents();
                 if (historyLog.isTraceEnabled()) {
                     historyLog.trace(WorkflowExecutionUtils.prettyPrintHistory(nextPageEvents, true));
                 }
@@ -113,7 +113,7 @@ class HistoryHelper {
 
     private final EventsIterator events;
 
-    public HistoryHelper(Iterator<DecisionTask> decisionTasks) {
+    public HistoryHelper(Iterator<PollForDecisionTaskResponse> decisionTasks) {
         this.events = new EventsIterator(decisionTasks);
     }
 
@@ -125,7 +125,7 @@ class HistoryHelper {
         return WorkflowExecutionUtils.prettyPrintHistory(events.getEvents(), true);
     }
 
-    public DecisionTask getDecisionTask() {
+    public PollForDecisionTaskResponse getDecisionTask() {
         return events.getDecisionTask();
     }
 
