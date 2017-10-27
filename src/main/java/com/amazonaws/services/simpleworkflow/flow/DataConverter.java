@@ -32,18 +32,18 @@ public abstract class DataConverter {
      *             if conversion of the value passed as parameter failed for any
      *             reason.
      */
-    public abstract String toData(Object value) throws DataConverterException;
+    public abstract byte[] toData(Object value) throws DataConverterException;
 
     /**
      * Implements conversion of the single value.
      * 
-     * @param data
+     * @param content
      *            Simple Workflow Data value to convert to a Java object.
      * @return converted Java object
      * @throws DataConverterException
      *             if conversion of the data passed as parameter failed for any
      *             reason.
      */
-    public abstract <T> T fromData(String content, Class<T> valueType) throws DataConverterException;
+    public abstract <T> T fromData(byte[] content, Class<T> valueType) throws DataConverterException;
 
 }

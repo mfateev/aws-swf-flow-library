@@ -22,7 +22,7 @@ import com.uber.cadence.ActivityType;
 @SuppressWarnings("serial")
 public class ActivityTaskFailedException extends ActivityTaskException {
     
-    private String details;
+    private byte[] details;
     
     public ActivityTaskFailedException(String message, Throwable cause) {
         super(message, cause);
@@ -32,16 +32,16 @@ public class ActivityTaskFailedException extends ActivityTaskException {
         super(message);
     }
     
-    public ActivityTaskFailedException(long eventId, ActivityType activityType, String activityId, String reason, String details) {
+    public ActivityTaskFailedException(long eventId, ActivityType activityType, String activityId, String reason, byte[] details) {
         super(reason, eventId, activityType, activityId);
         this.details = details;
     }
     
-    public String getDetails() {
+    public byte[] getDetails() {
         return details;
     }
 
-    public void setDetails(String details) {
+    public void setDetails(byte[] details) {
         this.details = details;
     }
 }

@@ -20,13 +20,4 @@ public abstract class WorkflowDefinitionFactoryFactory {
 
     public abstract WorkflowDefinitionFactory getWorkflowDefinitionFactory(WorkflowType workflowType);
 
-    /**
-     * There is no requirement to return any types. If type is returned
-     * {@link #getWorkflowDefinitionFactory(WorkflowType)} should support it.
-     * 
-     * @return types that should be registered before polling and executing
-     *         decision tasks.
-     */
-    public abstract Iterable<WorkflowType> getWorkflowTypesToRegister();
-
 }

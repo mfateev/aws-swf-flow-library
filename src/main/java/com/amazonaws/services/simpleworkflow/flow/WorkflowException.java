@@ -21,9 +21,9 @@ package com.amazonaws.services.simpleworkflow.flow;
 @SuppressWarnings("serial")
 public class WorkflowException extends Exception {
 
-    private final String details;
+    private final byte[] details;
 
-    public WorkflowException(String reason, String details) {
+    public WorkflowException(String reason, byte[] details) {
         super(reason);
         this.details = details;
     }
@@ -32,7 +32,7 @@ public class WorkflowException extends Exception {
         return getMessage();
     }
 
-    public String getDetails() {
+    public byte[] getDetails() {
         return details;
     }
 

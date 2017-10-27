@@ -26,9 +26,7 @@ import com.amazonaws.services.simpleworkflow.flow.generic.SignalExternalWorkflow
 import com.amazonaws.services.simpleworkflow.flow.generic.StartChildWorkflowExecutionParameters;
 import com.amazonaws.services.simpleworkflow.flow.generic.StartChildWorkflowReply;
 import com.amazonaws.services.simpleworkflow.flow.pojo.POJOWorkflowDefinitionFactoryFactory;
-import com.amazonaws.services.simpleworkflow.model.WorkflowExecution;
-import com.amazonaws.services.simpleworkflow.model.WorkflowType;
-
+import com.uber.cadence.WorkflowExecution;
 
 public class TestPOJOWorkflowImplementationGenericWorkflowClient implements GenericWorkflowClient {
 
@@ -52,12 +50,12 @@ public class TestPOJOWorkflowImplementationGenericWorkflowClient implements Gene
         return genericClient.startChildWorkflow(parameters);
     }
 
-    public Promise<String> startChildWorkflow(String workflow, String version, String input) {
-        return genericClient.startChildWorkflow(workflow, version, input);
+    public Promise<byte[]> startChildWorkflow(String workflow, byte[] input) {
+        return genericClient.startChildWorkflow(workflow, input);
     }
 
-    public Promise<String> startChildWorkflow(String workflow, String version, Promise<String> input) {
-        return genericClient.startChildWorkflow(workflow, version, input);
+    public Promise<byte[]> startChildWorkflow(String workflow, Promise<byte[]> input) {
+        return genericClient.startChildWorkflow(workflow, input);
     }
 
     public Promise<Void> signalWorkflowExecution(SignalExternalWorkflowParameters signalParameters) {
@@ -68,7 +66,7 @@ public class TestPOJOWorkflowImplementationGenericWorkflowClient implements Gene
         genericClient.requestCancelWorkflowExecution(execution);
     }
 
-    public String getWorkflowState(WorkflowExecution execution) throws WorkflowException {
+    public byte[] getWorkflowState(WorkflowExecution execution) throws WorkflowException {
         return genericClient.getWorkflowState(execution);
     }
 
@@ -82,10 +80,6 @@ public class TestPOJOWorkflowImplementationGenericWorkflowClient implements Gene
 
     public void setDataConverter(DataConverter converter) {
         factoryFactory.setDataConverter(converter);
-    }
-
-    public Iterable<WorkflowType> getWorkflowTypesToRegister() {
-        return factoryFactory.getWorkflowTypesToRegister();
     }
 
     public void addWorkflowImplementationType(Class<?> workflowImplementationType)

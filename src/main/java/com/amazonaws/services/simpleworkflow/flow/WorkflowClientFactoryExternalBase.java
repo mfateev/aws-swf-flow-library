@@ -14,10 +14,9 @@
  */
 package com.amazonaws.services.simpleworkflow.flow;
 
-import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
 import com.amazonaws.services.simpleworkflow.flow.generic.GenericWorkflowClientExternal;
 import com.amazonaws.services.simpleworkflow.flow.worker.GenericWorkflowClientExternalImpl;
-import com.amazonaws.services.simpleworkflow.model.WorkflowExecution;
+import com.uber.cadence.WorkflowService;
 
 public abstract class WorkflowClientFactoryExternalBase<T> implements WorkflowClientFactoryExternal<T> {
 
@@ -27,7 +26,7 @@ public abstract class WorkflowClientFactoryExternalBase<T> implements WorkflowCl
 
     private StartWorkflowOptions startWorkflowOptions = new StartWorkflowOptions();
 
-    public WorkflowClientFactoryExternalBase(AmazonSimpleWorkflow service, String domain) {
+    public WorkflowClientFactoryExternalBase(WorkflowService.Iface service, String domain) {
         this(new GenericWorkflowClientExternalImpl(service, domain));
     }
 

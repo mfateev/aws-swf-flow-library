@@ -14,13 +14,11 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
-import com.amazonaws.services.simpleworkflow.model.Decision;
-import com.amazonaws.services.simpleworkflow.model.HistoryEvent;
-
+import com.uber.cadence.HistoryEvent;
 
 interface DecisionStateMachine {
 
-    Decision getDecision();
+    com.uber.cadence.Decision getDecision();
 
     void cancel(Runnable immediateCancellationCallback);
 

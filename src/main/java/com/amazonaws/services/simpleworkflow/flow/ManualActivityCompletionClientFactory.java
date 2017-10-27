@@ -18,6 +18,6 @@ package com.amazonaws.services.simpleworkflow.flow;
 
 public abstract class ManualActivityCompletionClientFactory {
 
-    public abstract ManualActivityCompletionClient getClient(String taskToken);
+    public abstract ManualActivityCompletionClient getClient(byte[] taskToken);
     
 }

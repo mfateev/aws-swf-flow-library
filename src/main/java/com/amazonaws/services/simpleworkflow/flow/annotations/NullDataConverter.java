@@ -34,7 +34,7 @@ public final class NullDataConverter extends DataConverter {
     }
 
     @Override
-    public String toData(Object value) throws DataConverterException {
+    public byte[] toData(Object value) throws DataConverterException {
         throw new UnsupportedOperationException("not implemented");
     }
 

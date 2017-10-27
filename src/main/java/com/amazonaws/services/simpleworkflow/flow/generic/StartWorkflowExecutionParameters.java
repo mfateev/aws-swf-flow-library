@@ -16,8 +16,8 @@ package com.amazonaws.services.simpleworkflow.flow.generic;
 
 import com.amazonaws.services.simpleworkflow.flow.StartWorkflowOptions;
 import com.amazonaws.services.simpleworkflow.flow.common.FlowConstants;
-import com.amazonaws.services.simpleworkflow.model.ChildPolicy;
-import com.amazonaws.services.simpleworkflow.model.WorkflowType;
+import com.uber.cadence.ChildPolicy;
+import com.uber.cadence.WorkflowType;
 
 public class StartWorkflowExecutionParameters {
 
@@ -27,11 +27,11 @@ public class StartWorkflowExecutionParameters {
     
     private String taskList;
     
-    private String input;
+    private byte[] input;
     
-    private long executionStartToCloseTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
+    private int executionStartToCloseTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
     
-    private long taskStartToCloseTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
+    private int taskStartToCloseTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
     
     private java.util.List<String> tagList;
     
@@ -160,7 +160,7 @@ public class StartWorkflowExecutionParameters {
      *
      * @return The value of the Input property for this object.
      */
-    public String getInput() {
+    public byte[] getInput() {
         return input;
     }
     
@@ -172,7 +172,7 @@ public class StartWorkflowExecutionParameters {
      *
      * @param input The new value for the Input property for this object.
      */
-    public void setInput(String input) {
+    public void setInput(byte[] input) {
         this.input = input;
     }
     
@@ -189,7 +189,7 @@ public class StartWorkflowExecutionParameters {
      * @return A reference to this updated object so that method calls can be chained 
      *         together. 
      */
-    public StartWorkflowExecutionParameters withInput(String input) {
+    public StartWorkflowExecutionParameters withInput(byte[] input) {
         this.input = input;
         return this;
     }
@@ -203,7 +203,7 @@ public class StartWorkflowExecutionParameters {
      *
      * @return The value of the StartToCloseTimeout property for this object.
      */
-    public long getExecutionStartToCloseTimeout() {
+    public int getExecutionStartToCloseTimeout() {
         return executionStartToCloseTimeoutSeconds;
     }
     
@@ -213,9 +213,9 @@ public class StartWorkflowExecutionParameters {
      * <b>Constraints:</b><br/>
      * <b>Length: </b>0 - 64<br/>
      *
-     * @param startToCloseTimeout The new value for the StartToCloseTimeout property for this object.
+     * @param executionStartToCloseTimeoutSeconds The new value for the StartToCloseTimeout property for this object.
      */
-    public void setExecutionStartToCloseTimeoutSeconds(long executionStartToCloseTimeoutSeconds) {
+    public void setExecutionStartToCloseTimeoutSeconds(int executionStartToCloseTimeoutSeconds) {
         this.executionStartToCloseTimeoutSeconds = executionStartToCloseTimeoutSeconds;
     }
     
@@ -227,25 +227,25 @@ public class StartWorkflowExecutionParameters {
      * <b>Constraints:</b><br/>
      * <b>Length: </b>0 - 64<br/>
      *
-     * @param startToCloseTimeout The new value for the StartToCloseTimeout property for this object.
+     * @param executionStartToCloseTimeoutSeconds The new value for the StartToCloseTimeout property for this object.
      *
      * @return A reference to this updated object so that method calls can be chained 
      *         together. 
      */
-    public StartWorkflowExecutionParameters withExecutionStartToCloseTimeoutSeconds(long executionStartToCloseTimeoutSeconds) {
+    public StartWorkflowExecutionParameters withExecutionStartToCloseTimeoutSeconds(int executionStartToCloseTimeoutSeconds) {
         this.executionStartToCloseTimeoutSeconds = executionStartToCloseTimeoutSeconds;
         return this;
     }
     
-    public long getTaskStartToCloseTimeoutSeconds() {
+    public int getTaskStartToCloseTimeoutSeconds() {
         return taskStartToCloseTimeoutSeconds;
     }
     
-    public void setTaskStartToCloseTimeoutSeconds(long taskStartToCloseTimeoutSeconds) {
+    public void setTaskStartToCloseTimeoutSeconds(int taskStartToCloseTimeoutSeconds) {
         this.taskStartToCloseTimeoutSeconds = taskStartToCloseTimeoutSeconds;
     }
     
-    public StartWorkflowExecutionParameters withTaskStartToCloseTimeoutSeconds(long taskStartToCloseTimeoutSeconds) {
+    public StartWorkflowExecutionParameters withTaskStartToCloseTimeoutSeconds(int taskStartToCloseTimeoutSeconds) {
         this.taskStartToCloseTimeoutSeconds = taskStartToCloseTimeoutSeconds;
         return this;
     }
@@ -368,12 +368,12 @@ public class StartWorkflowExecutionParameters {
     	StartWorkflowExecutionParameters parameters = this.clone();
     	
     	if (options != null) {
-    		Long executionStartToCloseTimeout = options.getExecutionStartToCloseTimeoutSeconds();
+    		Integer executionStartToCloseTimeout = options.getExecutionStartToCloseTimeoutSeconds();
     		if (executionStartToCloseTimeout != null) {
     			parameters.setExecutionStartToCloseTimeoutSeconds(executionStartToCloseTimeout);
     		}
     		
-    		Long taskStartToCloseTimeout = options.getTaskStartToCloseTimeoutSeconds();
+    		Integer taskStartToCloseTimeout = options.getTaskStartToCloseTimeoutSeconds();
             if (taskStartToCloseTimeout != null) {
                 parameters.setTaskStartToCloseTimeoutSeconds(taskStartToCloseTimeout);
             }
@@ -405,12 +405,12 @@ public class StartWorkflowExecutionParameters {
         }
     	
     	if (optionsOverride != null) {
-    	    Long executionStartToCloseTimeout = optionsOverride.getExecutionStartToCloseTimeoutSeconds();
+    	    Integer executionStartToCloseTimeout = optionsOverride.getExecutionStartToCloseTimeoutSeconds();
             if (executionStartToCloseTimeout != null) {
                 parameters.setExecutionStartToCloseTimeoutSeconds(executionStartToCloseTimeout);
             }
             
-            Long taskStartToCloseTimeout = optionsOverride.getTaskStartToCloseTimeoutSeconds();
+            Integer taskStartToCloseTimeout = optionsOverride.getTaskStartToCloseTimeoutSeconds();
             if (taskStartToCloseTimeout != null) {
                 parameters.setTaskStartToCloseTimeoutSeconds(taskStartToCloseTimeout);
             }

@@ -14,24 +14,19 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
-import java.util.List;
-
 import com.amazonaws.services.simpleworkflow.flow.WorkflowContext;
-import com.amazonaws.services.simpleworkflow.flow.common.FlowHelpers;
 import com.amazonaws.services.simpleworkflow.flow.generic.ContinueAsNewWorkflowExecutionParameters;
-import com.amazonaws.services.simpleworkflow.model.ChildPolicy;
-import com.amazonaws.services.simpleworkflow.model.DecisionTask;
-import com.amazonaws.services.simpleworkflow.model.HistoryEvent;
-import com.amazonaws.services.simpleworkflow.model.WorkflowExecutionStartedEventAttributes;
-
+import com.uber.cadence.HistoryEvent;
+import com.uber.cadence.PollForDecisionTaskResponse;
+import com.uber.cadence.WorkflowExecutionStartedEventAttributes;
 
 class WorkfowContextImpl implements WorkflowContext {
 
-    private final DecisionTask decisionTask;
+    private final PollForDecisionTaskResponse decisionTask;
     private boolean cancelRequested;
     private ContinueAsNewWorkflowExecutionParameters continueAsNewOnCompletion;
     
-    public WorkfowContextImpl(DecisionTask decisionTask) {
+    public WorkfowContextImpl(PollForDecisionTaskResponse decisionTask) {
         this.decisionTask = decisionTask;
     }
     
@@ -64,35 +59,34 @@ class WorkfowContextImpl implements WorkflowContext {
         this.continueAsNewOnCompletion = continueParameters;
     }
 
-    @Override
-    public com.uber.cadence.WorkflowExecution getParentWorkflowExecution() {
-        WorkflowExecutionStartedEventAttributes attributes = getWorkflowStartedEventAttributes();
-        return attributes.getParentWorkflowExecution();
-    }
+//    @Override
+//    public WorkflowExecution getParentWorkflowExecution() {
+//        WorkflowExecutionStartedEventAttributes attributes = getWorkflowStartedEventAttributes();
+//        return attributes.getParentWorkflowExecution();
+//    }
 
-    @Override
-    public List<String> getTagList() {
-        WorkflowExecutionStartedEventAttributes attributes = getWorkflowStartedEventAttributes();
-        return attributes.getTagList();
-    }
+//    @Override
+//    public List<String> getTagList() {
+//        WorkflowExecutionStartedEventAttributes attributes = getWorkflowStartedEventAttributes();
+//        return attributes.getTagList();
+//    }
 
-    @Override
-    public com.uber.cadence.ChildPolicy getChildPolicy() {
-        WorkflowExecutionStartedEventAttributes attributes = getWorkflowStartedEventAttributes();
-        return ChildPolicy.fromValue(attributes.getChildPolicy());
-    }
+//    @Override
+//    public com.uber.cadence.ChildPolicy getChildPolicy() {
+//        WorkflowExecutionStartedEventAttributes attributes = getWorkflowStartedEventAttributes();
+//        return ChildPolicy.fromValue(attributes.getChildPolicy());
+//    }
+    
+//    @Override
+//    public String getContinuedExecutionRunId() {
+//        WorkflowExecutionStartedEventAttributes attributes = getWorkflowStartedEventAttributes();
+//        return attributes.getContinuedExecutionRunId();
+//    }
     
     @Override
-    public String getContinuedExecutionRunId() {
+    public long getExecutionStartToCloseTimeoutSeconds() {
         WorkflowExecutionStartedEventAttributes attributes = getWorkflowStartedEventAttributes();
-        return attributes.getContinuedExecutionRunId();
-    }
-    
-    @Override
-    public long getExecutionStartToCloseTimeout() {
-        WorkflowExecutionStartedEventAttributes attributes = getWorkflowStartedEventAttributes();
-        String result = attributes.getExecutionStartToCloseTimeout();
-        return FlowHelpers.durationToSeconds(result);
+        return attributes.getExecutionStartToCloseTimeoutSeconds();
     }
     
     @Override
@@ -101,22 +95,22 @@ class WorkfowContextImpl implements WorkflowContext {
         return attributes.getTaskList().getName();
     }
 
-    @Override
-    public String getLambdaRole() {
-        WorkflowExecutionStartedEventAttributes attributes = getWorkflowStartedEventAttributes();
-        return attributes.getLambdaRole();
-    }
+//    @Override
+//    public String getLambdaRole() {
+//        WorkflowExecutionStartedEventAttributes attributes = getWorkflowStartedEventAttributes();
+//        return attributes.getLambdaRole();
+//    }
 
     private WorkflowExecutionStartedEventAttributes getWorkflowStartedEventAttributes() {
-        HistoryEvent firstHistoryEvent = decisionTask.getEvents().get(0);
+        HistoryEvent firstHistoryEvent = decisionTask.getHistory().getEvents().get(0);
         WorkflowExecutionStartedEventAttributes attributes = firstHistoryEvent.getWorkflowExecutionStartedEventAttributes();
         return attributes;
     }
 
-    @Override
-    public int getTaskPriority() {
-        WorkflowExecutionStartedEventAttributes attributes = getWorkflowStartedEventAttributes();
-        String result = attributes.getTaskPriority();
-        return FlowHelpers.taskPriorityToInt(result);
-    }
+//    @Override
+//    public int getTaskPriority() {
+//        WorkflowExecutionStartedEventAttributes attributes = getWorkflowStartedEventAttributes();
+//        String result = attributes.getTaskPriority();
+//        return FlowHelpers.taskPriorityToInt(result);
+//    }
 }

@@ -16,7 +16,6 @@ package com.amazonaws.services.simpleworkflow.flow;
 
 import com.amazonaws.services.simpleworkflow.flow.core.Promise;
 
-
 public interface DynamicWorkflowClient extends WorkflowClient {
 
     <T> Promise<T> startWorkflowExecution(final Promise<Object>[] arguments,

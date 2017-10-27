@@ -156,7 +156,7 @@ public class TestGenericWorkflowClient implements GenericWorkflowClient {
             return parameters;
         }
 
-        public String getWorkflowState() throws WorkflowException {
+        public byte[] getWorkflowState() throws WorkflowException {
             return childWorkflowDefinition.getWorkflowState();
         }
 
@@ -316,7 +316,7 @@ public class TestGenericWorkflowClient implements GenericWorkflowClient {
     }
 
     @Override
-    public Promise<String> startChildWorkflow(String workflow, byte[] input) {
+    public Promise<byte[]> startChildWorkflow(String workflow, byte[] input) {
         StartChildWorkflowExecutionParameters parameters = new StartChildWorkflowExecutionParameters();
         WorkflowType workflowType = new WorkflowType();
         workflowType.setName(workflow);
@@ -329,7 +329,7 @@ public class TestGenericWorkflowClient implements GenericWorkflowClient {
     }
 
     @Override
-    public Promise<String> startChildWorkflow(final String workflow, final Promise<byte[]> input) {
+    public Promise<byte[]> startChildWorkflow(final String workflow, final Promise<byte[]> input) {
         return new Functor<String>(input) {
 
             @Override
@@ -374,7 +374,7 @@ public class TestGenericWorkflowClient implements GenericWorkflowClient {
         childTryCatch.cancel(new CancellationException());
     }
 
-    public String getWorkflowState(WorkflowExecution execution) throws WorkflowException {
+    public byte[] getWorkflowState(WorkflowExecution execution) throws WorkflowException {
         String workflowId = execution.getWorkflowId();
         if (workflowId == null) {
             throw new IllegalArgumentException("null workflowId");

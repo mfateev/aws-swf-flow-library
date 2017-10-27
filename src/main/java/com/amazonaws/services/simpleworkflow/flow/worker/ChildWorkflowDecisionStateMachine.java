@@ -14,11 +14,7 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
-import com.amazonaws.services.simpleworkflow.model.Decision;
-import com.amazonaws.services.simpleworkflow.model.DecisionType;
-import com.amazonaws.services.simpleworkflow.model.HistoryEvent;
-import com.amazonaws.services.simpleworkflow.model.RequestCancelExternalWorkflowExecutionDecisionAttributes;
-import com.amazonaws.services.simpleworkflow.model.StartChildWorkflowExecutionDecisionAttributes;
+import com.uber.cadence.*;
 
 class ChildWorkflowDecisionStateMachine extends DecisionStateMachineBase {
 
@@ -135,14 +131,14 @@ class ChildWorkflowDecisionStateMachine extends DecisionStateMachineBase {
         tryCancel.setRunId(runId);
         Decision decision = new Decision();
         decision.setRequestCancelExternalWorkflowExecutionDecisionAttributes(tryCancel);
-        decision.setDecisionType(DecisionType.RequestCancelExternalWorkflowExecution.toString());
+        decision.setDecisionType(DecisionType.RequestCancelExternalWorkflowExecution);
         return decision;
     }
 
     private Decision createStartChildWorkflowExecutionDecision() {
         Decision decision = new Decision();
         decision.setStartChildWorkflowExecutionDecisionAttributes(startAttributes);
-        decision.setDecisionType(DecisionType.StartChildWorkflowExecution.toString());
+        decision.setDecisionType(DecisionType.StartChildWorkflowExecution);
         return decision;
     }
 

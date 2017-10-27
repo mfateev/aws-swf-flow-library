@@ -14,8 +14,7 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.generic;
 
-import com.amazonaws.services.simpleworkflow.model.WorkflowExecution;
-
+import com.uber.cadence.WorkflowExecution;
 
 public interface GenericWorkflowClientExternal {
     

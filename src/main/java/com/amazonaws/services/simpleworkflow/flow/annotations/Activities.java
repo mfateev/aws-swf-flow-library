@@ -48,19 +48,6 @@ public @interface Activities {
     String activityNamePrefix() default "";
 
     /**
-     * Version to use to each activity defined within the interface annotated 
-     * with @Activities annotation.  Default is empty string which means that
-     * version should be specified using {@link Activity#version()} on every 
-     * method individually.  Alternatively you can specify the version for 
-     * all activities defined within the interface using this attribute.
-     * 
-     * AWS Flow Framework annotation processor will report an error if version 
-     * for an activity is not specified through {@link Activities#version()} or 
-     * {@link Activity#version()}.
-     */
-    String version() default "";
-
-    /**
      * This is used to specify {@link DataConverter} type to use for 
      * serialization/de-serialization of activity method parameters and return types.
      * 

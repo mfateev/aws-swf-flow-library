@@ -14,9 +14,8 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
-import com.amazonaws.services.simpleworkflow.model.Decision;
-import com.amazonaws.services.simpleworkflow.model.HistoryEvent;
-
+import com.uber.cadence.Decision;
+import com.uber.cadence.HistoryEvent;
 
 public class CompleteWorkflowStateMachine implements DecisionStateMachine {
 
@@ -36,7 +35,7 @@ public class CompleteWorkflowStateMachine implements DecisionStateMachine {
 
 
     @Override
-    public Decision getDecision() {
+    public com.uber.cadence.Decision getDecision() {
         return decision;
     }
 

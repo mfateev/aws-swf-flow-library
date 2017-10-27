@@ -111,7 +111,7 @@ public class DynamicWorkflowClientExternalImpl implements DynamicWorkflowClientE
     }
 
     @Override
-    public void terminateWorkflowExecution(String reason, String details, ChildPolicy childPolicy) {
+    public void terminateWorkflowExecution(String reason, byte[] details, ChildPolicy childPolicy) {
         TerminateWorkflowExecutionParameters terminateParameters = new TerminateWorkflowExecutionParameters();
         terminateParameters.setReason(reason);
         terminateParameters.setDetails(details);
@@ -146,7 +146,7 @@ public class DynamicWorkflowClientExternalImpl implements DynamicWorkflowClientE
         StartWorkflowExecutionParameters parameters = new StartWorkflowExecutionParameters();
         parameters.setWorkflowType(workflowType);
         parameters.setWorkflowId(workflowExecution.getWorkflowId());
-        String input = dataConverter.toData(arguments);
+        byte[] input = dataConverter.toData(arguments);
         parameters.setInput(input);
         parameters = parameters.createStartWorkflowExecutionParametersFromOptions(schedulingOptions, startOptionsOverride);
         WorkflowExecution newExecution = genericClient.startWorkflow(parameters);
@@ -160,7 +160,7 @@ public class DynamicWorkflowClientExternalImpl implements DynamicWorkflowClientE
         signalParameters.setRunId(workflowExecution.getRunId());
         signalParameters.setWorkflowId(workflowExecution.getWorkflowId());
         signalParameters.setSignalName(signalName);
-        String input = dataConverter.toData(arguments);
+        byte[] input = dataConverter.toData(arguments);
         signalParameters.setInput(input);
         genericClient.signalWorkflowExecution(signalParameters);
     }

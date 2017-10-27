@@ -53,7 +53,7 @@ public class POJOWorkflowDefinition extends WorkflowDefinition {
     }
 
     @Override
-    public Promise<String> execute(final String input) throws WorkflowException {
+    public Settable<byte[]> execute(final String input) throws WorkflowException {
         final DataConverter c;
         if (workflowMethod.getConverter() == null) {
             c = converter;
@@ -61,7 +61,7 @@ public class POJOWorkflowDefinition extends WorkflowDefinition {
         else {
             c = workflowMethod.getConverter();
         }
-        final Settable<String> result = new Settable<String>();
+        final Settable<byte[]> result = new Settable<>();
         final AtomicReference<Promise> methodResult = new AtomicReference<Promise>();
         new TryCatchFinally() {
 
@@ -91,7 +91,7 @@ public class POJOWorkflowDefinition extends WorkflowDefinition {
                 Promise r = methodResult.get();
                 if (r == null || r.isReady()) {
                     Object workflowResult = r == null ? null : r.get();
-                    String convertedResult = c.toData(workflowResult);
+                    byte[] convertedResult = c.toData(workflowResult);
                     result.set(convertedResult);
                 }
             }
@@ -123,7 +123,7 @@ public class POJOWorkflowDefinition extends WorkflowDefinition {
     }
 
     @Override
-    public String getWorkflowState() throws WorkflowException {
+    public byte[] getWorkflowState() throws WorkflowException {
         if (getStateMethod == null) {
             return null;
         }
@@ -162,7 +162,7 @@ public class POJOWorkflowDefinition extends WorkflowDefinition {
             throw (WorkflowException)exception;
         }
         String reason = WorkflowExecutionUtils.truncateReason(exception.getMessage());
-        String details = null;
+        byte[] details = null;
         try {
             details = c.toData(exception);
         }

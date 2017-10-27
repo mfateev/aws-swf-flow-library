@@ -14,8 +14,8 @@
  */
 package com.amazonaws.services.simpleworkflow.flow;
 
-import com.amazonaws.services.simpleworkflow.model.ActivityTaskTimeoutType;
-import com.amazonaws.services.simpleworkflow.model.ActivityType;
+import com.uber.cadence.ActivityType;
+import com.uber.cadence.TimeoutType;
 
 /**
  * Exception that indicates Activity time out.
@@ -23,9 +23,9 @@ import com.amazonaws.services.simpleworkflow.model.ActivityType;
 @SuppressWarnings("serial")
 public class ActivityTaskTimedOutException extends ActivityTaskException {
 
-    private ActivityTaskTimeoutType timeoutType;
+    private TimeoutType timeoutType;
 
-    private String details;
+    private byte[] details;
 
     public ActivityTaskTimedOutException(String message, Throwable cause) {
         super(message, cause);
@@ -35,29 +35,29 @@ public class ActivityTaskTimedOutException extends ActivityTaskException {
         super(message);
     }
 
-    public ActivityTaskTimedOutException(long eventId, ActivityType activityType, String activityId, String timeoutType,
-            String details) {
-        super(timeoutType, eventId, activityType, activityId);
-        this.timeoutType = ActivityTaskTimeoutType.fromValue(timeoutType);
+    public ActivityTaskTimedOutException(long eventId, ActivityType activityType, String activityId, TimeoutType timeoutType,
+                                         byte[] details) {
+        super(String.valueOf(timeoutType), eventId, activityType, activityId);
+        this.timeoutType = timeoutType;
         this.details = details;
     }
 
-    public ActivityTaskTimeoutType getTimeoutType() {
+    public TimeoutType getTimeoutType() {
         return timeoutType;
     }
 
-    public void setTimeoutType(ActivityTaskTimeoutType timeoutType) {
+    public void setTimeoutType(TimeoutType timeoutType) {
         this.timeoutType = timeoutType;
     }
 
     /**
      * @return The value from the last activity heartbeat details field.
      */
-    public String getDetails() {
+    public byte[] getDetails() {
         return details;
     }
 
-    public void setDetails(String details) {
+    public void setDetails(byte[] details) {
         this.details = details;
     }
 

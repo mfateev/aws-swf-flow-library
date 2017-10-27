@@ -35,7 +35,7 @@ class LambdaFunctionDecisionStateMachine extends DecisionStateMachineBase {
     }
 
     @Override
-    public Decision getDecision() {
+    public com.uber.cadence.Decision getDecision() {
         switch (state) {
         case CREATED:
             return createScheduleLambdaFunctionDecision();

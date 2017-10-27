@@ -24,14 +24,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.uber.cadence.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
 import com.amazonaws.services.simpleworkflow.flow.WorkerBase;
 import com.amazonaws.services.simpleworkflow.flow.common.FlowConstants;
-import com.amazonaws.services.simpleworkflow.model.DomainAlreadyExistsException;
-import com.amazonaws.services.simpleworkflow.model.RegisterDomainRequest;
+import org.apache.thrift.TException;
 
 public abstract class GenericWorker implements WorkerBase {
 
@@ -113,13 +112,13 @@ public abstract class GenericWorker implements WorkerBase {
 
     protected static final int MAX_IDENTITY_LENGTH = 256;
 
-    protected AmazonSimpleWorkflow service;
+    protected WorkflowService.Iface service;
 
     protected String domain;
 
     protected boolean registerDomain;
 
-    protected long domainRetentionPeriodInDays = FlowConstants.NONE;
+    protected int domainRetentionPeriodInDays = FlowConstants.NONE;
 
     private String taskListToPoll;
 
@@ -132,10 +131,6 @@ public abstract class GenericWorker implements WorkerBase {
     private long pollBackoffInitialInterval = 100;
 
     private long pollBackoffMaximumInterval = 60000;
-
-    private boolean disableTypeRegitrationOnStart;
-
-    private boolean disableServiceShutdownOnStop;
 
     private ThreadPoolExecutor pollExecutor;
 
@@ -159,7 +154,7 @@ public abstract class GenericWorker implements WorkerBase {
 
     private TaskPoller poller;
 
-    public GenericWorker(AmazonSimpleWorkflow service, String domain, String taskListToPoll) {
+    public GenericWorker(WorkflowService.Iface service, String domain, String taskListToPoll) {
         this.service = service;
         this.domain = domain;
         this.taskListToPoll = taskListToPoll;
@@ -172,11 +167,11 @@ public abstract class GenericWorker implements WorkerBase {
     }
 
     @Override
-    public AmazonSimpleWorkflow getService() {
+    public WorkflowService.Iface getService() {
         return service;
     }
 
-    public void setService(AmazonSimpleWorkflow service) {
+    public void setService(WorkflowService.Iface service) {
         this.service = service;
     }
 
@@ -196,8 +191,7 @@ public abstract class GenericWorker implements WorkerBase {
 
     /**
      * Should domain be registered on startup. Default is <code>false</code>.
-     * When enabled {@link #setDomainRetentionPeriodInDays(Long)} property is
-     * required.
+     * When enabled workflowExecutionRetentionPeriodInDays property is required.
      */
     @Override
     public void setRegisterDomain(boolean registerDomain) {
@@ -205,12 +199,12 @@ public abstract class GenericWorker implements WorkerBase {
     }
 
     @Override
-    public long getDomainRetentionPeriodInDays() {
+    public int getDomainRetentionPeriodInDays() {
         return domainRetentionPeriodInDays;
     }
 
     @Override
-    public void setDomainRetentionPeriodInDays(long domainRetentionPeriodInDays) {
+    public void setDomainRetentionPeriodInDays(int domainRetentionPeriodInDays) {
         this.domainRetentionPeriodInDays = domainRetentionPeriodInDays;
     }
 
@@ -289,31 +283,6 @@ public abstract class GenericWorker implements WorkerBase {
         this.pollBackoffMaximumInterval = backoffMaximumInterval;
     }
 
-    /**
-     * @see #setDisableServiceShutdownOnStop(boolean)
-     */
-    @Override
-    public boolean isDisableServiceShutdownOnStop() {
-        return disableServiceShutdownOnStop;
-    }
-
-    /**
-     * By default when @{link {@link #shutdown()} or @{link
-     * {@link #shutdownNow()} is called the worker calls
-     * {@link AmazonSimpleWorkflow#shutdown()} on the service instance it is
-     * configured with before shutting down internal thread pools. Otherwise
-     * threads that are waiting on a poll request might block shutdown for the
-     * duration of a poll. This flag allows disabling this behavior.
-     * 
-     * @param disableServiceShutdownOnStop
-     *            <code>true</code> means do not call
-     *            {@link AmazonSimpleWorkflow#shutdown()}
-     */
-    @Override
-    public void setDisableServiceShutdownOnStop(boolean disableServiceShutdownOnStop) {
-        this.disableServiceShutdownOnStop = disableServiceShutdownOnStop;
-    }
-
     @Override
     public double getPollBackoffCoefficient() {
         return pollBackoffCoefficient;
@@ -339,16 +308,6 @@ public abstract class GenericWorker implements WorkerBase {
     }
 
     @Override
-    public void setDisableTypeRegistrationOnStart(boolean disableTypeRegistrationOnStart) {
-        this.disableTypeRegitrationOnStart = disableTypeRegistrationOnStart;
-    }
-
-    @Override
-    public boolean isDisableTypeRegistrationOnStart() {
-        return disableTypeRegitrationOnStart;
-    }
-
-    @Override
     public void start() {
         if (log.isInfoEnabled()) {
             log.info("start: " + toString());
@@ -361,10 +320,6 @@ public abstract class GenericWorker implements WorkerBase {
 
         if (registerDomain) {
             registerDomain();
-        }
-
-        if (!disableTypeRegitrationOnStart) {
-            registerTypesToPoll();
         }
 
         if (maximumPollRatePerSecond > 0.0) {
@@ -401,13 +356,21 @@ public abstract class GenericWorker implements WorkerBase {
             throw new IllegalStateException("required property domainRetentionPeriodInSeconds is not set");
         }
         try {
-            service.registerDomain(new RegisterDomainRequest().withName(domain).withWorkflowExecutionRetentionPeriodInDays(
-                    String.valueOf(domainRetentionPeriodInDays)));
+            RegisterDomainRequest registerDomainRequest = new RegisterDomainRequest();
+            registerDomainRequest.setName(domain);
+            registerDomainRequest.setWorkflowExecutionRetentionPeriodInDays(domainRetentionPeriodInDays);
+            service.RegisterDomain(registerDomainRequest);
         }
-        catch (DomainAlreadyExistsException e) {
+        catch (DomainAlreadyExistsError e) {
             if (log.isTraceEnabled()) {
                 log.trace("Domain is already registered: " + domain);
             }
+        } catch (BadRequestError e) {
+            throw new RuntimeException(e);
+        } catch (InternalServiceError e) {
+            throw new RuntimeException(e);
+        } catch (TException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -435,9 +398,6 @@ public abstract class GenericWorker implements WorkerBase {
         if (!isStarted()) {
             return;
         }
-        if (!disableServiceShutdownOnStop) {
-            service.shutdown();
-        }
         pollExecutor.shutdown();
         poller.shutdown();
     }
@@ -449,9 +409,6 @@ public abstract class GenericWorker implements WorkerBase {
         }
         if (!isStarted()) {
             return;
-        }
-        if (!disableServiceShutdownOnStop) {
-            service.shutdown();
         }
         pollExecutor.shutdownNow();
         poller.shutdownNow();
@@ -472,9 +429,6 @@ public abstract class GenericWorker implements WorkerBase {
             return true;
         }
         long start = System.currentTimeMillis();
-        if (!disableServiceShutdownOnStop) {
-            service.shutdown();
-        }
         pollExecutor.shutdownNow();
         try {
             pollExecutor.awaitTermination(timeout, unit);

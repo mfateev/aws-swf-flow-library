@@ -16,10 +16,10 @@ package com.amazonaws.services.simpleworkflow.flow.worker;
 
 import java.lang.management.ManagementFactory;
 
+import com.uber.cadence.WorkflowService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
 import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinitionFactoryFactory;
 
 public class GenericWorkflowWorker extends GenericWorker {
@@ -34,7 +34,7 @@ public class GenericWorkflowWorker extends GenericWorker {
         setIdentity(ManagementFactory.getRuntimeMXBean().getName());
     }
 
-    public GenericWorkflowWorker(AmazonSimpleWorkflow service, String domain, String taskListToPoll) {
+    public GenericWorkflowWorker(WorkflowService.Iface service, String domain, String taskListToPoll) {
         this();
         setService(service);
         setDomain(domain);
@@ -73,10 +73,6 @@ public class GenericWorkflowWorker extends GenericWorker {
         result.setService(getService());
         result.setTaskListToPoll(getTaskListToPoll());
         return result;
-    }
-
-    @Override
-    public void registerTypesToPoll() {
     }
 
     @Override

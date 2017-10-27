@@ -14,8 +14,7 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
-import com.amazonaws.services.kms.model.UnsupportedOperationException;
-import com.uber.cadence.WorkflowService.Iface;
+import com.uber.cadence.WorkflowService;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -24,9 +23,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
-import com.amazonaws.services.simpleworkflow.flow.generic.ActivityImplementation;
 import com.amazonaws.services.simpleworkflow.flow.generic.ActivityImplementationFactory;
 
 public class GenericActivityWorker extends GenericWorker {
@@ -41,7 +37,7 @@ public class GenericActivityWorker extends GenericWorker {
 
     private int taskExecutorThreadPoolSize = 100;
 
-    public GenericActivityWorker(AmazonSimpleWorkflow service, String domain, String taskListToPoll) {
+    public GenericActivityWorker(WorkflowService.Iface service, String domain, String taskListToPoll) {
         super(service, domain, taskListToPoll);
         if (service == null) {
             throw new IllegalArgumentException("service");

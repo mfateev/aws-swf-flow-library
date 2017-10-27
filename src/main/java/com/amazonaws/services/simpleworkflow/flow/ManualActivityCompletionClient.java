@@ -24,8 +24,8 @@ public abstract class ManualActivityCompletionClient {
     
     public abstract void fail(Throwable failure);
     
-    public abstract void recordHeartbeat(String details) throws CancellationException;
+    public abstract void recordHeartbeat(byte[] details) throws CancellationException;
     
-    public abstract void reportCancellation(String details);
+    public abstract void reportCancellation(byte[] details);
     
 }

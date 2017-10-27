@@ -15,18 +15,9 @@
 package com.amazonaws.services.simpleworkflow.flow.generic;
 
 import com.amazonaws.services.simpleworkflow.flow.DecisionContext;
-import com.amazonaws.services.simpleworkflow.flow.WorkflowTypeRegistrationOptions;
-import com.amazonaws.services.simpleworkflow.model.WorkflowType;
+import com.uber.cadence.WorkflowType;
 
 public abstract class WorkflowDefinitionFactory {
-
-    /**
-     * 
-     * @return options to use when registering workflow type with the service.
-     *         <code>null</code> if registration is not necessary on executor
-     *         startup.
-     */
-    public abstract WorkflowTypeRegistrationOptions getWorkflowRegistrationOptions();
 
     public abstract WorkflowDefinition getWorkflowDefinition(DecisionContext context) throws Exception;
     

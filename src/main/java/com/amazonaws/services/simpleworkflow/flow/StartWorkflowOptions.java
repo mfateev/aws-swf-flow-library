@@ -14,56 +14,54 @@
  */
 package com.amazonaws.services.simpleworkflow.flow;
 
-import java.util.List;
+import com.uber.cadence.ChildPolicy;
 
-import com.amazonaws.services.simpleworkflow.model.ChildPolicy;
+import java.util.List;
 
 public class StartWorkflowOptions {
 	
-    private Long executionStartToCloseTimeoutSeconds;
+    private Integer executionStartToCloseTimeoutSeconds;
 	
-    private Long taskStartToCloseTimeoutSeconds;
+    private Integer taskStartToCloseTimeoutSeconds;
     
     private List<String> tagList;
 	
     private String taskList;
 	
-    private Integer taskPriority;
+//    private Integer taskPriority;
 
-    private String lambdaRole;
-
-    private ChildPolicy childPolicy;
+//    private ChildPolicy childPolicy;
+//
+//    public com.uber.cadence.ChildPolicy getChildPolicy() {
+//        return childPolicy;
+//    }
+//
+//    public void setChildPolicy(ChildPolicy childPolicy) {
+//        this.childPolicy = childPolicy;
+//    }
     
-    public com.uber.cadence.ChildPolicy getChildPolicy() {
-        return childPolicy;
-    }
-    
-    public void setChildPolicy(ChildPolicy childPolicy) {
-        this.childPolicy = childPolicy;
-    }
-    
-    public Long getExecutionStartToCloseTimeoutSeconds() {
+    public Integer getExecutionStartToCloseTimeoutSeconds() {
 		return executionStartToCloseTimeoutSeconds;
 	}
 	
-	public void setExecutionStartToCloseTimeoutSeconds(Long executionStartToCloseTimeoutSeconds) {
+	public void setExecutionStartToCloseTimeoutSeconds(Integer executionStartToCloseTimeoutSeconds) {
 		this.executionStartToCloseTimeoutSeconds = executionStartToCloseTimeoutSeconds;
 	}
 	
-	public StartWorkflowOptions withExecutionStartToCloseTimeoutSeconds(Long executionStartToCloseTimeoutSeconds) {
+	public StartWorkflowOptions withExecutionStartToCloseTimeoutSeconds(Integer executionStartToCloseTimeoutSeconds) {
 		this.executionStartToCloseTimeoutSeconds = executionStartToCloseTimeoutSeconds;
 		return this;
 	}
 	
-	public Long getTaskStartToCloseTimeoutSeconds() {
+	public Integer getTaskStartToCloseTimeoutSeconds() {
         return taskStartToCloseTimeoutSeconds;
     }
 
-    public void setTaskStartToCloseTimeoutSeconds(Long taskStartToCloseTimeoutSeconds) {
+    public void setTaskStartToCloseTimeoutSeconds(Integer taskStartToCloseTimeoutSeconds) {
         this.taskStartToCloseTimeoutSeconds = taskStartToCloseTimeoutSeconds;
     }
     
-    public StartWorkflowOptions withTaskStartToCloseTimeoutSeconds(Long taskStartToCloseTimeoutSeconds) {
+    public StartWorkflowOptions withTaskStartToCloseTimeoutSeconds(Integer taskStartToCloseTimeoutSeconds) {
         this.taskStartToCloseTimeoutSeconds = taskStartToCloseTimeoutSeconds;
         return this;
     }
@@ -94,29 +92,17 @@ public class StartWorkflowOptions {
 		return this;
 	}
 	
-    public Integer getTaskPriority() {
-        return taskPriority;
-    }
-	
-    public void setTaskPriority(Integer taskPriority) {
-        this.taskPriority = taskPriority;
-    }
-    
-    public StartWorkflowOptions withTaskPriority(Integer taskPriority) {
-    	this.taskPriority = taskPriority;
-    	return this;
-    }
+//    public Integer getTaskPriority() {
+//        return taskPriority;
+//    }
+//
+//    public void setTaskPriority(Integer taskPriority) {
+//        this.taskPriority = taskPriority;
+//    }
+//
+//    public StartWorkflowOptions withTaskPriority(Integer taskPriority) {
+//    	this.taskPriority = taskPriority;
+//    	return this;
+//    }
 
-	public String getLambdaRole() {
-		return lambdaRole;
-	}
-
-	public void setLambdaRole(String lambdaRole) {
-		this.lambdaRole = lambdaRole;
-	}
-
-	public StartWorkflowOptions withLambdaRole(String lambdaRole) {
-		this.lambdaRole = lambdaRole;
-		return this;
-	}
 }

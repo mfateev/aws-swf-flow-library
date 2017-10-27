@@ -18,45 +18,33 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
 import com.amazonaws.services.simpleworkflow.flow.core.AsyncTaskInfo;
-import com.amazonaws.services.simpleworkflow.model.DecisionTask;
-import com.amazonaws.services.simpleworkflow.model.RespondDecisionTaskCompletedRequest;
+import com.uber.cadence.RespondDecisionTaskCompletedRequest;
 
 /**
- * Base class for workflow task handlers. Extend this class to implement custom
- * deciders that can be executed using a
- * {@link WorkflowTaskPollingExecutorService}.
+ * Base class for workflow task handlers.
  * 
  * @author fateev, suskin
  * 
- * @see WorkflowTaskPollingExecutorService
  */
 public abstract class DecisionTaskHandler {
 
     /**
      * The implementation should be called when a polling SWF Decider receives a
-     * new WorkflowTask. Later, that decider should call one of
-     * {@link #respondWorkflowTaskCompleted(String, Transition, AmazonSimpleWorkflow)}
-     * or
-     * {@link #respondWorkflowTaskFailed(String, int, String, Map, AmazonSimpleWorkflow)}
-     * .
-     * 
-     * @param workflowTask
-     *            The decision task to handle. The reason for more then one task
-     *            being received is pagination of the history. All tasks in the
-     *            iterator contain the same information but different pages of
-     *            the history. The tasks are loaded lazily when
-     *            {@link Iterator#next()} is called. It is expected that the
-     *            method implementation aborts decision by rethrowing any
+     * new WorkflowTask.
+     *
+     * @param decisionTaskIterator
+     *            The decision task to handle. Iterator wraps the task to support
+     *            pagination of the history. The events are loaded lazily when history iterator next is called.
+     *            It is expected that the method implementation aborts decision by rethrowing any
      *            exception from {@link Iterator#next()}.
      */
-    public abstract RespondDecisionTaskCompletedRequest handleDecisionTask(Iterator<DecisionTask> decisionTaskIterator) throws Exception;
+    public abstract RespondDecisionTaskCompletedRequest handleDecisionTask(DecisionTaskWithHistoryIterator decisionTaskIterator) throws Exception;
 
-    public abstract List<AsyncTaskInfo> getAsynchronousThreadDump(Iterator<DecisionTask> decisionTaskIterator) throws Exception;
+    public abstract List<AsyncTaskInfo> getAsynchronousThreadDump(DecisionTaskWithHistoryIterator decisionTaskIterator) throws Exception;
 
-    public abstract String getAsynchronousThreadDumpAsString(Iterator<DecisionTask> decisionTaskIterator) throws Exception;
+    public abstract String getAsynchronousThreadDumpAsString(DecisionTaskWithHistoryIterator decisionTaskIterator) throws Exception;
 
-    public abstract Object loadWorkflowThroughReplay(Iterator<DecisionTask> decisionTaskIterator) throws Exception;
+    public abstract Object loadWorkflowThroughReplay(DecisionTaskWithHistoryIterator decisionTaskIterator) throws Exception;
 
 }

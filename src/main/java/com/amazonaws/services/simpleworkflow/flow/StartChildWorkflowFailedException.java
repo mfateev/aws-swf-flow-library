@@ -14,13 +14,14 @@
  */
 package com.amazonaws.services.simpleworkflow.flow;
 
+import com.uber.cadence.ChildWorkflowExecutionFailedCause;
 import com.uber.cadence.WorkflowExecution;
 import com.uber.cadence.WorkflowType;
 
 @SuppressWarnings("serial")
 public class StartChildWorkflowFailedException extends ChildWorkflowException {
 
-    private String failureCause;
+    private ChildWorkflowExecutionFailedCause failureCause;
     
     public StartChildWorkflowFailedException(String message) {
         super(message);
@@ -31,19 +32,19 @@ public class StartChildWorkflowFailedException extends ChildWorkflowException {
     }
 
     public StartChildWorkflowFailedException(long eventId, WorkflowExecution workflowExecution, WorkflowType workflowType,
-                                             String cause) {
-        super(cause, eventId, workflowExecution, workflowType);
+                                             ChildWorkflowExecutionFailedCause cause) {
+        super(String.valueOf(cause), eventId, workflowExecution, workflowType);
         this.failureCause = cause;
     }
 
     /**
      * @return enumeration that contains the cause of the failure
      */
-    public String getFailureCause() {
+    public ChildWorkflowExecutionFailedCause getFailureCause() {
         return failureCause;
     }
 
-    public void setFailureCause(String failureCause) {
+    public void setFailureCause(ChildWorkflowExecutionFailedCause failureCause) {
         this.failureCause = failureCause;
     }
 

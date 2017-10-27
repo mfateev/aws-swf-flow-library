@@ -18,21 +18,18 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 
+import com.uber.cadence.HistoryEvent;
+import com.uber.cadence.StartTimerDecisionAttributes;
+import com.uber.cadence.TimerCanceledEventAttributes;
+import com.uber.cadence.TimerFiredEventAttributes;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.amazonaws.services.simpleworkflow.flow.StartTimerFailedException;
 import com.amazonaws.services.simpleworkflow.flow.WorkflowClock;
-import com.amazonaws.services.simpleworkflow.flow.common.FlowHelpers;
 import com.amazonaws.services.simpleworkflow.flow.core.ExternalTask;
 import com.amazonaws.services.simpleworkflow.flow.core.ExternalTaskCancellationHandler;
 import com.amazonaws.services.simpleworkflow.flow.core.ExternalTaskCompletionHandle;
 import com.amazonaws.services.simpleworkflow.flow.core.Promise;
-import com.amazonaws.services.simpleworkflow.model.HistoryEvent;
-import com.amazonaws.services.simpleworkflow.model.StartTimerDecisionAttributes;
-import com.amazonaws.services.simpleworkflow.model.StartTimerFailedEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.TimerCanceledEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.TimerFiredEventAttributes;
 
 class WorkflowClockImpl implements WorkflowClock {
 
@@ -105,10 +102,10 @@ class WorkflowClockImpl implements WorkflowClock {
         }
         final OpenRequestInfo<T, Object> context = new OpenRequestInfo<T, Object>(userContext);
         final StartTimerDecisionAttributes timer = new StartTimerDecisionAttributes();
-        timer.setStartToFireTimeout(FlowHelpers.secondsToDuration(delaySeconds));
+        timer.setStartToFireTimeoutSeconds(delaySeconds);
         final String timerId = decisions.getNextId();
         timer.setTimerId(timerId);
-        String taskName = "timerId=" + timer.getTimerId() + ", delaySeconds=" + timer.getStartToFireTimeout();
+        String taskName = "timerId=" + timer.getTimerId() + ", delaySeconds=" + timer.getStartToFireTimeoutSeconds();
         new ExternalTask() {
 
             @Override
@@ -137,25 +134,6 @@ class WorkflowClockImpl implements WorkflowClock {
         }
         else {
             log.debug("handleTimerFired not complete");
-        }
-    }
-
-    @SuppressWarnings({ "rawtypes" })
-    void handleStartTimerFailed(HistoryEvent event) {
-        StartTimerFailedEventAttributes attributes = event.getStartTimerFailedEventAttributes();
-        String timerId = attributes.getTimerId();
-        if (decisions.handleStartTimerFailed(event)) {
-            OpenRequestInfo scheduled = scheduledTimers.remove(timerId);
-            if (scheduled != null) {
-                ExternalTaskCompletionHandle completionHandle = scheduled.getCompletionHandle();
-                Object createTimerUserContext = scheduled.getUserContext();
-                String cause = attributes.getCause();
-                Throwable failure = new StartTimerFailedException(event.getEventId(), timerId, createTimerUserContext, cause);
-                completionHandle.fail(failure);
-            }
-        }
-        else {
-            log.debug("handleStartTimerFailed not complete");
         }
     }
 

@@ -21,7 +21,7 @@ import com.uber.cadence.WorkflowType;
 @SuppressWarnings("serial")
 public class ChildWorkflowFailedException extends ChildWorkflowException {
 
-    private String details;
+    private byte[] details;
     
     public ChildWorkflowFailedException(String message) {
         super(message);
@@ -32,16 +32,16 @@ public class ChildWorkflowFailedException extends ChildWorkflowException {
     }
 
     public ChildWorkflowFailedException(long eventId, WorkflowExecution workflowExecution, WorkflowType workflowType,
-                                        String reason, String details) {
+                                        String reason, byte[] details) {
         super(createMessage(workflowExecution, workflowType, reason), eventId, workflowExecution, workflowType);
         this.details = details;
     }
 
-    public String getDetails() {
+    public byte[] getDetails() {
         return details;
     }
     
-    public void setDetails(String details) {
+    public void setDetails(byte[] details) {
         this.details = details;
     }
     

@@ -21,25 +21,6 @@ import com.amazonaws.services.simpleworkflow.model.PredefinedDuration;
 
 public final class FlowHelpers {
     
-    public static String secondsToDuration(Long seconds) {
-        if (seconds == null || seconds == FlowConstants.NONE) {
-            return PredefinedDuration.NONE.toString();
-        } else if (seconds == FlowConstants.USE_REGISTERED_DEFAULTS) {
-            return null;
-        }
-        
-        return Long.toString(seconds);
-    }
-    
-    
-    public static long durationToSeconds(String duration) {
-        if (duration == null || duration.equals(PredefinedDuration.NONE.toString())) {
-            return FlowConstants.NONE;
-        } else {
-            return Long.parseLong(duration);
-        }
-    }
-    
     public static Object[] validateInput(Method method, Object[] args) {
         Class<?>[] paramterTypes = method.getParameterTypes();
         int numberOfParameters = paramterTypes.length;

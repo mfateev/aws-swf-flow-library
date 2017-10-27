@@ -25,15 +25,15 @@ public class StartChildWorkflowExecutionParameters implements Cloneable {
 
     private String control;
 
-    private long executionStartToCloseTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
+    private int executionStartToCloseTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
 
     private byte[] input;
 
-    private List<String> tagList;
+//    private List<String> tagList;
 
     private String taskList;
 
-    private long taskStartToCloseTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
+    private int taskStartToCloseTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
 
     private String workflowId;
 
@@ -41,9 +41,7 @@ public class StartChildWorkflowExecutionParameters implements Cloneable {
 
     private ChildPolicy childPolicy;
 
-    private int taskPriority;
-
-    private String lambdaRole;
+//    private int taskPriority;
 
     public StartChildWorkflowExecutionParameters() {
     }
@@ -61,15 +59,15 @@ public class StartChildWorkflowExecutionParameters implements Cloneable {
         return this;
     }
 
-    public long getExecutionStartToCloseTimeoutSeconds() {
+    public int getExecutionStartToCloseTimeoutSeconds() {
         return executionStartToCloseTimeoutSeconds;
     }
 
-    public void setExecutionStartToCloseTimeoutSeconds(long executionStartToCloseTimeoutSeconds) {
+    public void setExecutionStartToCloseTimeoutSeconds(int executionStartToCloseTimeoutSeconds) {
         this.executionStartToCloseTimeoutSeconds = executionStartToCloseTimeoutSeconds;
     }
 
-    public StartChildWorkflowExecutionParameters withExecutionStartToCloseTimeoutSeconds(long executionStartToCloseTimeoutSeconds) {
+    public StartChildWorkflowExecutionParameters withExecutionStartToCloseTimeoutSeconds(int executionStartToCloseTimeoutSeconds) {
         this.executionStartToCloseTimeoutSeconds = executionStartToCloseTimeoutSeconds;
         return this;
     }
@@ -87,18 +85,18 @@ public class StartChildWorkflowExecutionParameters implements Cloneable {
         return this;
     }
 
-    public List<String> getTagList() {
-        return tagList;
-    }
-
-    public void setTagList(List<String> tagList) {
-        this.tagList = tagList;
-    }
-
-    public StartChildWorkflowExecutionParameters withTagList(List<String> tagList) {
-        this.tagList = tagList;
-        return this;
-    }
+//    public List<String> getTagList() {
+//        return tagList;
+//    }
+//
+//    public void setTagList(List<String> tagList) {
+//        this.tagList = tagList;
+//    }
+//
+//    public StartChildWorkflowExecutionParameters withTagList(List<String> tagList) {
+//        this.tagList = tagList;
+//        return this;
+//    }
 
     public String getTaskList() {
         return taskList;
@@ -113,15 +111,15 @@ public class StartChildWorkflowExecutionParameters implements Cloneable {
         return this;
     }
 
-    public long getTaskStartToCloseTimeoutSeconds() {
+    public int getTaskStartToCloseTimeoutSeconds() {
         return taskStartToCloseTimeoutSeconds;
     }
 
-    public void setTaskStartToCloseTimeoutSeconds(long taskStartToCloseTimeoutSeconds) {
+    public void setTaskStartToCloseTimeoutSeconds(int taskStartToCloseTimeoutSeconds) {
         this.taskStartToCloseTimeoutSeconds = taskStartToCloseTimeoutSeconds;
     }
 
-    public StartChildWorkflowExecutionParameters withTaskStartToCloseTimeoutSeconds(long taskStartToCloseTimeoutSeconds) {
+    public StartChildWorkflowExecutionParameters withTaskStartToCloseTimeoutSeconds(int taskStartToCloseTimeoutSeconds) {
         this.taskStartToCloseTimeoutSeconds = taskStartToCloseTimeoutSeconds;
         return this;
     }
@@ -165,31 +163,18 @@ public class StartChildWorkflowExecutionParameters implements Cloneable {
         return this;
     }
 
-    public int getTaskPriority() {
-        return taskPriority;
-    }
-
-    public void setTaskPriority(int taskPriority) {
-        this.taskPriority = taskPriority;
-    }
-
-    public StartChildWorkflowExecutionParameters withTaskPriority(int taskPriority) {
-        this.taskPriority = taskPriority;
-        return this;
-    }
-
-    public String getLambdaRole() {
-        return lambdaRole;
-    }
-
-    public void setLambdaRole(String lambdaRole) {
-        this.lambdaRole = lambdaRole;
-    }
-
-    public StartChildWorkflowExecutionParameters withLambdaRole(String lambdaRole) {
-        this.lambdaRole = lambdaRole;
-        return this;
-    }
+//    public int getTaskPriority() {
+//        return taskPriority;
+//    }
+//
+//    public void setTaskPriority(int taskPriority) {
+//        this.taskPriority = taskPriority;
+//    }
+//
+//    public StartChildWorkflowExecutionParameters withTaskPriority(int taskPriority) {
+//        this.taskPriority = taskPriority;
+//        return this;
+//    }
 
     public StartChildWorkflowExecutionParameters createStartChildWorkflowExecutionParametersFromOptions(
             StartWorkflowOptions options, StartWorkflowOptions optionsOverride) {
@@ -197,77 +182,68 @@ public class StartChildWorkflowExecutionParameters implements Cloneable {
 
         if (options != null) {
 
-            Long executionStartToCloseTimeoutSeconds = options.getExecutionStartToCloseTimeoutSeconds();
+            Integer executionStartToCloseTimeoutSeconds = options.getExecutionStartToCloseTimeoutSeconds();
             if (executionStartToCloseTimeoutSeconds != null) {
                 startChildWorkflowExecutionParameters.setExecutionStartToCloseTimeoutSeconds(executionStartToCloseTimeoutSeconds);
             }
 
-            Long taskStartToCloseTimeoutSeconds = options.getTaskStartToCloseTimeoutSeconds();
+            Integer taskStartToCloseTimeoutSeconds = options.getTaskStartToCloseTimeoutSeconds();
             if (taskStartToCloseTimeoutSeconds != null) {
                 startChildWorkflowExecutionParameters.setTaskStartToCloseTimeoutSeconds(taskStartToCloseTimeoutSeconds);
             }
 
-            List<String> tagList = options.getTagList();
-            if (tagList != null) {
-                startChildWorkflowExecutionParameters.setTagList(tagList);
-            }
-
+//            List<String> tagList = options.getTagList();
+//            if (tagList != null) {
+//                startChildWorkflowExecutionParameters.setTagList(tagList);
+//            }
+//
             String taskList = options.getTaskList();
             if (taskList != null && !taskList.isEmpty()) {
                 startChildWorkflowExecutionParameters.setTaskList(taskList);
             }
 
-            ChildPolicy childPolicy = options.getChildPolicy();
-            if (childPolicy != null) {
-                startChildWorkflowExecutionParameters.setChildPolicy(childPolicy);
-            }
-
-            Integer taskPriority = options.getTaskPriority();
-            if (taskPriority != null) {
-                startChildWorkflowExecutionParameters.setTaskPriority(taskPriority);
-            }
-
-            String lambdaRole = options.getLambdaRole();
-            if (lambdaRole != null) {
-                startChildWorkflowExecutionParameters.setLambdaRole(lambdaRole);
-            }
+//            ChildPolicy childPolicy = options.getChildPolicy();
+//            if (childPolicy != null) {
+//                startChildWorkflowExecutionParameters.setChildPolicy(childPolicy);
+//            }
+//
+//            Integer taskPriority = options.getTaskPriority();
+//            if (taskPriority != null) {
+//                startChildWorkflowExecutionParameters.setTaskPriority(taskPriority);
+//            }
         }
 
         if (optionsOverride != null) {
-            Long executionStartToCloseTimeoutSeconds = optionsOverride.getExecutionStartToCloseTimeoutSeconds();
+            Integer executionStartToCloseTimeoutSeconds = optionsOverride.getExecutionStartToCloseTimeoutSeconds();
             if (executionStartToCloseTimeoutSeconds != null) {
                 startChildWorkflowExecutionParameters.setExecutionStartToCloseTimeoutSeconds(executionStartToCloseTimeoutSeconds);
             }
 
-            Long taskStartToCloseTimeoutSeconds = optionsOverride.getTaskStartToCloseTimeoutSeconds();
+            Integer taskStartToCloseTimeoutSeconds = optionsOverride.getTaskStartToCloseTimeoutSeconds();
             if (taskStartToCloseTimeoutSeconds != null) {
                 startChildWorkflowExecutionParameters.setTaskStartToCloseTimeoutSeconds(taskStartToCloseTimeoutSeconds);
             }
 
-            List<String> tagList = optionsOverride.getTagList();
-            if (tagList != null) {
-                startChildWorkflowExecutionParameters.setTagList(tagList);
-            }
+//            List<String> tagList = optionsOverride.getTagList();
+//            if (tagList != null) {
+//                startChildWorkflowExecutionParameters.setTagList(tagList);
+//            }
 
             String taskList = optionsOverride.getTaskList();
             if (taskList != null && !taskList.isEmpty()) {
                 startChildWorkflowExecutionParameters.setTaskList(taskList);
             }
 
-            ChildPolicy childPolicy = optionsOverride.getChildPolicy();
-            if (childPolicy != null) {
-                startChildWorkflowExecutionParameters.setChildPolicy(childPolicy);
-            }
+//            ChildPolicy childPolicy = optionsOverride.getChildPolicy();
+//            if (childPolicy != null) {
+//                startChildWorkflowExecutionParameters.setChildPolicy(childPolicy);
+//            }
+//
+//            Integer taskPriority = optionsOverride.getTaskPriority();
+//            if (taskPriority != null) {
+//                startChildWorkflowExecutionParameters.setTaskPriority(taskPriority);
+//            }
 
-            Integer taskPriority = optionsOverride.getTaskPriority();
-            if (taskPriority != null) {
-                startChildWorkflowExecutionParameters.setTaskPriority(taskPriority);
-            }
-
-            String lambdaRole = optionsOverride.getLambdaRole();
-            if (lambdaRole != null) {
-                startChildWorkflowExecutionParameters.setLambdaRole(lambdaRole);
-            }
         }
 
         return startChildWorkflowExecutionParameters;
@@ -283,10 +259,9 @@ public class StartChildWorkflowExecutionParameters implements Cloneable {
         sb.append("Control: " + control + ", ");
         sb.append("ExecutionStartToCloseTimeout: " + executionStartToCloseTimeoutSeconds + ", ");
         sb.append("TaskStartToCloseTimeout: " + taskStartToCloseTimeoutSeconds + ", ");
-        sb.append("TagList: " + tagList + ", ");
+//        sb.append("TagList: " + tagList + ", ");
         sb.append("TaskList: " + taskList + ", ");
-        sb.append("TaskPriority: " + taskPriority + ", ");
-        sb.append("LambdaRole: " + lambdaRole);
+//        sb.append("TaskPriority: " + taskPriority + ", ");
         sb.append("}");
         return sb.toString();
     }
@@ -296,13 +271,12 @@ public class StartChildWorkflowExecutionParameters implements Cloneable {
         result.setControl(control);
         result.setExecutionStartToCloseTimeoutSeconds(executionStartToCloseTimeoutSeconds);
         result.setInput(input);
-        result.setTagList(tagList);
+//        result.setTagList(tagList);
         result.setTaskList(taskList);
         result.setTaskStartToCloseTimeoutSeconds(taskStartToCloseTimeoutSeconds);
         result.setWorkflowId(workflowId);
         result.setWorkflowType(workflowType);
-        result.setTaskPriority(taskPriority);
-        result.setLambdaRole(lambdaRole);
+//        result.setTaskPriority(taskPriority);
         return result;
     }
 

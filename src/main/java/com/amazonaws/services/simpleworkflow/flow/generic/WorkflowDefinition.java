@@ -14,14 +14,14 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.generic;
 
-import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
 import com.amazonaws.services.simpleworkflow.flow.WorkflowException;
 import com.amazonaws.services.simpleworkflow.flow.annotations.Asynchronous;
 import com.amazonaws.services.simpleworkflow.flow.annotations.Execute;
 import com.amazonaws.services.simpleworkflow.flow.core.Promise;
 import com.amazonaws.services.simpleworkflow.flow.core.Task;
 import com.amazonaws.services.simpleworkflow.flow.core.TryCatchFinally;
-import com.amazonaws.services.simpleworkflow.model.RespondDecisionTaskCompletedRequest;
+
+import java.nio.ByteBuffer;
 
 /**
  * Base class for all workflow definitions. Implementation should use
@@ -49,7 +49,7 @@ public abstract class WorkflowDefinition {
      * @throws WorkflowException
      *             Prefer throwing {@link WorkflowException}.
      */
-    public abstract Promise<String> execute(byte[] input) throws WorkflowException;
+    public abstract Promise<byte[]> execute(byte[] input) throws WorkflowException;
 
     /**
      * Asynchronous method that implements signals handling logic. This method
@@ -65,9 +65,9 @@ public abstract class WorkflowDefinition {
 
     /**
      * Return state that is inserted decision completion through
-     * {@link RespondDecisionTaskCompletedRequest#setExecutionContext(String)}
-     * and later can be retrieved through
-     * {@link AmazonSimpleWorkflow#describeWorkflowExecution(com.amazonaws.services.simpleworkflow.model.DescribeWorkflowExecutionRequest)}
+     * {@link com.uber.cadence.RespondDecisionTaskCompletedRequest#setExecutionContext(ByteBuffer)}
+     * and later can be retrieved through (when added to Cadence)
+     * {@link com.uber.cadence.WorkflowService#describeWorkflowExecution(DescribeWorkflowExecutionRequest)}
      * visibility call.
      * 
      * Implementation of this call is expected to be synchronous and is not
@@ -79,6 +79,6 @@ public abstract class WorkflowDefinition {
      * @return current state of the workflow execution.
      * @throws WorkflowException 
      */
-    public abstract String getWorkflowState() throws WorkflowException;
+    public abstract byte[] getWorkflowState() throws WorkflowException;
 
 }

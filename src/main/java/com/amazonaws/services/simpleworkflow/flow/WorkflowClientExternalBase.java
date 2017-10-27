@@ -51,7 +51,7 @@ public abstract class WorkflowClientExternalBase implements WorkflowClientExtern
     }
 
     @Override
-    public void terminateWorkflowExecution(String reason, String details, ChildPolicy childPolicy) {
+    public void terminateWorkflowExecution(String reason, byte[] details, ChildPolicy childPolicy) {
         dynamicWorkflowClient.terminateWorkflowExecution(reason, details, childPolicy);
     }
 

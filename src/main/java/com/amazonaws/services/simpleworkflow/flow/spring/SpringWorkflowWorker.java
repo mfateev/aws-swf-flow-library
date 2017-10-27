@@ -17,6 +17,7 @@ package com.amazonaws.services.simpleworkflow.flow.spring;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.TimeUnit;
 
+import com.uber.cadence.WorkflowService;
 import org.springframework.context.SmartLifecycle;
 
 import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
@@ -53,7 +54,7 @@ public class SpringWorkflowWorker implements WorkerBase, SmartLifecycle {
         genericWorker.setWorkflowDefinitionFactoryFactory(factoryFactory);
     }
 
-    public AmazonSimpleWorkflow getService() {
+    public WorkflowService.Iface getService() {
         return genericWorker.getService();
     }
 

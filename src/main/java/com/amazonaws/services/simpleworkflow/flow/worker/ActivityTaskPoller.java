@@ -15,7 +15,7 @@
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
 import com.uber.cadence.PollForActivityTaskResponse;
-import com.uber.cadence.WorkflowService.Iface;
+import com.uber.cadence.WorkflowService;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Semaphore;
@@ -25,7 +25,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
 import com.amazonaws.services.simpleworkflow.flow.generic.ActivityImplementationFactory;
 
 public class ActivityTaskPoller extends SynchronousActivityTaskPoller {
@@ -44,9 +43,9 @@ public class ActivityTaskPoller extends SynchronousActivityTaskPoller {
         }
     };
 
-    public ActivityTaskPoller(AmazonSimpleWorkflow service, String domain, String pollTaskList,
-            ActivityImplementationFactory activityImplementationFactory, ThreadPoolExecutor taskExecutorService) {
-        super((Iface) service, domain, pollTaskList, activityImplementationFactory);
+    public ActivityTaskPoller(WorkflowService.Iface service, String domain, String pollTaskList,
+                              ActivityImplementationFactory activityImplementationFactory, ThreadPoolExecutor taskExecutorService) {
+        super(service, domain, pollTaskList, activityImplementationFactory);
         setTaskExecutorService(taskExecutorService);
     }
 

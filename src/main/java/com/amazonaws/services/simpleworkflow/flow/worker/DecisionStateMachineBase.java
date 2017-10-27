@@ -14,10 +14,10 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
+import com.uber.cadence.HistoryEvent;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import com.amazonaws.services.simpleworkflow.model.HistoryEvent;
 
 abstract class DecisionStateMachineBase implements DecisionStateMachine {
 

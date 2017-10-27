@@ -106,7 +106,7 @@ public class DynamicActivitiesClientImpl implements DynamicActivitiesClient {
             protected void doTry() throws Throwable {
                 ExecuteActivityParameters parameters = new ExecuteActivityParameters();
                 parameters.setActivityType(activityType);
-                String stringInput = dataConverter.toData(arguments);
+                byte[] stringInput = dataConverter.toData(arguments);
                 parameters.setInput(stringInput);
                 final ExecuteActivityParameters _scheduleParameters_ = parameters.createExecuteActivityParametersFromOptions(
                         schedulingOptions, optionsOverride);

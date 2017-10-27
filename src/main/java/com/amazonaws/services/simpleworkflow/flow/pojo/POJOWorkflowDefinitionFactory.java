@@ -18,19 +18,16 @@ import java.util.Map;
 import com.amazonaws.services.simpleworkflow.flow.DataConverter;
 import com.amazonaws.services.simpleworkflow.flow.DecisionContext;
 import com.amazonaws.services.simpleworkflow.flow.JsonDataConverter;
-import com.amazonaws.services.simpleworkflow.flow.WorkflowTypeRegistrationOptions;
 import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinition;
 import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinitionFactory;
 import com.amazonaws.services.simpleworkflow.flow.worker.CurrentDecisionContext;
-import com.amazonaws.services.simpleworkflow.model.WorkflowType;
+import com.uber.cadence.WorkflowType;
 
 class POJOWorkflowDefinitionFactory extends WorkflowDefinitionFactory {
 
     private final DataConverter converter = new JsonDataConverter();
 
     private final WorkflowType workflowType;
-
-    private final WorkflowTypeRegistrationOptions registrationOptions;
 
     private final POJOWorkflowImplementationFactory implementationFactory;
 
@@ -43,11 +40,10 @@ class POJOWorkflowDefinitionFactory extends WorkflowDefinitionFactory {
     private final Object[] constructorArgs;
 
     public POJOWorkflowDefinitionFactory(POJOWorkflowImplementationFactory implementationFactory, WorkflowType workflowType,
-            WorkflowTypeRegistrationOptions registrationOptions, MethodConverterPair workflowImplementationMethod,
+            MethodConverterPair workflowImplementationMethod,
             Map<String, MethodConverterPair> signals, MethodConverterPair getStateMethod, Object[] constructorArgs) {
         this.implementationFactory = implementationFactory;
         this.workflowType = workflowType;
-        this.registrationOptions = registrationOptions;
         this.workflowImplementationMethod = workflowImplementationMethod;
         this.signals = signals;
         this.getStateMethod = getStateMethod;
@@ -57,11 +53,6 @@ class POJOWorkflowDefinitionFactory extends WorkflowDefinitionFactory {
     @Override
     public WorkflowType getWorkflowType() {
         return workflowType;
-    }
-
-    @Override
-    public WorkflowTypeRegistrationOptions getWorkflowRegistrationOptions() {
-        return registrationOptions;
     }
 
     @Override

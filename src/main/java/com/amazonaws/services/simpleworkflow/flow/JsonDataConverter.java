@@ -44,7 +44,7 @@ public class JsonDataConverter extends DataConverter {
 
     /**
      * Create instance of the converter that uses ObjectMapper with
-     * {@link Feature#FAIL_ON_UNKNOWN_PROPERTIES} set to <code>false</code> and
+     * {@link DeserializationFeature#FAIL_ON_UNKNOWN_PROPERTIES} set to <code>false</code> and
      * default typing set to {@link DefaultTyping#NON_FINAL}.
      */
     public JsonDataConverter() {
@@ -67,9 +67,9 @@ public class JsonDataConverter extends DataConverter {
     }
 
     @Override
-    public String toData(Object value) throws DataConverterException {
+    public byte[] toData(Object value) throws DataConverterException {
         try {
-            return mapper.writeValueAsString(value);
+            return mapper.writeValueAsBytes(value);
         }
         catch (JsonGenerationException e) {
             throwDataConverterException(e, value);
@@ -91,7 +91,7 @@ public class JsonDataConverter extends DataConverter {
     }
 
     @Override
-    public <T> T fromData(String serialized, Class<T> valueType) throws DataConverterException {
+    public <T> T fromData(byte[] serialized, Class<T> valueType) throws DataConverterException {
         try {
             return mapper.readValue(serialized, valueType);
         }

@@ -14,24 +14,23 @@
  */
 package com.amazonaws.services.simpleworkflow.flow;
 
-import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
-
+import com.uber.cadence.WorkflowService;
 
 public class ManualActivityCompletionClientFactoryImpl extends ManualActivityCompletionClientFactory {
 
-    private AmazonSimpleWorkflow service;
+    private WorkflowService.Iface service;
 
     private DataConverter dataConverter = new JsonDataConverter();
     
-    public ManualActivityCompletionClientFactoryImpl(AmazonSimpleWorkflow service) {
+    public ManualActivityCompletionClientFactoryImpl(WorkflowService.Iface service) {
         this.service = service;
     }
     
-    public AmazonSimpleWorkflow getService() {
+    public WorkflowService.Iface getService() {
         return service;
     }
     
-    public void setService(AmazonSimpleWorkflow service) {
+    public void setService(WorkflowService.Iface service) {
         this.service = service;
     }
     
@@ -44,7 +43,7 @@ public class ManualActivityCompletionClientFactoryImpl extends ManualActivityCom
     }
 
     @Override
-    public ManualActivityCompletionClient getClient(String taskToken) {
+    public ManualActivityCompletionClient getClient(byte[] taskToken) {
         if (service == null) {
             throw new IllegalStateException("required property service is null");
         }

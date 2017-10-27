@@ -21,8 +21,6 @@ import com.uber.cadence.WorkflowService.Iface;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.simpleworkflow.flow.ActivityExecutionContext;
 import com.amazonaws.services.simpleworkflow.flow.ActivityFailureException;
 import com.amazonaws.services.simpleworkflow.flow.ActivityTaskFailedException;
@@ -46,7 +44,7 @@ public class TestGenericActivityClient implements GenericActivityClient {
         }
 
         @Override
-        public void recordActivityHeartbeat(String details) throws AmazonServiceException, AmazonClientException {
+        public void recordActivityHeartbeat(String details) {
             //TODO: timeouts
         }
 

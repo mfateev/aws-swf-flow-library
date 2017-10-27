@@ -29,7 +29,7 @@ import com.amazonaws.services.simpleworkflow.flow.generic.ActivityImplementation
 @SuppressWarnings("serial")
 public class ActivityFailureException extends RuntimeException {
 
-    private String details;
+    private byte[] details;
 
     public ActivityFailureException(String reason) {
         super(reason);
@@ -38,21 +38,21 @@ public class ActivityFailureException extends RuntimeException {
     /**
      * Construct exception with given arguments.
      * 
-     * @param statusCode
-     *            value of status code field
+     * @param reason
+     *            value of reason field
      * @param details
      *            application specific failure details
      */
-    public ActivityFailureException(String reason, String details) {
+    public ActivityFailureException(String reason, byte[] details) {
         this(reason);
         this.details = details;
     }
 
-    public String getDetails() {
+    public byte[] getDetails() {
         return details;
     }
 
-    public void setDetails(String details) {
+    public void setDetails(byte[] details) {
         this.details = details;
     }
 

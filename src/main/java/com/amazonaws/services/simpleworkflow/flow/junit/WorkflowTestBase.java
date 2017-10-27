@@ -18,6 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import com.uber.cadence.WorkflowExecution;
+import com.uber.cadence.WorkflowType;
 import org.junit.rules.MethodRule;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
@@ -32,8 +34,6 @@ import com.amazonaws.services.simpleworkflow.flow.junit.spring.FlowSpringJUnit4C
 import com.amazonaws.services.simpleworkflow.flow.test.TestWorkflowClock;
 import com.amazonaws.services.simpleworkflow.flow.test.TestWorkflowContext;
 import com.amazonaws.services.simpleworkflow.flow.worker.CurrentDecisionContext;
-import com.amazonaws.services.simpleworkflow.model.WorkflowExecution;
-import com.amazonaws.services.simpleworkflow.model.WorkflowType;
 
 public abstract class WorkflowTestBase implements MethodRule {
 
@@ -71,7 +71,6 @@ public abstract class WorkflowTestBase implements MethodRule {
         workflowContext.setWorkflowExecution(we);
         WorkflowType wt = new WorkflowType();
         wt.setName("testWorkflow");
-        wt.setVersion("0.0");
         workflowContext.setWorkflowType(wt);
     }
 

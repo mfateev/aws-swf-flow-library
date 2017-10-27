@@ -16,12 +16,11 @@ package com.amazonaws.services.simpleworkflow.flow;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 
-import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
-import com.amazonaws.services.simpleworkflow.flow.annotations.SkipTypeRegistration;
+import com.uber.cadence.WorkflowService;
 
 public interface WorkerBase extends SuspendableWorker {
 
-    AmazonSimpleWorkflow getService();
+    WorkflowService.Iface getService();
 
     String getDomain();
 
@@ -29,19 +28,19 @@ public interface WorkerBase extends SuspendableWorker {
 
     /**
      * Should domain be registered on startup. Default is <code>false</code>.
-     * When enabled {@link #setDomainRetentionPeriodInDays(Long)} property is
+     * When enabled domainRetentionPeriodInDays property is
      * required.
      */
     void setRegisterDomain(boolean registerDomain);
 
-    long getDomainRetentionPeriodInDays();
+    int getDomainRetentionPeriodInDays();
 
     /**
      * Value of DomainRetentionPeriodInDays parameter passed to
-     * {@link AmazonSimpleWorkflow#registerDomain} call. Required when
+     * {@link WorkflowService.Iface#RegisterDomain} call. Required when
      * {@link #isRegisterDomain()} is <code>true</code>.
      */
-    void setDomainRetentionPeriodInDays(long domainRetentionPeriodInDays);
+    void setDomainRetentionPeriodInDays(int domainRetentionPeriodInDays);
 
     /**
      * Task list name that given worker polls for tasks.
@@ -126,16 +125,6 @@ public interface WorkerBase extends SuspendableWorker {
      */
     void setPollBackoffCoefficient(double backoffCoefficient);
 
-    boolean isDisableServiceShutdownOnStop();
-
-    /**
-     * When set to false (which is default) at the beginning of the worker
-     * shutdown {@link AmazonSimpleWorkflow#shutdown()} is called. It causes all
-     * outstanding long poll request to disconnect. But also causes all future
-     * request (for example activity completions) to SWF fail.
-     */
-    void setDisableServiceShutdownOnStop(boolean disableServiceShutdownOnStop);
-
     int getPollThreadCount();
 
     /**
@@ -148,23 +137,8 @@ public interface WorkerBase extends SuspendableWorker {
      */
     void setPollThreadCount(int threadCount);
 
-    /**
-     * Try to register every type (activity or workflow depending on worker)
-     * that are configured with the worker.
-     * 
-     * @see #setDisableTypeRegistrationOnStart(boolean)
-     */
-    void registerTypesToPoll();
 
     boolean isRunning();
 
-    /**
-     * When set to true disables types registration on start even if
-     * {@link SkipTypeRegistration} is not specified. Types still can be
-     * registered by calling {@link #registerTypesToPoll()}.
-     */
-    void setDisableTypeRegistrationOnStart(boolean disableTypeRegistrationOnStart);
-
-    boolean isDisableTypeRegistrationOnStart();
 
 }

@@ -14,11 +14,11 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
-import com.amazonaws.services.simpleworkflow.model.Decision;
-import com.amazonaws.services.simpleworkflow.model.DecisionType;
-import com.amazonaws.services.simpleworkflow.model.HistoryEvent;
-import com.amazonaws.services.simpleworkflow.model.RequestCancelActivityTaskDecisionAttributes;
-import com.amazonaws.services.simpleworkflow.model.ScheduleActivityTaskDecisionAttributes;
+import com.uber.cadence.Decision;
+import com.uber.cadence.DecisionType;
+import com.uber.cadence.HistoryEvent;
+import com.uber.cadence.RequestCancelActivityTaskDecisionAttributes;
+import com.uber.cadence.ScheduleActivityTaskDecisionAttributes;
 
 class ActivityDecisionStateMachine extends DecisionStateMachineBase {
 
@@ -80,14 +80,14 @@ class ActivityDecisionStateMachine extends DecisionStateMachineBase {
         tryCancel.setActivityId(scheduleAttributes.getActivityId());
         Decision decision = new Decision();
         decision.setRequestCancelActivityTaskDecisionAttributes(tryCancel);
-        decision.setDecisionType(DecisionType.RequestCancelActivityTask.toString());
+        decision.setDecisionType(DecisionType.RequestCancelActivityTask);
         return decision;
     }
 
     private Decision createScheduleActivityTaskDecision() {
         Decision decision = new Decision();
         decision.setScheduleActivityTaskDecisionAttributes(scheduleAttributes);
-        decision.setDecisionType(DecisionType.ScheduleActivityTask.toString());
+        decision.setDecisionType(DecisionType.ScheduleActivityTask);
         return decision;
     }
 

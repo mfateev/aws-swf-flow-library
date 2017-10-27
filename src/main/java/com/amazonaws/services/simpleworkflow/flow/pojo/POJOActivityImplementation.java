@@ -25,7 +25,6 @@ import com.amazonaws.services.simpleworkflow.flow.DataConverterException;
 import com.amazonaws.services.simpleworkflow.flow.common.WorkflowExecutionUtils;
 import com.amazonaws.services.simpleworkflow.flow.generic.ActivityImplementationBase;
 import com.amazonaws.services.simpleworkflow.flow.worker.ActivityTypeExecutionOptions;
-import com.amazonaws.services.simpleworkflow.flow.worker.ActivityTypeRegistrationOptions;
 import com.amazonaws.services.simpleworkflow.flow.worker.CurrentActivityExecutionContext;
 
 class POJOActivityImplementation extends ActivityImplementationBase {
@@ -38,20 +37,16 @@ class POJOActivityImplementation extends ActivityImplementationBase {
 
     private final DataConverter converter;
 
-    private final ActivityTypeRegistrationOptions registrationOptions;
-
     public POJOActivityImplementation(Object activitiesImplmentationObject, Method activity,
-            ActivityTypeRegistrationOptions registrationOptions, ActivityTypeExecutionOptions executionOptions,
-            DataConverter converter) {
+            ActivityTypeExecutionOptions executionOptions, DataConverter converter) {
         this.activitiesImplmentationObject = activitiesImplmentationObject;
         this.activity = activity;
-        this.registrationOptions = registrationOptions;
         this.executionOptions = executionOptions;
         this.converter = converter;
     }
 
     @Override
-    protected String execute(String input, ActivityExecutionContext context) 
+    protected byte[] execute(byte[] input, ActivityExecutionContext context)
             throws ActivityFailureException, CancellationException {
         //TODO: Support ability to call activity using old client 
         // after new parameters were added to activity method
@@ -80,11 +75,6 @@ class POJOActivityImplementation extends ActivityImplementationBase {
     }
 
     @Override
-    public ActivityTypeRegistrationOptions getRegistrationOptions() {
-        return registrationOptions;
-    }
-
-    @Override
     public ActivityTypeExecutionOptions getExecutionOptions() {
         return executionOptions;
     }
@@ -97,7 +87,7 @@ class POJOActivityImplementation extends ActivityImplementationBase {
         }
         
         String reason = WorkflowExecutionUtils.truncateReason(exception.getMessage());
-        String details = null;
+        byte[] details = null;
         try {
             details = converter.toData(exception);
         } catch (DataConverterException dataConverterException) {

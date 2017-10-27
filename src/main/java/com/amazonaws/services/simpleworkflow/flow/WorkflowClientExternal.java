@@ -22,7 +22,7 @@ public interface WorkflowClientExternal {
     
     public void requestCancelWorkflowExecution();
 
-    public void terminateWorkflowExecution(String reason, String details, ChildPolicy childPolicy);
+    public void terminateWorkflowExecution(String reason, byte[] details, ChildPolicy childPolicy);
     
     public DataConverter getDataConverter();
 

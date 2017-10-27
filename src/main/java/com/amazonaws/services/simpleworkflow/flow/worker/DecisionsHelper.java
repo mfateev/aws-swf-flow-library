@@ -24,49 +24,9 @@ import java.util.List;
 import java.util.Map;
 
 import com.amazonaws.services.simpleworkflow.flow.WorkflowException;
-import com.amazonaws.services.simpleworkflow.flow.common.FlowHelpers;
 import com.amazonaws.services.simpleworkflow.flow.common.WorkflowExecutionUtils;
 import com.amazonaws.services.simpleworkflow.flow.generic.ContinueAsNewWorkflowExecutionParameters;
-import com.amazonaws.services.simpleworkflow.model.ActivityTaskCancelRequestedEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.ActivityTaskCanceledEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.ActivityTaskCompletedEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.ActivityTaskFailedEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.ActivityTaskScheduledEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.ActivityTaskTimedOutEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.CancelTimerFailedEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.CancelWorkflowExecutionDecisionAttributes;
-import com.amazonaws.services.simpleworkflow.model.ChildPolicy;
-import com.amazonaws.services.simpleworkflow.model.ChildWorkflowExecutionStartedEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.CompleteWorkflowExecutionDecisionAttributes;
-import com.amazonaws.services.simpleworkflow.model.ContinueAsNewWorkflowExecutionDecisionAttributes;
-import com.amazonaws.services.simpleworkflow.model.Decision;
-import com.amazonaws.services.simpleworkflow.model.DecisionTask;
-import com.amazonaws.services.simpleworkflow.model.DecisionTaskCompletedEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.DecisionType;
-import com.amazonaws.services.simpleworkflow.model.FailWorkflowExecutionDecisionAttributes;
-import com.amazonaws.services.simpleworkflow.model.HistoryEvent;
-import com.amazonaws.services.simpleworkflow.model.LambdaFunctionCompletedEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.LambdaFunctionFailedEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.LambdaFunctionScheduledEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.LambdaFunctionTimedOutEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.RequestCancelActivityTaskFailedEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.RequestCancelExternalWorkflowExecutionDecisionAttributes;
-import com.amazonaws.services.simpleworkflow.model.RequestCancelExternalWorkflowExecutionFailedEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.RequestCancelExternalWorkflowExecutionInitiatedEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.ScheduleActivityTaskDecisionAttributes;
-import com.amazonaws.services.simpleworkflow.model.ScheduleActivityTaskFailedEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.ScheduleLambdaFunctionDecisionAttributes;
-import com.amazonaws.services.simpleworkflow.model.ScheduleLambdaFunctionFailedEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.SignalExternalWorkflowExecutionDecisionAttributes;
-import com.amazonaws.services.simpleworkflow.model.SignalExternalWorkflowExecutionInitiatedEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.StartChildWorkflowExecutionDecisionAttributes;
-import com.amazonaws.services.simpleworkflow.model.StartChildWorkflowExecutionFailedEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.StartChildWorkflowExecutionInitiatedEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.StartTimerDecisionAttributes;
-import com.amazonaws.services.simpleworkflow.model.StartTimerFailedEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.TaskList;
-import com.amazonaws.services.simpleworkflow.model.TimerCanceledEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.TimerStartedEventAttributes;
+import com.uber.cadence.*;
 
 class DecisionsHelper {
 
@@ -76,7 +36,7 @@ class DecisionsHelper {
 
     static final String FORCE_IMMEDIATE_DECISION_TIMER = "FORCE_IMMEDIATE_DECISION";
 
-    private final DecisionTask task;
+    private final PollForDecisionTaskResponse task;
 
     private long idCounter;
 
@@ -95,51 +55,12 @@ class DecisionsHelper {
 
     private Throwable workflowFailureCause;
 
-    private String workflowContextData;
+    private byte[] workflowContextData;
 
-    private String workfowContextFromLastDecisionCompletion;
+    private byte[] workfowContextFromLastDecisionCompletion;
 
-    DecisionsHelper(DecisionTask task) {
+    DecisionsHelper(PollForDecisionTaskResponse task) {
         this.task = task;
-    }
-
-    void scheduleLambdaFunction(ScheduleLambdaFunctionDecisionAttributes schedule) {
-        DecisionId decisionId = new DecisionId(DecisionTarget.LAMBDA_FUNCTION, schedule.getId());
-        addDecision(decisionId, new LambdaFunctionDecisionStateMachine(decisionId, schedule));
-    }
-
-    /**
-     * @return
-     * @return true if cancellation already happened as schedule event was found
-     *         in the new decisions list
-     */
-    boolean requestCancelLambdaFunction(String lambdaId, Runnable immediateCancellationCallback) {
-        DecisionStateMachine decision = getDecision(new DecisionId(DecisionTarget.LAMBDA_FUNCTION, lambdaId));
-        decision.cancel(immediateCancellationCallback);
-        return decision.isDone();
-    }
-
-    boolean handleLambdaFunctionClosed(String lambdaId) {
-        DecisionStateMachine decision = getDecision(new DecisionId(DecisionTarget.LAMBDA_FUNCTION, lambdaId));
-        decision.handleCompletionEvent();
-        return decision.isDone();
-    }
-
-    boolean handleLambdaFunctionScheduled(HistoryEvent event) {
-        LambdaFunctionScheduledEventAttributes attributes = event.getLambdaFunctionScheduledEventAttributes();
-        String functionId = attributes.getId();
-        lambdaSchedulingEventIdToLambdaId.put(event.getEventId(), functionId);
-        DecisionStateMachine decision = getDecision(new DecisionId(DecisionTarget.LAMBDA_FUNCTION, functionId));
-        decision.handleInitiatedEvent(event);
-        return decision.isDone();
-    }
-
-    public boolean handleScheduleLambdaFunctionFailed(HistoryEvent event) {
-        ScheduleLambdaFunctionFailedEventAttributes attributes = event.getScheduleLambdaFunctionFailedEventAttributes();
-        String functionId = attributes.getId();
-        DecisionStateMachine decision = getDecision(new DecisionId(DecisionTarget.LAMBDA_FUNCTION, functionId));
-        decision.handleInitiationFailedEvent(event);
-        return decision.isDone();
     }
 
     void scheduleActivityTask(ScheduleActivityTaskDecisionAttributes schedule) {
@@ -170,14 +91,6 @@ class DecisionsHelper {
         activitySchedulingEventIdToActivityId.put(event.getEventId(), activityId);
         DecisionStateMachine decision = getDecision(new DecisionId(DecisionTarget.ACTIVITY, activityId));
         decision.handleInitiatedEvent(event);
-        return decision.isDone();
-    }
-
-    public boolean handleScheduleActivityTaskFailed(HistoryEvent event) {
-        ScheduleActivityTaskFailedEventAttributes attributes = event.getScheduleActivityTaskFailedEventAttributes();
-        String activityId = attributes.getActivityId();
-        DecisionStateMachine decision = getDecision(new DecisionId(DecisionTarget.ACTIVITY, activityId));
-        decision.handleInitiationFailedEvent(event);
         return decision.isDone();
     }
 
@@ -239,33 +152,15 @@ class DecisionsHelper {
 
     void handleRequestCancelExternalWorkflowExecutionInitiated(HistoryEvent event) {
         RequestCancelExternalWorkflowExecutionInitiatedEventAttributes attributes = event.getRequestCancelExternalWorkflowExecutionInitiatedEventAttributes();
-        String workflowId = attributes.getWorkflowId();
+        String workflowId = attributes.getWorkflowExecution().getWorkflowId();
         DecisionStateMachine decision = getDecision(new DecisionId(DecisionTarget.EXTERNAL_WORKFLOW, workflowId));
         decision.handleCancellationInitiatedEvent();
     }
 
     void handleRequestCancelExternalWorkflowExecutionFailed(HistoryEvent event) {
         RequestCancelExternalWorkflowExecutionFailedEventAttributes attributes = event.getRequestCancelExternalWorkflowExecutionFailedEventAttributes();
-        DecisionStateMachine decision = getDecision(new DecisionId(DecisionTarget.EXTERNAL_WORKFLOW, attributes.getWorkflowId()));
+        DecisionStateMachine decision = getDecision(new DecisionId(DecisionTarget.EXTERNAL_WORKFLOW, attributes.getWorkflowExecution().getWorkflowId()));
         decision.handleCancellationFailureEvent(event);
-    }
-
-    void signalExternalWorkflowExecution(SignalExternalWorkflowExecutionDecisionAttributes signal) {
-        DecisionId decisionId = new DecisionId(DecisionTarget.SIGNAL, signal.getControl());
-        addDecision(decisionId, new SignalDecisionStateMachine(decisionId, signal));
-    }
-
-    void cancelSignalExternalWorkflowExecution(String signalId, Runnable immediateCancellationCallback) {
-        DecisionStateMachine decision = getDecision(new DecisionId(DecisionTarget.SIGNAL, signalId));
-        decision.cancel(immediateCancellationCallback);
-    }
-
-    void handleSignalExternalWorkflowExecutionInitiated(HistoryEvent event) {
-        SignalExternalWorkflowExecutionInitiatedEventAttributes attributes = event.getSignalExternalWorkflowExecutionInitiatedEventAttributes();
-        String signalId = attributes.getControl();
-        signalInitiatedEventIdToSignalId.put(event.getEventId(), signalId);
-        DecisionStateMachine decision = getDecision(new DecisionId(DecisionTarget.SIGNAL, signalId));
-        decision.handleInitiatedEvent(event);
     }
 
     public boolean handleSignalExternalWorkflowExecutionFailed(String signalId) {
@@ -327,13 +222,6 @@ class DecisionsHelper {
         return decision.isDone();
     }
 
-    public boolean handleStartTimerFailed(HistoryEvent event) {
-        StartTimerFailedEventAttributes attributes = event.getStartTimerFailedEventAttributes();
-        DecisionStateMachine decision = getDecision(new DecisionId(DecisionTarget.TIMER, attributes.getTimerId()));
-        decision.handleInitiationFailedEvent(event);
-        return decision.isDone();
-    }
-
     boolean handleTimerCanceled(HistoryEvent event) {
         TimerCanceledEventAttributes attributes = event.getTimerCanceledEventAttributes();
         DecisionStateMachine decision = getDecision(new DecisionId(DecisionTarget.TIMER, attributes.getTimerId()));
@@ -348,39 +236,29 @@ class DecisionsHelper {
         return decision.isDone();
     }
 
-    void completeWorkflowExecution(String output) {
+    void completeWorkflowExecution(byte[] output) {
         Decision decision = new Decision();
         CompleteWorkflowExecutionDecisionAttributes complete = new CompleteWorkflowExecutionDecisionAttributes();
         complete.setResult(output);
         decision.setCompleteWorkflowExecutionDecisionAttributes(complete);
-        decision.setDecisionType(DecisionType.CompleteWorkflowExecution.toString());
+        decision.setDecisionType(DecisionType.CompleteWorkflowExecution);
         DecisionId decisionId = new DecisionId(DecisionTarget.SELF, null);
         addDecision(decisionId, new CompleteWorkflowStateMachine(decisionId, decision));
     }
 
     void continueAsNewWorkflowExecution(ContinueAsNewWorkflowExecutionParameters continueParameters) {
         ContinueAsNewWorkflowExecutionDecisionAttributes attributes = new ContinueAsNewWorkflowExecutionDecisionAttributes();
-        attributes.setWorkflowTypeVersion(continueParameters.getWorkflowTypeVersion());
-        ChildPolicy childPolicy = continueParameters.getChildPolicy();
-        if (childPolicy != null) {
-            attributes.setChildPolicy(childPolicy);
-        }
         attributes.setInput(continueParameters.getInput());
-        attributes.setExecutionStartToCloseTimeout(FlowHelpers.secondsToDuration(continueParameters.getExecutionStartToCloseTimeoutSeconds()));
-        attributes.setTaskStartToCloseTimeout(FlowHelpers.secondsToDuration(continueParameters.getTaskStartToCloseTimeoutSeconds()));
-        attributes.setTaskPriority(FlowHelpers.taskPriorityToString(continueParameters.getTaskPriority()));
-        List<String> tagList = continueParameters.getTagList();
-        if (tagList != null) {
-            attributes.setTagList(tagList);
-        }
+        attributes.setExecutionStartToCloseTimeoutSeconds(continueParameters.getExecutionStartToCloseTimeoutSeconds());
+        attributes.setTaskStartToCloseTimeoutSeconds(continueParameters.getTaskStartToCloseTimeoutSeconds());
         String taskList = continueParameters.getTaskList();
         if (taskList != null && !taskList.isEmpty()) {
-            attributes.setTaskList(new TaskList().withName(taskList));
+            TaskList tl = new TaskList();
+            tl.setName(taskList);
+            attributes.setTaskList(tl);
         }
-        attributes.setLambdaRole(continueParameters.getLambdaRole());
-
         Decision decision = new Decision();
-        decision.setDecisionType(DecisionType.ContinueAsNewWorkflowExecution.toString());
+        decision.setDecisionType(DecisionType.ContinueAsNewWorkflowExecution);
         decision.setContinueAsNewWorkflowExecutionDecisionAttributes(attributes);
 
         DecisionId decisionId = new DecisionId(DecisionTarget.SELF, null);
@@ -391,7 +269,7 @@ class DecisionsHelper {
         Decision decision = new Decision();
         FailWorkflowExecutionDecisionAttributes fail = createFailWorkflowInstanceAttributes(e);
         decision.setFailWorkflowExecutionDecisionAttributes(fail);
-        decision.setDecisionType(DecisionType.FailWorkflowExecution.toString());
+        decision.setDecisionType(DecisionType.FailWorkflowExecution);
         DecisionId decisionId = new DecisionId(DecisionTarget.SELF, null);
         addDecision(decisionId, new CompleteWorkflowStateMachine(decisionId, decision));
         workflowFailureCause = e;
@@ -430,9 +308,9 @@ class DecisionsHelper {
     void cancelWorkflowExecution() {
         Decision decision = new Decision();
         CancelWorkflowExecutionDecisionAttributes cancel = new CancelWorkflowExecutionDecisionAttributes();
-        cancel.setDetails(null);
+        cancel.setDetails((byte[])null);
         decision.setCancelWorkflowExecutionDecisionAttributes(cancel);
-        decision.setDecisionType(DecisionType.CancelWorkflowExecution.toString());
+        decision.setDecisionType(DecisionType.CancelWorkflowExecution);
         DecisionId decisionId = new DecisionId(DecisionTarget.SELF, null);
         addDecision(decisionId, new CompleteWorkflowStateMachine(decisionId, decision));
     }
@@ -450,11 +328,11 @@ class DecisionsHelper {
         if (size > MAXIMUM_DECISIONS_PER_COMPLETION && !isCompletionEvent(result.get(MAXIMUM_DECISIONS_PER_COMPLETION - 2))) {
             result = result.subList(0, MAXIMUM_DECISIONS_PER_COMPLETION - 1);
             StartTimerDecisionAttributes attributes = new StartTimerDecisionAttributes();
-            attributes.setStartToFireTimeout("0");
+            attributes.setStartToFireTimeoutSeconds(0);
             attributes.setTimerId(FORCE_IMMEDIATE_DECISION_TIMER);
             Decision d = new Decision();
             d.setStartTimerDecisionAttributes(attributes);
-            d.setDecisionType(DecisionType.StartTimer.toString());
+            d.setDecisionType(DecisionType.StartTimer);
             result.add(d);
         }
 
@@ -462,7 +340,7 @@ class DecisionsHelper {
     }
 
     private boolean isCompletionEvent(Decision decision) {
-        DecisionType type = DecisionType.fromValue(decision.getDecisionType());
+        DecisionType type = decision.getDecisionType();
         switch (type) {
         case CancelWorkflowExecution:
         case CompleteWorkflowExecution:
@@ -516,11 +394,11 @@ class DecisionsHelper {
         return workflowFailureCause;
     }
 
-    String getWorkflowContextData() {
+    byte[] getWorkflowContextData() {
         return workflowContextData;
     }
 
-    void setWorkflowContextData(String workflowState) {
+    void setWorkflowContextData(byte[] workflowState) {
         this.workflowContextData = workflowState;
     }
 
@@ -528,7 +406,7 @@ class DecisionsHelper {
      * @return new workflow state or null if it didn't change since the last
      *         decision completion
      */
-    String getWorkflowContextDataToReturn() {
+    byte[] getWorkflowContextDataToReturn() {
         if (workfowContextFromLastDecisionCompletion == null
                 || !workfowContextFromLastDecisionCompletion.equals(workflowContextData)) {
             return workflowContextData;
@@ -540,7 +418,7 @@ class DecisionsHelper {
         workfowContextFromLastDecisionCompletion = decisionTaskCompletedEventAttributes.getExecutionContext();
     }
 
-    DecisionTask getTask() {
+    PollForDecisionTaskResponse getTask() {
         return task;
     }
 
@@ -564,28 +442,13 @@ class DecisionsHelper {
         return activitySchedulingEventIdToActivityId.get(sourceId);
     }
 
-    String getFunctionId(LambdaFunctionCompletedEventAttributes attributes) {
-        Long sourceId = attributes.getScheduledEventId();
-        return lambdaSchedulingEventIdToLambdaId.get(sourceId);
-    }
-
-    String getFunctionId(LambdaFunctionFailedEventAttributes attributes) {
-        Long sourceId = attributes.getScheduledEventId();
-        return lambdaSchedulingEventIdToLambdaId.get(sourceId);
-    }
-
-    String getFunctionId(LambdaFunctionTimedOutEventAttributes attributes) {
-        Long sourceId = attributes.getScheduledEventId();
-        return lambdaSchedulingEventIdToLambdaId.get(sourceId);
-    }
-
     String getSignalIdFromExternalWorkflowExecutionSignaled(long initiatedEventId) {
         return signalInitiatedEventIdToSignalId.get(initiatedEventId);
     }
 
     private FailWorkflowExecutionDecisionAttributes createFailWorkflowInstanceAttributes(Throwable failure) {
         String reason;
-        String details;
+        byte[] details;
         if (failure instanceof WorkflowException) {
             WorkflowException f = (WorkflowException) failure;
             reason = f.getReason();
@@ -595,11 +458,11 @@ class DecisionsHelper {
             reason = failure.getMessage();
             StringWriter sw = new StringWriter();
             failure.printStackTrace(new PrintWriter(sw));
-            details = sw.toString();
+            details = sw.toString().getBytes(TaskPoller.UTF8_CHARSET);
         }
         FailWorkflowExecutionDecisionAttributes result = new FailWorkflowExecutionDecisionAttributes();
         result.setReason(WorkflowExecutionUtils.truncateReason(reason));
-        result.setDetails(WorkflowExecutionUtils.truncateDetails(details));
+        result.setDetails(details);
         return result;
     }
 

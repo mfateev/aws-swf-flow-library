@@ -15,7 +15,6 @@
 package com.amazonaws.services.simpleworkflow.flow;
 
 import com.amazonaws.services.simpleworkflow.flow.core.Promise;
-import com.amazonaws.services.simpleworkflow.model.DecisionTask;
 
 /**
  * Clock that must be used inside workflow definition code to ensure replay
@@ -24,7 +23,7 @@ import com.amazonaws.services.simpleworkflow.model.DecisionTask;
 public interface WorkflowClock {
 
     /**
-     * @return time of the {@link DecisionTask} start event of the decision
+     * @return time of the {@link com.uber.cadence.PollForDecisionTaskResponse} start event of the decision
      *         being processed or replayed.
      */
     public long currentTimeMillis();
@@ -40,7 +39,7 @@ public interface WorkflowClock {
     /**
      * Create a Value that becomes ready after the specified delay.
      * 
-     * @param delay
+     * @param delaySeconds
      *            time-interval after which the Value becomes ready in seconds.
      * @return Promise that becomes ready after the specified delay.
      */

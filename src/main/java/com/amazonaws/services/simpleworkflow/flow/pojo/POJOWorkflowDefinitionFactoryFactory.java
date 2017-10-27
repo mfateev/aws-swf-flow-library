@@ -27,25 +27,20 @@ import java.util.Set;
 import com.amazonaws.services.simpleworkflow.flow.DataConverter;
 import com.amazonaws.services.simpleworkflow.flow.DecisionContext;
 import com.amazonaws.services.simpleworkflow.flow.JsonDataConverter;
-import com.amazonaws.services.simpleworkflow.flow.WorkflowTypeRegistrationOptions;
 import com.amazonaws.services.simpleworkflow.flow.annotations.Execute;
 import com.amazonaws.services.simpleworkflow.flow.annotations.GetState;
 import com.amazonaws.services.simpleworkflow.flow.annotations.NullDataConverter;
 import com.amazonaws.services.simpleworkflow.flow.annotations.Signal;
 import com.amazonaws.services.simpleworkflow.flow.annotations.SkipTypeRegistration;
 import com.amazonaws.services.simpleworkflow.flow.annotations.Workflow;
-import com.amazonaws.services.simpleworkflow.flow.annotations.WorkflowRegistrationOptions;
-import com.amazonaws.services.simpleworkflow.flow.common.FlowConstants;
 import com.amazonaws.services.simpleworkflow.flow.core.Promise;
 import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinitionFactory;
 import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinitionFactoryFactory;
-import com.amazonaws.services.simpleworkflow.model.WorkflowType;
+import com.uber.cadence.WorkflowType;
 
 public class POJOWorkflowDefinitionFactoryFactory extends WorkflowDefinitionFactoryFactory {
 
     private DataConverter converter = new JsonDataConverter();
-
-    private List<WorkflowType> workflowTypesToRegister = new ArrayList<WorkflowType>();
 
     private Map<WorkflowType, WorkflowDefinitionFactory> factories = new HashMap<WorkflowType, WorkflowDefinitionFactory>();
 
@@ -62,11 +57,6 @@ public class POJOWorkflowDefinitionFactoryFactory extends WorkflowDefinitionFact
     @Override
     public WorkflowDefinitionFactory getWorkflowDefinitionFactory(WorkflowType workflowType) {
         return factories.get(workflowType);
-    }
-
-    @Override
-    public Iterable<WorkflowType> getWorkflowTypesToRegister() {
-        return workflowTypesToRegister;
     }
 
     public void addWorkflowImplementationType(Class<?> workflowImplementationType)
@@ -113,7 +103,6 @@ public class POJOWorkflowDefinitionFactoryFactory extends WorkflowDefinitionFact
         MethodConverterPair workflowImplementationMethod = null;
         MethodConverterPair getStateMethod = null;
         WorkflowType workflowType = null;
-        WorkflowTypeRegistrationOptions registrationOptions = null;
         Map<String, MethodConverterPair> signals = new HashMap<String, MethodConverterPair>();
         for (Method method : interfaze.getMethods()) {
             if (method.getDeclaringClass().getAnnotation(Workflow.class) == null) {
@@ -152,7 +141,6 @@ public class POJOWorkflowDefinitionFactoryFactory extends WorkflowDefinitionFact
                         throw new IllegalArgumentException(
                                 "@WorkflowRegistrationOptions is required for the interface that contains method annotated with @Execute");
                     }
-                    registrationOptions = createRegistrationOptions(registrationOptionsAnnotation);
                 }
                 else {
                     if (registrationOptionsAnnotation != null) {
@@ -191,12 +179,9 @@ public class POJOWorkflowDefinitionFactoryFactory extends WorkflowDefinitionFact
         POJOWorkflowImplementationFactory implementationFactory = getImplementationFactory(workflowImplementationType, interfaze,
                 workflowType);
         WorkflowDefinitionFactory factory = new POJOWorkflowDefinitionFactory(implementationFactory, workflowType,
-                registrationOptions, workflowImplementationMethod, signals, getStateMethod, constructorArgs);
+                workflowImplementationMethod, signals, getStateMethod, constructorArgs);
         factories.put(workflowType, factory);
         workflowImplementationTypes.add(workflowImplementationType);
-        if (factory.getWorkflowRegistrationOptions() != null) {
-            workflowTypesToRegister.add(workflowType);
-        }
     }
 
     private void checkAnnotationUniqueness(Method method, Object... annotations) {
@@ -323,34 +308,6 @@ public class POJOWorkflowDefinitionFactoryFactory extends WorkflowDefinitionFact
                             + getMethodFullName(method));
         }
         workflowType.setName(workflowName);
-        workflowType.setVersion(executeAnnotation.version());
         return workflowType;
-    }
-
-    protected WorkflowTypeRegistrationOptions createRegistrationOptions(WorkflowRegistrationOptions registrationOptionsAnnotation) {
-
-        WorkflowTypeRegistrationOptions result = new WorkflowTypeRegistrationOptions();
-
-        result.setDescription(emptyStringToNull(registrationOptionsAnnotation.description()));
-        result.setDefaultExecutionStartToCloseTimeoutSeconds(registrationOptionsAnnotation.defaultExecutionStartToCloseTimeoutSeconds());
-        result.setDefaultTaskStartToCloseTimeoutSeconds(registrationOptionsAnnotation.defaultTaskStartToCloseTimeoutSeconds());
-
-        String taskList = registrationOptionsAnnotation.defaultTaskList();
-        if (!taskList.equals(FlowConstants.USE_WORKER_TASK_LIST)) {
-            result.setDefaultTaskList(taskList);
-        }
-        result.setDefaultChildPolicy(registrationOptionsAnnotation.defaultChildPolicy());
-        String defaultLambdaRole = registrationOptionsAnnotation.defaultLambdaRole();
-        if (defaultLambdaRole != null && !defaultLambdaRole.isEmpty()) {
-            result.setDefaultLambdaRole(defaultLambdaRole);
-        }
-        return result;
-    }
-
-    private static String emptyStringToNull(String value) {
-        if (value.length() == 0) {
-            return null;
-        }
-        return value;
     }
 }

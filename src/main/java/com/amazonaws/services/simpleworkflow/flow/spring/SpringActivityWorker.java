@@ -18,14 +18,14 @@ import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.uber.cadence.ActivityType;
+import com.uber.cadence.WorkflowService;
 import org.springframework.context.SmartLifecycle;
 
-import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
 import com.amazonaws.services.simpleworkflow.flow.DataConverter;
 import com.amazonaws.services.simpleworkflow.flow.WorkerBase;
 import com.amazonaws.services.simpleworkflow.flow.pojo.POJOActivityImplementationFactory;
 import com.amazonaws.services.simpleworkflow.flow.worker.GenericActivityWorker;
-import com.amazonaws.services.simpleworkflow.model.ActivityType;
 
 public class SpringActivityWorker implements WorkerBase, SmartLifecycle {
     
@@ -44,16 +44,16 @@ public class SpringActivityWorker implements WorkerBase, SmartLifecycle {
         genericWorker.setActivityImplementationFactory(factory);
     }
 
-    public SpringActivityWorker(AmazonSimpleWorkflow service, String domain, String taskListToPoll) {
+    public SpringActivityWorker(WorkflowService.Iface service, String domain, String taskListToPoll) {
         genericWorker = new GenericActivityWorker(service, domain, taskListToPoll);
         genericWorker.setActivityImplementationFactory(factory);
     }
     
-    public AmazonSimpleWorkflow getService() {
+    public WorkflowService.Iface getService() {
         return genericWorker.getService();
     }
 
-    public void setService(AmazonSimpleWorkflow service) {
+    public void setService(WorkflowService.Iface service) {
         genericWorker.setService(service);
     }
     
@@ -73,11 +73,11 @@ public class SpringActivityWorker implements WorkerBase, SmartLifecycle {
         genericWorker.setRegisterDomain(registerDomain);
     }
     
-    public long getDomainRetentionPeriodInDays() {
+    public int getDomainRetentionPeriodInDays() {
         return genericWorker.getDomainRetentionPeriodInDays();
     }
     
-    public void setDomainRetentionPeriodInDays(long domainRetentionPeriodInDays) {
+    public void setDomainRetentionPeriodInDays(int domainRetentionPeriodInDays) {
         genericWorker.setDomainRetentionPeriodInDays(domainRetentionPeriodInDays);
     }
     
@@ -169,13 +169,13 @@ public class SpringActivityWorker implements WorkerBase, SmartLifecycle {
         genericWorker.setTaskExecutorThreadPoolSize(taskExecutorThreadPoolSize);
     }
     
-    public boolean isDisableServiceShutdownOnStop() {
-        return genericWorker.isDisableServiceShutdownOnStop();
-    }
-    
-    public void setDisableServiceShutdownOnStop(boolean disableServiceShutdownOnStop) {
-        genericWorker.setDisableServiceShutdownOnStop(disableServiceShutdownOnStop);
-    }
+//    public boolean isDisableServiceShutdownOnStop() {
+//        return genericWorker.isDisableServiceShutdownOnStop();
+//    }
+//
+//    public void setDisableServiceShutdownOnStop(boolean disableServiceShutdownOnStop) {
+//        genericWorker.setDisableServiceShutdownOnStop(disableServiceShutdownOnStop);
+//    }
     
     public void suspendPolling() {
         genericWorker.suspendPolling();
@@ -242,11 +242,6 @@ public class SpringActivityWorker implements WorkerBase, SmartLifecycle {
         return factory.addActivitiesImplementation(activitiesImplementation);
     }
 
-    @Override
-    public void registerTypesToPoll() {
-        genericWorker.registerTypesToPoll();
-    }
-
     /**
      * @return default is 0
      */
@@ -278,16 +273,6 @@ public class SpringActivityWorker implements WorkerBase, SmartLifecycle {
 
     public void setDisableAutoStartup(boolean disableAutoStartup) {
         this.disableAutoStartup = disableAutoStartup;
-    }
-    
-    @Override
-    public void setDisableTypeRegistrationOnStart(boolean disableTypeRegistrationOnStart) {
-        genericWorker.setDisableTypeRegistrationOnStart(disableTypeRegistrationOnStart);
-    }
-
-    @Override
-    public boolean isDisableTypeRegistrationOnStart() {
-        return genericWorker.isDisableTypeRegistrationOnStart();
     }
 
     @Override

@@ -14,18 +14,12 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CancellationException;
-
 import com.amazonaws.services.simpleworkflow.flow.ChildWorkflowFailedException;
 import com.amazonaws.services.simpleworkflow.flow.ChildWorkflowTerminatedException;
 import com.amazonaws.services.simpleworkflow.flow.ChildWorkflowTimedOutException;
 import com.amazonaws.services.simpleworkflow.flow.SignalExternalWorkflowException;
 import com.amazonaws.services.simpleworkflow.flow.StartChildWorkflowFailedException;
 import com.amazonaws.services.simpleworkflow.flow.WorkflowContext;
-import com.amazonaws.services.simpleworkflow.flow.common.FlowHelpers;
 import com.amazonaws.services.simpleworkflow.flow.core.ExternalTask;
 import com.amazonaws.services.simpleworkflow.flow.core.ExternalTaskCancellationHandler;
 import com.amazonaws.services.simpleworkflow.flow.core.ExternalTaskCompletionHandle;
@@ -35,26 +29,27 @@ import com.amazonaws.services.simpleworkflow.flow.core.Settable;
 import com.amazonaws.services.simpleworkflow.flow.core.Task;
 import com.amazonaws.services.simpleworkflow.flow.generic.ContinueAsNewWorkflowExecutionParameters;
 import com.amazonaws.services.simpleworkflow.flow.generic.GenericWorkflowClient;
-import com.amazonaws.services.simpleworkflow.flow.generic.SignalExternalWorkflowParameters;
 import com.amazonaws.services.simpleworkflow.flow.generic.StartChildWorkflowExecutionParameters;
 import com.amazonaws.services.simpleworkflow.flow.generic.StartChildWorkflowReply;
-import com.amazonaws.services.simpleworkflow.model.ChildPolicy;
-import com.amazonaws.services.simpleworkflow.model.ChildWorkflowExecutionCanceledEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.ChildWorkflowExecutionCompletedEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.ChildWorkflowExecutionFailedEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.ChildWorkflowExecutionStartedEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.ChildWorkflowExecutionTerminatedEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.ChildWorkflowExecutionTimedOutEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.ExternalWorkflowExecutionSignaledEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.HistoryEvent;
-import com.amazonaws.services.simpleworkflow.model.RequestCancelExternalWorkflowExecutionDecisionAttributes;
-import com.amazonaws.services.simpleworkflow.model.SignalExternalWorkflowExecutionDecisionAttributes;
-import com.amazonaws.services.simpleworkflow.model.SignalExternalWorkflowExecutionFailedEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.StartChildWorkflowExecutionDecisionAttributes;
-import com.amazonaws.services.simpleworkflow.model.StartChildWorkflowExecutionFailedEventAttributes;
-import com.amazonaws.services.simpleworkflow.model.TaskList;
-import com.amazonaws.services.simpleworkflow.model.WorkflowExecution;
-import com.amazonaws.services.simpleworkflow.model.WorkflowType;
+import com.uber.cadence.ChildPolicy;
+import com.uber.cadence.ChildWorkflowExecutionCanceledEventAttributes;
+import com.uber.cadence.ChildWorkflowExecutionCompletedEventAttributes;
+import com.uber.cadence.ChildWorkflowExecutionFailedCause;
+import com.uber.cadence.ChildWorkflowExecutionFailedEventAttributes;
+import com.uber.cadence.ChildWorkflowExecutionStartedEventAttributes;
+import com.uber.cadence.ChildWorkflowExecutionTerminatedEventAttributes;
+import com.uber.cadence.ChildWorkflowExecutionTimedOutEventAttributes;
+import com.uber.cadence.HistoryEvent;
+import com.uber.cadence.RequestCancelExternalWorkflowExecutionDecisionAttributes;
+import com.uber.cadence.StartChildWorkflowExecutionDecisionAttributes;
+import com.uber.cadence.StartChildWorkflowExecutionFailedEventAttributes;
+import com.uber.cadence.TaskList;
+import com.uber.cadence.WorkflowExecution;
+import com.uber.cadence.WorkflowType;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CancellationException;
 
 class GenericWorkflowClientImpl implements GenericWorkflowClient {
 
@@ -62,7 +57,7 @@ class GenericWorkflowClientImpl implements GenericWorkflowClient {
 
         private String runId;
 
-        private final Settable<String> result = new Settable<String>();
+        private final Settable<byte[]> result = new Settable<>();
 
         public StartChildWorkflowReplyImpl(String runId, String description) {
             this.runId = runId;
@@ -75,11 +70,11 @@ class GenericWorkflowClientImpl implements GenericWorkflowClient {
         }
 
         @Override
-        public Promise<String> getResult() {
+        public Promise<byte[]> getResult() {
             return result;
         }
 
-        public void setResult(String value) {
+        public void setResult(byte[] value) {
             result.set(value);
         }
 
@@ -139,22 +134,23 @@ class GenericWorkflowClientImpl implements GenericWorkflowClient {
         }
         attributes.setWorkflowId(workflowId);
         attributes.setInput(parameters.getInput());
-        attributes.setExecutionStartToCloseTimeout(FlowHelpers.secondsToDuration(parameters.getExecutionStartToCloseTimeoutSeconds()));
-        attributes.setTaskStartToCloseTimeout(FlowHelpers.secondsToDuration(parameters.getTaskStartToCloseTimeoutSeconds()));
-        attributes.setTaskPriority(FlowHelpers.taskPriorityToString(parameters.getTaskPriority()));
-        List<String> tagList = parameters.getTagList();
-        if (tagList != null) {
-            attributes.setTagList(tagList);
-        }
+        attributes.setExecutionStartToCloseTimeoutSeconds(parameters.getExecutionStartToCloseTimeoutSeconds());
+        attributes.setTaskStartToCloseTimeoutSeconds(parameters.getTaskStartToCloseTimeoutSeconds());
+//        attributes.setTaskPriority(FlowHelpers.taskPriorityToString(parameters.getTaskPriority()));
+//        List<String> tagList = parameters.getTagList();
+//        if (tagList != null) {
+//            attributes.setTagList(tagList);
+//        }
         ChildPolicy childPolicy = parameters.getChildPolicy();
         if (childPolicy != null) {
             attributes.setChildPolicy(childPolicy);
         }
         String taskList = parameters.getTaskList();
         if (taskList != null && !taskList.isEmpty()) {
-            attributes.setTaskList(new TaskList().withName(taskList));
+            TaskList tl = new TaskList();
+            tl.setName(taskList);
+            attributes.setTaskList(tl);
         }
-        attributes.setLambdaRole(parameters.getLambdaRole());
         String taskName = "workflowId=" + workflowId + ", workflowType=" + attributes.getWorkflowType();
         new ExternalTask() {
 
@@ -171,72 +167,74 @@ class GenericWorkflowClientImpl implements GenericWorkflowClient {
     }
 
     @Override
-    public Promise<String> startChildWorkflow(String workflow, String version, String input) {
+    public Promise<byte[]> startChildWorkflow(String workflow, byte[] input) {
         StartChildWorkflowExecutionParameters parameters = new StartChildWorkflowExecutionParameters();
-        parameters.setWorkflowType(new WorkflowType().withName(workflow).withVersion(version));
+        WorkflowType workflowType = new WorkflowType();
+        workflowType.setName(workflow);
+        parameters.setWorkflowType(workflowType);
         parameters.setInput(input);
         final Promise<StartChildWorkflowReply> started = startChildWorkflow(parameters);
-        return new Functor<String>(started) {
+        return new Functor<byte[]>(started) {
 
             @Override
-            protected Promise<String> doExecute() throws Throwable {
+            protected Promise<byte[]> doExecute() throws Throwable {
                 return started.get().getResult();
             }
         };
     }
 
     @Override
-    public Promise<String> startChildWorkflow(final String workflow, final String version, final Promise<String> input) {
-        final Settable<String> result = new Settable<String>();
+    public Promise<byte[]> startChildWorkflow(final String workflow, final Promise<byte[]> input) {
+        final Settable<byte[]> result = new Settable<>();
 
         new Task(input) {
 
             @Override
             protected void doExecute() throws Throwable {
-                result.chain(startChildWorkflow(workflow, version, input.get()));
+                result.chain(startChildWorkflow(workflow, input.get()));
             }
         };
         return result;
     }
 
-    @Override
-    public Promise<Void> signalWorkflowExecution(final SignalExternalWorkflowParameters parameters) {
-        final OpenRequestInfo<Void, Void> context = new OpenRequestInfo<Void, Void>();
-        final SignalExternalWorkflowExecutionDecisionAttributes attributes = new SignalExternalWorkflowExecutionDecisionAttributes();
-        String signalId = decisions.getNextId();
-        attributes.setControl(signalId);
-        attributes.setSignalName(parameters.getSignalName());
-        attributes.setInput(parameters.getInput());
-        attributes.setRunId(parameters.getRunId());
-        attributes.setWorkflowId(parameters.getWorkflowId());
-        String taskName = "signalId=" + signalId + ", workflowId=" + parameters.getWorkflowId() + ", workflowRunId="
-                + parameters.getRunId();
-        new ExternalTask() {
-
-            @Override
-            protected ExternalTaskCancellationHandler doExecute(final ExternalTaskCompletionHandle handle) throws Throwable {
-
-                decisions.signalExternalWorkflowExecution(attributes);
-                context.setCompletionHandle(handle);
-                final String finalSignalId = attributes.getControl();
-                scheduledSignals.put(finalSignalId, context);
-                return new ExternalTaskCancellationHandler() {
-
-                    @Override
-                    public void handleCancellation(Throwable cause) {
-                        decisions.cancelSignalExternalWorkflowExecution(finalSignalId, null);
-                        OpenRequestInfo<Void, Void> scheduled = scheduledSignals.remove(finalSignalId);
-                        if (scheduled == null) {
-                            throw new IllegalArgumentException("Signal \"" + finalSignalId + "\" wasn't scheduled");
-                        }
-                        handle.complete();
-                    }
-                };
-            }
-        }.setName(taskName);
-        context.setResultDescription("signalWorkflowExecution " + taskName);
-        return context.getResult();
-    }
+//    @Override
+//    public Promise<Void> signalWorkflowExecution(final SignalExternalWorkflowParameters parameters) {
+//        final OpenRequestInfo<Void, Void> context = new OpenRequestInfo<Void, Void>();
+//        final SignalExternalWorkflowExecutionDecisionAttributes attributes = new SignalExternalWorkflowExecutionDecisionAttributes();
+//        String signalId = decisions.getNextId();
+//        attributes.setControl(signalId);
+//        attributes.setSignalName(parameters.getSignalName());
+//        attributes.setInput(parameters.getInput());
+//        attributes.setRunId(parameters.getRunId());
+//        attributes.setWorkflowId(parameters.getWorkflowId());
+//        String taskName = "signalId=" + signalId + ", workflowId=" + parameters.getWorkflowId() + ", workflowRunId="
+//                + parameters.getRunId();
+//        new ExternalTask() {
+//
+//            @Override
+//            protected ExternalTaskCancellationHandler doExecute(final ExternalTaskCompletionHandle handle) throws Throwable {
+//
+//                decisions.signalExternalWorkflowExecution(attributes);
+//                context.setCompletionHandle(handle);
+//                final String finalSignalId = attributes.getControl();
+//                scheduledSignals.put(finalSignalId, context);
+//                return new ExternalTaskCancellationHandler() {
+//
+//                    @Override
+//                    public void handleCancellation(Throwable cause) {
+//                        decisions.cancelSignalExternalWorkflowExecution(finalSignalId, null);
+//                        OpenRequestInfo<Void, Void> scheduled = scheduledSignals.remove(finalSignalId);
+//                        if (scheduled == null) {
+//                            throw new IllegalArgumentException("Signal \"" + finalSignalId + "\" wasn't scheduled");
+//                        }
+//                        handle.complete();
+//                    }
+//                };
+//            }
+//        }.setName(taskName);
+//        context.setResultDescription("signalWorkflowExecution " + taskName);
+//        return context.getResult();
+//    }
 
     @Override
     public void requestCancelWorkflowExecution(WorkflowExecution execution) {
@@ -337,7 +335,7 @@ class GenericWorkflowClientImpl implements GenericWorkflowClient {
                 WorkflowExecution workflowExecution = new WorkflowExecution();
                 workflowExecution.setWorkflowId(workflowId);
                 WorkflowType workflowType = attributes.getWorkflowType();
-                String cause = attributes.getCause();
+                ChildWorkflowExecutionFailedCause cause = attributes.getCause();
                 Exception failure = new StartChildWorkflowFailedException(event.getEventId(), workflowExecution, workflowType,
                         cause);
                 ExternalTaskCompletionHandle context = scheduled.getCompletionHandle();
@@ -354,7 +352,7 @@ class GenericWorkflowClientImpl implements GenericWorkflowClient {
             OpenRequestInfo<StartChildWorkflowReply, WorkflowType> scheduled = scheduledExternalWorkflows.remove(workflowId);
             if (scheduled != null) {
                 String reason = attributes.getReason();
-                String details = attributes.getDetails();
+                byte[] details = attributes.getDetails();
                 Exception failure = new ChildWorkflowFailedException(event.getEventId(), execution, attributes.getWorkflowType(),
                         reason, details);
                 ExternalTaskCompletionHandle context = scheduled.getCompletionHandle();
@@ -371,7 +369,7 @@ class GenericWorkflowClientImpl implements GenericWorkflowClient {
             OpenRequestInfo<StartChildWorkflowReply, WorkflowType> scheduled = scheduledExternalWorkflows.remove(workflowId);
             if (scheduled != null) {
                 ExternalTaskCompletionHandle context = scheduled.getCompletionHandle();
-                String result = attributes.getResult();
+                byte[] result = attributes.getResult();
                 StartChildWorkflowReplyImpl startedReply = (StartChildWorkflowReplyImpl) scheduled.getResult().get();
                 startedReply.setResult(result);
                 context.complete();
@@ -379,32 +377,33 @@ class GenericWorkflowClientImpl implements GenericWorkflowClient {
         }
     }
 
-    void handleSignalExternalWorkflowExecutionFailed(HistoryEvent event) {
-        SignalExternalWorkflowExecutionFailedEventAttributes attributes = event.getSignalExternalWorkflowExecutionFailedEventAttributes();
-        String signalId = attributes.getControl();
-        if (decisions.handleSignalExternalWorkflowExecutionFailed(signalId)) {
-            OpenRequestInfo<Void, Void> signalContextAndResult = scheduledSignals.remove(signalId);
-            if (signalContextAndResult != null) {
-                WorkflowExecution signaledExecution = new WorkflowExecution();
-                signaledExecution.setWorkflowId(attributes.getWorkflowId());
-                signaledExecution.setRunId(attributes.getRunId());
-                Throwable failure = new SignalExternalWorkflowException(event.getEventId(), signaledExecution,
-                        attributes.getCause());
-                signalContextAndResult.getCompletionHandle().fail(failure);
-            }
-        }
-    }
-
-    void handleExternalWorkflowExecutionSignaled(HistoryEvent event) {
-        ExternalWorkflowExecutionSignaledEventAttributes attributes = event.getExternalWorkflowExecutionSignaledEventAttributes();
-        String signalId = decisions.getSignalIdFromExternalWorkflowExecutionSignaled(attributes.getInitiatedEventId());
-        if (decisions.handleExternalWorkflowExecutionSignaled(signalId)) {
-            OpenRequestInfo<Void, Void> signalContextAndResult = scheduledSignals.remove(signalId);
-            if (signalContextAndResult != null) {
-                signalContextAndResult.getResult().set(null);
-                signalContextAndResult.getCompletionHandle().complete();
-            }
-        }
-    }
+    // TODO(Cadence): Impelement signal decision
+//    void handleSignalExternalWorkflowExecutionFailed(HistoryEvent event) {
+//        SignalExternalWorkflowExecutionFailedEventAttributes attributes = event.getSignalExternalWorkflowExecutionFailedEventAttributes();
+//        String signalId = attributes.getControl();
+//        if (decisions.handleSignalExternalWorkflowExecutionFailed(signalId)) {
+//            OpenRequestInfo<Void, Void> signalContextAndResult = scheduledSignals.remove(signalId);
+//            if (signalContextAndResult != null) {
+//                WorkflowExecution signaledExecution = new WorkflowExecution();
+//                signaledExecution.setWorkflowId(attributes.getWorkflowId());
+//                signaledExecution.setRunId(attributes.getRunId());
+//                Throwable failure = new SignalExternalWorkflowException(event.getEventId(), signaledExecution,
+//                        attributes.getCause());
+//                signalContextAndResult.getCompletionHandle().fail(failure);
+//            }
+//        }
+//    }
+//
+//    void handleExternalWorkflowExecutionSignaled(HistoryEvent event) {
+//        ExternalWorkflowExecutionSignaledEventAttributes attributes = event.getExternalWorkflowExecutionSignaledEventAttributes();
+//        String signalId = decisions.getSignalIdFromExternalWorkflowExecutionSignaled(attributes.getInitiatedEventId());
+//        if (decisions.handleExternalWorkflowExecutionSignaled(signalId)) {
+//            OpenRequestInfo<Void, Void> signalContextAndResult = scheduledSignals.remove(signalId);
+//            if (signalContextAndResult != null) {
+//                signalContextAndResult.getResult().set(null);
+//                signalContextAndResult.getCompletionHandle().complete();
+//            }
+//        }
+//    }
 
 }

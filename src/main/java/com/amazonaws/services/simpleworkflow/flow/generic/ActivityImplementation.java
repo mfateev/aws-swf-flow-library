@@ -17,13 +17,10 @@ package com.amazonaws.services.simpleworkflow.flow.generic;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 
-import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
 import com.amazonaws.services.simpleworkflow.flow.ActivityExecutionContext;
 import com.amazonaws.services.simpleworkflow.flow.ActivityFailureException;
 import com.amazonaws.services.simpleworkflow.flow.ActivityWorker;
 import com.amazonaws.services.simpleworkflow.flow.worker.ActivityTypeExecutionOptions;
-import com.amazonaws.services.simpleworkflow.flow.worker.ActivityTypeRegistrationOptions;
-import com.amazonaws.services.simpleworkflow.model.ActivityTask;
 
 /**
  * Base class for activity implementation. Extending
@@ -37,27 +34,17 @@ import com.amazonaws.services.simpleworkflow.model.ActivityTask;
  */
 public abstract class ActivityImplementation {
 
-    /**
-     * Options passed to the
-     * {@link AmazonSimpleWorkflow#registerActivityType(com.amazonaws.services.simpleworkflow.model.RegisterActivityTypeRequest)}
-     * call.
-     * 
-     * @return null if activity registration is not required on the worker
-     *         startup
-     */
-    public abstract ActivityTypeRegistrationOptions getRegistrationOptions();
-
     public abstract ActivityTypeExecutionOptions getExecutionOptions();
 
     /**
      * Execute external activity or initiate its execution if
-     * {@link #isManualActivityCompletion()} is <code>true</code>.
+     * {@link ActivityTypeExecutionOptions#isManualActivityCompletion()} is <code>true</code>.
      * 
-     * @param task
+     * @param context
      *            information about activity to be executed. Use
-     *            {@link ActivityTask#getInput()} to get activity input
+     *            {@link com.uber.cadence.PollForActivityTaskResponse#getInput()} to get activity input
      *            arguments.
-     * @return result of activity execution if {@link #isManualActivityCompletion()} is set
+     * @return result of activity execution if {@link ActivityTypeExecutionOptions#isManualActivityCompletion()} is set
      *         to false. Use
      *         {@link ActivityWorker#respondActivityTaskCompleted(String, Map)}
      *         to return result in asynchronous case.

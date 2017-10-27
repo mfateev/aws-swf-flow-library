@@ -14,11 +14,7 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
-import com.amazonaws.services.simpleworkflow.model.CancelTimerDecisionAttributes;
-import com.amazonaws.services.simpleworkflow.model.Decision;
-import com.amazonaws.services.simpleworkflow.model.DecisionType;
-import com.amazonaws.services.simpleworkflow.model.HistoryEvent;
-import com.amazonaws.services.simpleworkflow.model.StartTimerDecisionAttributes;
+import com.uber.cadence.*;
 
 /**
  * Timer doesn't have separate initiation decision as it is started immediately.
@@ -105,14 +101,14 @@ class TimerDecisionStateMachine extends DecisionStateMachineBase {
         tryCancel.setTimerId(attributes.getTimerId());
         Decision decision = new Decision();
         decision.setCancelTimerDecisionAttributes(tryCancel);
-        decision.setDecisionType(DecisionType.CancelTimer.toString());
+        decision.setDecisionType(DecisionType.CancelTimer);
         return decision;
     }
 
     private Decision createStartTimerDecision() {
         Decision decision = new Decision();
         decision.setStartTimerDecisionAttributes(attributes);
-        decision.setDecisionType(DecisionType.StartTimer.toString());
+        decision.setDecisionType(DecisionType.StartTimer);
         return decision;
     }
 

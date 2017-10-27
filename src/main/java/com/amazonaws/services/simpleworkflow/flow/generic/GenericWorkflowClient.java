@@ -28,11 +28,11 @@ public interface GenericWorkflowClient {
      */
     Promise<StartChildWorkflowReply> startChildWorkflow(StartChildWorkflowExecutionParameters parameters);
 
-    Promise<String> startChildWorkflow(String workflow, byte[] input);
+    Promise<byte[]> startChildWorkflow(String workflow, byte[] input);
 
-    Promise<String> startChildWorkflow(String workflow, Promise<byte[]> input);
+    Promise<byte[]> startChildWorkflow(String workflow, Promise<byte[]> input);
 
-    Promise<Void> signalWorkflowExecution(SignalExternalWorkflowParameters signalParameters);
+// TODO(Cadence):   Promise<Void> signalWorkflowExecution(SignalExternalWorkflowParameters signalParameters);
 
     void requestCancelWorkflowExecution(WorkflowExecution execution);
 

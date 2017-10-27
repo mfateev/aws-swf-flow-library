@@ -1,7 +1,7 @@
 package com.amazonaws.services.simpleworkflow.flow.generic;
 
-import com.amazonaws.services.simpleworkflow.model.ChildPolicy;
-import com.amazonaws.services.simpleworkflow.model.WorkflowExecution;
+import com.uber.cadence.ChildPolicy;
+import com.uber.cadence.WorkflowExecution;
 
 public class TerminateWorkflowExecutionParameters {
 
@@ -11,13 +11,13 @@ public class TerminateWorkflowExecutionParameters {
 
     private String reason;
 
-    private String details;
+    private byte[] details;
 
     public TerminateWorkflowExecutionParameters() {
     }
 
     public TerminateWorkflowExecutionParameters(WorkflowExecution workflowExecution, ChildPolicy childPolicy, String reason,
-            String details) {
+                                                byte[] details) {
         this.workflowExecution = workflowExecution;
         this.childPolicy = childPolicy;
         this.reason = reason;
@@ -63,15 +63,15 @@ public class TerminateWorkflowExecutionParameters {
         return this;
     }
 
-    public String getDetails() {
+    public byte[] getDetails() {
         return details;
     }
 
-    public void setDetails(String details) {
+    public void setDetails(byte[] details) {
         this.details = details;
     }
 
-    public TerminateWorkflowExecutionParameters withDetails(String details) {
+    public TerminateWorkflowExecutionParameters withDetails(byte[] details) {
         this.details = details;
         return this;
     }

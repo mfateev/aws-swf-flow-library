@@ -30,8 +30,8 @@ import com.amazonaws.services.simpleworkflow.flow.pojo.POJOWorkflowDefinitionFac
 import com.amazonaws.services.simpleworkflow.flow.pojo.POJOWorkflowImplementationFactory;
 import com.amazonaws.services.simpleworkflow.flow.spring.POJOWorkflowStubImplementationFactory;
 import com.amazonaws.services.simpleworkflow.flow.test.TestGenericWorkflowClient;
-import com.amazonaws.services.simpleworkflow.model.WorkflowExecution;
-import com.amazonaws.services.simpleworkflow.model.WorkflowType;
+import com.uber.cadence.WorkflowExecution;
+import com.uber.cadence.WorkflowType;
 
 public class SpringTestPOJOWorkflowImplementationGenericWorkflowClient implements GenericWorkflowClient {
 
@@ -88,12 +88,12 @@ public class SpringTestPOJOWorkflowImplementationGenericWorkflowClient implement
         return genericClient.startChildWorkflow(parameters);
     }
 
-    public Promise<String> startChildWorkflow(String workflow, String version, String input) {
-        return genericClient.startChildWorkflow(workflow, version, input);
+    public Promise<byte[]> startChildWorkflow(String workflow, byte[] input) {
+        return genericClient.startChildWorkflow(workflow, input);
     }
 
-    public Promise<String> startChildWorkflow(String workflow, String version, Promise<String> input) {
-        return genericClient.startChildWorkflow(workflow, version, input);
+    public Promise<byte[]> startChildWorkflow(String workflow, Promise<byte[]> input) {
+        return genericClient.startChildWorkflow(workflow, input);
     }
 
     public Promise<Void> signalWorkflowExecution(SignalExternalWorkflowParameters signalParameters) {
@@ -104,7 +104,7 @@ public class SpringTestPOJOWorkflowImplementationGenericWorkflowClient implement
         genericClient.requestCancelWorkflowExecution(execution);
     }
 
-    public String getWorkflowState(WorkflowExecution execution) throws WorkflowException {
+    public byte[] getWorkflowState(WorkflowExecution execution) throws WorkflowException {
         return genericClient.getWorkflowState(execution);
     }
 
@@ -123,9 +123,4 @@ public class SpringTestPOJOWorkflowImplementationGenericWorkflowClient implement
     public void setDataConverter(DataConverter converter) {
         getFactoryFactory().setDataConverter(converter);
     }
-
-    public Iterable<WorkflowType> getWorkflowTypesToRegister() {
-        return getFactoryFactory().getWorkflowTypesToRegister();
-    }
-    
 }

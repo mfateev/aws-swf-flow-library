@@ -18,8 +18,6 @@ import com.uber.cadence.PollForActivityTaskResponse;
 import com.uber.cadence.WorkflowService.Iface;
 import java.util.concurrent.CancellationException;
 
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.simpleworkflow.flow.annotations.ManualActivityCompletion;
 import com.amazonaws.services.simpleworkflow.flow.generic.ActivityImplementation;
 
@@ -54,22 +52,13 @@ public abstract class ActivityExecutionContext {
      * @param details
      *            In case of activity timeout details are returned as a field of
      *            the exception thrown.
-     * @throws AmazonClientException
-     *             If any internal errors are encountered inside the client
-     *             while attempting to make the request or handle the response.
-     *             For example if a network connection is not available.
-     * @throws AmazonServiceException
-     *             If an error response is returned by AmazonSimpleWorkflow
-     *             indicating either a problem with the data in the request.
-     *             Internal service errors are swallowed and not propagated to
-     *             the caller.
      * @throws CancellationException
      *             Indicates that activity cancellation was requested by the
      *             workflow.Should be rethrown from activity implementation to
      *             indicate successful cancellation.
      */
     public abstract void recordActivityHeartbeat(String details)
-            throws AmazonServiceException, AmazonClientException, CancellationException;
+            throws CancellationException;
 
     /**
      * @return an instance of the Simple Workflow Java client that is the same

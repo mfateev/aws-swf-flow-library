@@ -17,66 +17,66 @@ package com.amazonaws.services.simpleworkflow.flow;
 
 public class ActivitySchedulingOptions {
     
-    private Long heartbeatTimeoutSeconds;
+    private Integer heartbeatTimeoutSeconds;
     
-    private Long scheduleToCloseTimeoutSeconds;
+    private Integer scheduleToCloseTimeoutSeconds;
     
-    private Long scheduleToStartTimeoutSeconds;
+    private Integer scheduleToStartTimeoutSeconds;
 	
-    private Long startToCloseTimeoutSeconds;
+    private Integer startToCloseTimeoutSeconds;
 	
     private String taskList;
 	
     private Integer taskPriority;
     
-	public Long getHeartbeatTimeoutSeconds() {
+	public Integer getHeartbeatTimeoutSeconds() {
         return heartbeatTimeoutSeconds;
     }
 
-    public void setHeartbeatTimeoutSeconds(Long heartbeatTimeoutSeconds) {
+    public void setHeartbeatTimeoutSeconds(Integer heartbeatTimeoutSeconds) {
         this.heartbeatTimeoutSeconds = heartbeatTimeoutSeconds;
     }
     
-    public ActivitySchedulingOptions withHeartbeatTimeoutSeconds(Long heartbeatTimeoutSeconds) {
+    public ActivitySchedulingOptions withHeartbeatTimeoutSeconds(Integer heartbeatTimeoutSeconds) {
         this.heartbeatTimeoutSeconds = heartbeatTimeoutSeconds;
         return this;
     }
 	
-	public Long getScheduleToCloseTimeoutSeconds() {
+	public Integer getScheduleToCloseTimeoutSeconds() {
 		return scheduleToCloseTimeoutSeconds;
 	}
 	
-	public void setScheduleToCloseTimeoutSeconds(Long scheduleToCloseTimeoutSeconds) {
+	public void setScheduleToCloseTimeoutSeconds(Integer scheduleToCloseTimeoutSeconds) {
 		this.scheduleToCloseTimeoutSeconds = scheduleToCloseTimeoutSeconds;
 	}
 	
-	public ActivitySchedulingOptions withScheduleToCloseTimeoutSeconds(Long scheduleToCloseTimeoutSeconds) {
+	public ActivitySchedulingOptions withScheduleToCloseTimeoutSeconds(Integer scheduleToCloseTimeoutSeconds) {
 		this.scheduleToCloseTimeoutSeconds = scheduleToCloseTimeoutSeconds;
 		return this;
 	}
 	
-	public Long getScheduleToStartTimeoutSeconds() {
+	public Integer getScheduleToStartTimeoutSeconds() {
 		return scheduleToStartTimeoutSeconds;
 	}
 	
-	public void setScheduleToStartTimeoutSeconds(Long scheduleToStartTimeoutSeconds) {
+	public void setScheduleToStartTimeoutSeconds(Integer scheduleToStartTimeoutSeconds) {
 		this.scheduleToStartTimeoutSeconds = scheduleToStartTimeoutSeconds;
 	}
 	
-	public ActivitySchedulingOptions withScheduleToStartTimeoutSeconds(Long scheduleToStartTimeoutSeconds) {
+	public ActivitySchedulingOptions withScheduleToStartTimeoutSeconds(Integer scheduleToStartTimeoutSeconds) {
 		this.scheduleToStartTimeoutSeconds = scheduleToStartTimeoutSeconds;
 		return this;
 	}
 	
-	public Long getStartToCloseTimeoutSeconds() {
+	public Integer getStartToCloseTimeoutSeconds() {
         return startToCloseTimeoutSeconds;
     }
 
-    public void setStartToCloseTimeoutSeconds(Long startToCloseTimeoutSeconds) {
+    public void setStartToCloseTimeoutSeconds(Integer startToCloseTimeoutSeconds) {
         this.startToCloseTimeoutSeconds = startToCloseTimeoutSeconds;
     }
     
-    public ActivitySchedulingOptions withStartToCloseTimeoutSeconds(Long startToCloseTimeoutSeconds) {
+    public ActivitySchedulingOptions withStartToCloseTimeoutSeconds(Integer startToCloseTimeoutSeconds) {
         this.startToCloseTimeoutSeconds = startToCloseTimeoutSeconds;
         return this;
     }

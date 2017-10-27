@@ -22,11 +22,11 @@ public class ExecuteActivityParameters implements Cloneable {
     private String activityId;
     private ActivityType activityType;
     private String control;
-    private long heartbeatTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
+    private int heartbeatTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
     private byte[] input;
-    private long scheduleToCloseTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
-    private long scheduleToStartTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
-    private long startToCloseTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
+    private int scheduleToCloseTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
+    private int scheduleToStartTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
+    private int startToCloseTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
     private String taskList;
     private int taskPriority;
     
@@ -194,16 +194,16 @@ public class ExecuteActivityParameters implements Cloneable {
         return this;
     }    
     
-    public long getHeartbeatTimeoutSeconds() {
+    public int getHeartbeatTimeoutSeconds() {
         return heartbeatTimeoutSeconds;
     }
 
     
-    public void setHeartbeatTimeoutSeconds(long heartbeatTimeoutSeconds) {
+    public void setHeartbeatTimeoutSeconds(int heartbeatTimeoutSeconds) {
         this.heartbeatTimeoutSeconds = heartbeatTimeoutSeconds;
     }
     
-    public ExecuteActivityParameters withHeartbeatTimeoutSeconds(long heartbeatTimeoutSeconds) {
+    public ExecuteActivityParameters withHeartbeatTimeoutSeconds(int heartbeatTimeoutSeconds) {
         this.heartbeatTimeoutSeconds = heartbeatTimeoutSeconds;
         return this;
     }
@@ -218,7 +218,7 @@ public class ExecuteActivityParameters implements Cloneable {
      *
      * @return The value of the ScheduleToStartTimeout property for this object.
      */
-    public long getScheduleToStartTimeoutSeconds() {
+    public int getScheduleToStartTimeoutSeconds() {
         return scheduleToStartTimeoutSeconds;
     }
     
@@ -230,7 +230,7 @@ public class ExecuteActivityParameters implements Cloneable {
      *
      * @param scheduleToStartTimeoutSeconds The new value for the ScheduleToStartTimeout property for this object.
      */
-    public void setScheduleToStartTimeoutSeconds(long scheduleToStartTimeoutSeconds) {
+    public void setScheduleToStartTimeoutSeconds(int scheduleToStartTimeoutSeconds) {
         this.scheduleToStartTimeoutSeconds = scheduleToStartTimeoutSeconds;
     }
     
@@ -247,7 +247,7 @@ public class ExecuteActivityParameters implements Cloneable {
      * @return A reference to this updated object so that method calls can be chained 
      *         together. 
      */
-    public ExecuteActivityParameters withScheduleToStartTimeoutSeconds(long scheduleToStartTimeoutSeconds) {
+    public ExecuteActivityParameters withScheduleToStartTimeoutSeconds(int scheduleToStartTimeoutSeconds) {
         this.scheduleToStartTimeoutSeconds = scheduleToStartTimeoutSeconds;
         return this;
     }
@@ -262,7 +262,7 @@ public class ExecuteActivityParameters implements Cloneable {
      *
      * @return The value of the ScheduleToCloseTimeout property for this object.
      */
-    public long getScheduleToCloseTimeoutSeconds() {
+    public int getScheduleToCloseTimeoutSeconds() {
         return scheduleToCloseTimeoutSeconds;
     }
     
@@ -274,7 +274,7 @@ public class ExecuteActivityParameters implements Cloneable {
      *
      * @param scheduleToCloseTimeoutSeconds The new value for the ScheduleToCloseTimeout property for this object.
      */
-    public void setScheduleToCloseTimeoutSeconds(long scheduleToCloseTimeoutSeconds) {
+    public void setScheduleToCloseTimeoutSeconds(int scheduleToCloseTimeoutSeconds) {
         this.scheduleToCloseTimeoutSeconds = scheduleToCloseTimeoutSeconds;
     }
     
@@ -291,21 +291,21 @@ public class ExecuteActivityParameters implements Cloneable {
      * @return A reference to this updated object so that method calls can be chained 
      *         together. 
      */
-    public ExecuteActivityParameters withScheduleToCloseTimeoutSeconds(long scheduleToCloseTimeoutSeconds) {
+    public ExecuteActivityParameters withScheduleToCloseTimeoutSeconds(int scheduleToCloseTimeoutSeconds) {
         this.scheduleToCloseTimeoutSeconds = scheduleToCloseTimeoutSeconds;
         return this;
     }
     
-    public long getStartToCloseTimeoutSeconds() {
+    public int getStartToCloseTimeoutSeconds() {
         return startToCloseTimeoutSeconds;
     }
 
     
-    public void setStartToCloseTimeoutSeconds(long startToCloseTimeoutSeconds) {
+    public void setStartToCloseTimeoutSeconds(int startToCloseTimeoutSeconds) {
         this.startToCloseTimeoutSeconds = startToCloseTimeoutSeconds;
     }
     
-    public ExecuteActivityParameters withStartToCloseTimeoutSeconds(long startToCloseTimeoutSeconds) {
+    public ExecuteActivityParameters withStartToCloseTimeoutSeconds(int startToCloseTimeoutSeconds) {
         this.startToCloseTimeoutSeconds = startToCloseTimeoutSeconds;
         return this;
     }
@@ -361,22 +361,22 @@ public class ExecuteActivityParameters implements Cloneable {
     	ExecuteActivityParameters scheduleActivityParameters = this.clone();
     	
     	if (options != null) {
-    	    Long heartbeatTimeoutSeconds = options.getHeartbeatTimeoutSeconds();
+    	    Integer heartbeatTimeoutSeconds = options.getHeartbeatTimeoutSeconds();
     	    if (heartbeatTimeoutSeconds != null) {
     	        scheduleActivityParameters.setHeartbeatTimeoutSeconds(heartbeatTimeoutSeconds);
     	    }
     	    
-    		Long scheduleToCloseTimeout = options.getScheduleToCloseTimeoutSeconds();
+    		Integer scheduleToCloseTimeout = options.getScheduleToCloseTimeoutSeconds();
     		if (scheduleToCloseTimeout != null) {
     			scheduleActivityParameters.setScheduleToCloseTimeoutSeconds(scheduleToCloseTimeout);
     		}
     		
-    		Long scheduleToStartTimeout = options.getScheduleToStartTimeoutSeconds();
+    		Integer scheduleToStartTimeout = options.getScheduleToStartTimeoutSeconds();
     		if (scheduleToStartTimeout != null) {
     			scheduleActivityParameters.setScheduleToStartTimeoutSeconds(scheduleToStartTimeout);
     		}
     		
-    		Long startToCloseTimeoutSeconds = options.getStartToCloseTimeoutSeconds();
+    		Integer startToCloseTimeoutSeconds = options.getStartToCloseTimeoutSeconds();
     		if (startToCloseTimeoutSeconds != null) {
     		    scheduleActivityParameters.setStartToCloseTimeoutSeconds(startToCloseTimeoutSeconds);
     		}
@@ -393,22 +393,22 @@ public class ExecuteActivityParameters implements Cloneable {
     	}
     	
     	if (optionsOverride != null) {    
-    	    Long heartbeatTimeoutSeconds = optionsOverride.getHeartbeatTimeoutSeconds();
+    	    Integer heartbeatTimeoutSeconds = optionsOverride.getHeartbeatTimeoutSeconds();
             if (heartbeatTimeoutSeconds != null) {
                 scheduleActivityParameters.setHeartbeatTimeoutSeconds(heartbeatTimeoutSeconds);
             }
             
-    		Long scheduleToCloseTimeout = optionsOverride.getScheduleToCloseTimeoutSeconds();
+    		Integer scheduleToCloseTimeout = optionsOverride.getScheduleToCloseTimeoutSeconds();
     		if (scheduleToCloseTimeout != null) {
     			scheduleActivityParameters.setScheduleToCloseTimeoutSeconds(scheduleToCloseTimeout);
     		}
     		
-    		Long scheduleToStartTimeout = optionsOverride.getScheduleToStartTimeoutSeconds();
+    		Integer scheduleToStartTimeout = optionsOverride.getScheduleToStartTimeoutSeconds();
     		if (scheduleToStartTimeout != null) {
     			scheduleActivityParameters.setScheduleToStartTimeoutSeconds(scheduleToStartTimeout);
     		}
     		
-    		Long startToCloseTimeoutSeconds = optionsOverride.getStartToCloseTimeoutSeconds();
+    		Integer startToCloseTimeoutSeconds = optionsOverride.getStartToCloseTimeoutSeconds();
             if (startToCloseTimeoutSeconds != null) {
                 scheduleActivityParameters.setStartToCloseTimeoutSeconds(startToCloseTimeoutSeconds);
             }

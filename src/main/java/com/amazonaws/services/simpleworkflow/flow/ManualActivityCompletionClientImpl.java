@@ -16,23 +16,24 @@ package com.amazonaws.services.simpleworkflow.flow;
 
 import java.util.concurrent.CancellationException;
 
-import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
 import com.amazonaws.services.simpleworkflow.flow.common.WorkflowExecutionUtils;
-import com.amazonaws.services.simpleworkflow.model.ActivityTaskStatus;
-import com.amazonaws.services.simpleworkflow.model.RecordActivityTaskHeartbeatRequest;
-import com.amazonaws.services.simpleworkflow.model.RespondActivityTaskCanceledRequest;
-import com.amazonaws.services.simpleworkflow.model.RespondActivityTaskCompletedRequest;
-import com.amazonaws.services.simpleworkflow.model.RespondActivityTaskFailedRequest;
+import com.uber.cadence.RecordActivityTaskHeartbeatRequest;
+import com.uber.cadence.RecordActivityTaskHeartbeatResponse;
+import com.uber.cadence.RespondActivityTaskCanceledRequest;
+import com.uber.cadence.RespondActivityTaskCompletedRequest;
+import com.uber.cadence.RespondActivityTaskFailedRequest;
+import com.uber.cadence.WorkflowService;
+import org.apache.thrift.TException;
 
 class ManualActivityCompletionClientImpl extends ManualActivityCompletionClient {
 
-    private final AmazonSimpleWorkflow service;
+    private final WorkflowService.Iface service;
 
-    private final String taskToken;
+    private final byte[] taskToken;
 
     private final DataConverter dataConverter;
 
-    public ManualActivityCompletionClientImpl(AmazonSimpleWorkflow service, String taskToken, DataConverter dataConverter) {
+    public ManualActivityCompletionClientImpl(WorkflowService.Iface service, byte[] taskToken, DataConverter dataConverter) {
         this.service = service;
         this.taskToken = taskToken;
         this.dataConverter = dataConverter;
@@ -41,40 +42,56 @@ class ManualActivityCompletionClientImpl extends ManualActivityCompletionClient 
     @Override
     public void complete(Object result) {
         RespondActivityTaskCompletedRequest request = new RespondActivityTaskCompletedRequest();
-        String convertedResult = dataConverter.toData(result);
+        byte[] convertedResult = dataConverter.toData(result);
         request.setResult(convertedResult);
         request.setTaskToken(taskToken);
-        service.respondActivityTaskCompleted(request);
+        try {
+            service.RespondActivityTaskCompleted(request);
+        } catch (TException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public void fail(Throwable failure) {
         RespondActivityTaskFailedRequest request = new RespondActivityTaskFailedRequest();
-        String convertedFailure = dataConverter.toData(failure);
+        byte[] convertedFailure = dataConverter.toData(failure);
         request.setReason(WorkflowExecutionUtils.truncateReason(failure.getMessage()));
         request.setDetails(convertedFailure);
         request.setTaskToken(taskToken);
-        service.respondActivityTaskFailed(request);
+        try {
+            service.RespondActivityTaskFailed(request);
+        } catch (TException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public void recordHeartbeat(String details) throws CancellationException {
+    public void recordHeartbeat(byte[] details) throws CancellationException {
         RecordActivityTaskHeartbeatRequest request = new RecordActivityTaskHeartbeatRequest();
         request.setDetails(details);
         request.setTaskToken(taskToken);
-        ActivityTaskStatus status = service.recordActivityTaskHeartbeat(request);
-        status = service.recordActivityTaskHeartbeat(request);
+        RecordActivityTaskHeartbeatResponse status = null;
+        try {
+            status = service.RecordActivityTaskHeartbeat(request);
+        } catch (TException e) {
+            throw new RuntimeException(e);
+        }
         if (status.isCancelRequested()) {
             throw new CancellationException();
         }
     }
 
     @Override
-    public void reportCancellation(String details) {
+    public void reportCancellation(byte[] details) {
         RespondActivityTaskCanceledRequest request = new RespondActivityTaskCanceledRequest();
         request.setDetails(details);
         request.setTaskToken(taskToken);
-        service.respondActivityTaskCanceled(request);
+        try {
+            service.RespondActivityTaskCanceled(request);
+        } catch (TException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

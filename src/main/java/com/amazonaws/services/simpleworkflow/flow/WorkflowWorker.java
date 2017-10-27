@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
 import com.amazonaws.services.simpleworkflow.flow.pojo.POJOWorkflowDefinitionFactoryFactory;
 import com.amazonaws.services.simpleworkflow.flow.worker.GenericWorkflowWorker;
+import com.uber.cadence.WorkflowService;
 
 public class WorkflowWorker implements WorkerBase {
 
@@ -37,7 +38,7 @@ public class WorkflowWorker implements WorkerBase {
     }
 
     @Override
-    public AmazonSimpleWorkflow getService() {
+    public WorkflowService.Iface getService() {
         return genericWorker.getService();
     }
 

@@ -21,6 +21,6 @@ public interface StartChildWorkflowReply {
 
     public String getRunId();
     
-    public Promise<String> getResult();
+    public Promise<byte[]> getResult();
     
 }

@@ -18,15 +18,12 @@ import java.lang.management.ManagementFactory;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
+import com.uber.cadence.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
 import com.amazonaws.services.simpleworkflow.flow.common.WorkflowExecutionUtils;
-import com.amazonaws.services.simpleworkflow.model.DecisionTask;
-import com.amazonaws.services.simpleworkflow.model.PollForDecisionTaskRequest;
-import com.amazonaws.services.simpleworkflow.model.RespondDecisionTaskCompletedRequest;
-import com.amazonaws.services.simpleworkflow.model.TaskList;
+import org.apache.thrift.TException;
 
 public class DecisionTaskPoller implements TaskPoller {
 
@@ -34,52 +31,9 @@ public class DecisionTaskPoller implements TaskPoller {
 
     private static final Log decisionsLog = LogFactory.getLog(DecisionTaskPoller.class.getName() + ".decisions");
 
-    private class DecisionTaskIterator implements Iterator<DecisionTask> {
+    private static final int MAXIMUM_PAGE_SIZE = 500;
 
-        private final DecisionTask firstDecisionTask;
-
-        private DecisionTask next;
-
-        public DecisionTaskIterator() {
-            next = firstDecisionTask = poll(null);
-        }
-
-        @Override
-        public boolean hasNext() {
-            return next != null;
-        }
-
-        @Override
-        public DecisionTask next() {
-            if (!hasNext()) {
-                throw new IllegalStateException("hasNext() == false");
-            }
-            DecisionTask result = next;
-            if (next.getNextPageToken() == null) {
-                next = null;
-            }
-            else {
-                next = poll(next.getNextPageToken());
-                // Just to not keep around the history page
-                if (firstDecisionTask != result) {
-                    firstDecisionTask.setEvents(null);
-                }
-            }
-            return result;
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException();
-        }
-
-        public DecisionTask getFirstDecisionTask() {
-            return firstDecisionTask;
-        }
-
-    }
-
-    private AmazonSimpleWorkflow service;
+    private WorkflowService.Iface service;
 
     private String domain;
 
@@ -95,7 +49,7 @@ public class DecisionTaskPoller implements TaskPoller {
         identity = ManagementFactory.getRuntimeMXBean().getName();
     }
 
-    public DecisionTaskPoller(AmazonSimpleWorkflow service, String domain, String taskListToPoll,
+    public DecisionTaskPoller(WorkflowService.Iface service, String domain, String taskListToPoll,
             DecisionTaskHandler decisionTaskHandler) {
         this.service = service;
         this.domain = domain;
@@ -113,7 +67,7 @@ public class DecisionTaskPoller implements TaskPoller {
         this.identity = identity;
     }
 
-    public AmazonSimpleWorkflow getService() {
+    public WorkflowService.Iface getService() {
         return service;
     }
 
@@ -130,7 +84,7 @@ public class DecisionTaskPoller implements TaskPoller {
         this.decisionTaskHandler = decisionTaskHandler;
     }
 
-    public void setService(AmazonSimpleWorkflow service) {
+    public void setService(WorkflowService.Iface service) {
         validated = false;
         this.service = service;
     }
@@ -149,26 +103,25 @@ public class DecisionTaskPoller implements TaskPoller {
 
     /**
      * Poll for a task using {@link #getPollTimeoutInSeconds()}
-     * 
-     * @param nextResultToken
-     * 
+     *
      * @return null if poll timed out
-     * @throws DeciderExecutorConfigurationException
+     * @throws TException
      */
-    private DecisionTask poll(String nextResultToken) {
+    private PollForDecisionTaskResponse poll() throws TException {
         validate();
         PollForDecisionTaskRequest pollRequest = new PollForDecisionTaskRequest();
 
         pollRequest.setDomain(domain);
         pollRequest.setIdentity(identity);
-        pollRequest.setNextPageToken(nextResultToken);
 
-        pollRequest.setTaskList(new TaskList().withName(taskListToPoll));
+        TaskList tl = new TaskList();
+        tl.setName(taskListToPoll);
+        pollRequest.setTaskList(tl);
 
         if (log.isDebugEnabled()) {
             log.debug("poll request begin: " + pollRequest);
         }
-        DecisionTask result = service.pollForDecisionTask(pollRequest);
+        PollForDecisionTaskResponse result = service.PollForDecisionTask(pollRequest);
         if (log.isDebugEnabled()) {
             log.debug("poll request returned decision task: workflowType=" + result.getWorkflowType() + ", workflowExecution="
                     + result.getWorkflowExecution() + ", startedEventId=" + result.getStartedEventId() + ", previousStartedEventId=" + result.getPreviousStartedEventId());
@@ -187,50 +140,38 @@ public class DecisionTaskPoller implements TaskPoller {
      * 
      * @return true if task was polled and decided upon, false if poll timed out
      * @throws Exception
-     * @throws DeciderConfigurationException
      */
     @Override
     public boolean pollAndProcessSingleTask() throws Exception {
-        DecisionTaskIterator tasks = null;
         RespondDecisionTaskCompletedRequest taskCompletedRequest = null;
+        PollForDecisionTaskResponse task = poll();
+        if (task == null) {
+            return false;
+        }
+        DecisionTaskWithHistoryIterator historyIterator = new DecisionTaskWithHistoryIteratorImpl(task);
         try {
-            tasks = new DecisionTaskIterator();
-            if (!tasks.hasNext()) {
-                return false;
-            }
-            taskCompletedRequest = decisionTaskHandler.handleDecisionTask(tasks);
+            taskCompletedRequest = decisionTaskHandler.handleDecisionTask(historyIterator);
             if (decisionsLog.isTraceEnabled()) {
                 decisionsLog.trace(WorkflowExecutionUtils.prettyPrintDecisions(taskCompletedRequest.getDecisions()));
             }
-            service.respondDecisionTaskCompleted(taskCompletedRequest);
+            service.RespondDecisionTaskCompleted(taskCompletedRequest);
         }
         catch (Exception e) {
-            if (tasks != null) {
-                DecisionTask firstTask = tasks.getFirstDecisionTask();
-                if (firstTask != null) {
-                    if (log.isWarnEnabled()) {
-                        log.warn("DecisionTask failure: taskId= " + firstTask.getStartedEventId() + ", workflowExecution="
-                                + firstTask.getWorkflowExecution(), e);
-                    }
-                    if (log.isDebugEnabled() && firstTask.getEvents() != null) {
-                        log.debug("Failed taskId=" + firstTask.getStartedEventId() + " history: "
-                                + WorkflowExecutionUtils.prettyPrintHistory(firstTask.getEvents(), true));
-                    }
+            PollForDecisionTaskResponse firstTask = historyIterator.getDecisionTask();
+            if (firstTask != null) {
+                if (log.isWarnEnabled()) {
+                    log.warn("DecisionTask failure: taskId= " + firstTask.getStartedEventId() + ", workflowExecution="
+                            + firstTask.getWorkflowExecution(), e);
                 }
-                if (taskCompletedRequest != null && decisionsLog.isWarnEnabled()) {
-                    decisionsLog.warn("Failed taskId=" + firstTask.getStartedEventId() + " decisions="
-                            + WorkflowExecutionUtils.prettyPrintDecisions(taskCompletedRequest.getDecisions()));
-                }
+            }
+            if (taskCompletedRequest != null && decisionsLog.isWarnEnabled()) {
+                decisionsLog.warn("Failed taskId=" + firstTask.getStartedEventId() + " decisions="
+                        + WorkflowExecutionUtils.prettyPrintDecisions(taskCompletedRequest.getDecisions()));
             }
             throw e;
         }
         return true;
     }
-
-    /**
-     * @param seconds
-     * @return
-     */
 
     private void validate() throws IllegalStateException {
         if (validated) {
@@ -266,5 +207,51 @@ public class DecisionTaskPoller implements TaskPoller {
     public boolean awaitTermination(long left, TimeUnit milliseconds) throws InterruptedException {
         //TODO: Waiting for all currently running pollAndProcessSingleTask to complete 
         return false;
+    }
+
+    private class DecisionTaskWithHistoryIteratorImpl implements DecisionTaskWithHistoryIterator {
+        private final PollForDecisionTaskResponse task;
+        private Iterator<HistoryEvent> current;
+        private byte[] nextPageToken;
+
+        public DecisionTaskWithHistoryIteratorImpl(PollForDecisionTaskResponse task) {
+            this.task = task;
+            current = task.getHistory().getEventsIterator();
+            nextPageToken = task.getNextPageToken();
+        }
+
+        @Override
+        public PollForDecisionTaskResponse getDecisionTask() {
+            return null;
+        }
+
+        @Override
+        public Iterator<HistoryEvent> getHistory() {
+            return new Iterator<HistoryEvent>() {
+                @Override
+                public boolean hasNext() {
+                    return current.hasNext() || nextPageToken != null;
+                }
+
+                @Override
+                public HistoryEvent next() {
+                    if (current.hasNext()) {
+                        return current.next();
+                    }
+                    GetWorkflowExecutionHistoryRequest request = new GetWorkflowExecutionHistoryRequest();
+                    request.setDomain(domain);
+                    request.setExecution(task.getWorkflowExecution());
+                    request.setMaximumPageSize(MAXIMUM_PAGE_SIZE);
+                    try {
+                        GetWorkflowExecutionHistoryResponse r = service.GetWorkflowExecutionHistory(request);
+                        current = r.getHistory().getEventsIterator();
+                        nextPageToken = r.getNextPageToken();
+                    } catch (TException e) {
+                        throw new RuntimeException(e);
+                    }
+                    return current.next();
+                }
+            };
+        }
     }
 }

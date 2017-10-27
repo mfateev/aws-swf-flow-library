@@ -23,8 +23,6 @@ import com.amazonaws.services.simpleworkflow.flow.ActivityFailureException;
 import com.amazonaws.services.simpleworkflow.flow.ActivityWorker;
 import com.amazonaws.services.simpleworkflow.flow.DataConverter;
 import com.amazonaws.services.simpleworkflow.flow.worker.ActivityTypeExecutionOptions;
-import com.amazonaws.services.simpleworkflow.flow.worker.ActivityTypeRegistrationOptions;
-import com.amazonaws.services.simpleworkflow.model.ActivityTask;
 
 /**
  * Extend this class to implement an activity. There are two types of activity
@@ -41,7 +39,7 @@ public abstract class ActivityImplementationBase extends ActivityImplementation 
      * @see ActivityImplementation#execute(ActivityExecutionContext)
      */
     @Override
-    public String execute(ActivityExecutionContext context) 
+    public byte[] execute(ActivityExecutionContext context)
             throws ActivityFailureException, CancellationException {
         PollForActivityTaskResponse task = context.getTask();
         return execute(task.getInput(), context);
@@ -50,14 +48,6 @@ public abstract class ActivityImplementationBase extends ActivityImplementation 
     @Override
     public ActivityTypeExecutionOptions getExecutionOptions() {
         return new ActivityTypeExecutionOptions();
-    }
-
-    /**
-     * By default do not register
-     */
-    @Override
-    public ActivityTypeRegistrationOptions getRegistrationOptions() {
-        return null;
     }
 
     /**
@@ -74,7 +64,7 @@ public abstract class ActivityImplementationBase extends ActivityImplementation 
      *             {@link DataConverter#failureToTaskFailed(Throwable)}.
      */
 
-    protected abstract String execute(byte[] input, ActivityExecutionContext context)
+    protected abstract byte[] execute(byte[] input, ActivityExecutionContext context)
             throws ActivityFailureException, CancellationException;
 
 }

@@ -16,15 +16,15 @@ package com.amazonaws.services.simpleworkflow.flow;
 
 import com.amazonaws.services.simpleworkflow.flow.core.Promise;
 import com.amazonaws.services.simpleworkflow.flow.generic.GenericWorkflowClient;
-import com.amazonaws.services.simpleworkflow.model.WorkflowExecution;
-import com.amazonaws.services.simpleworkflow.model.WorkflowType;
+import com.uber.cadence.WorkflowExecution;
+import com.uber.cadence.WorkflowType;
 
 public abstract class WorkflowClientBase implements WorkflowClient {
 
     protected final DynamicWorkflowClientImpl dynamicWorkflowClient;
 
     protected WorkflowClientBase(WorkflowExecution workflowExecution, WorkflowType workflowType, StartWorkflowOptions options,
-            DataConverter dataConverter, GenericWorkflowClient genericClient) {
+                                 DataConverter dataConverter, GenericWorkflowClient genericClient) {
         dynamicWorkflowClient = new DynamicWorkflowClientImpl(workflowExecution, workflowType, options, dataConverter,
                 genericClient);
     }

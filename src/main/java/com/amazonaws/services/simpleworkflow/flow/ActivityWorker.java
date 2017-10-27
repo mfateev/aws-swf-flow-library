@@ -23,6 +23,7 @@ import com.amazonaws.services.simpleworkflow.flow.generic.ActivityImplementation
 import com.amazonaws.services.simpleworkflow.flow.pojo.POJOActivityImplementationFactory;
 import com.amazonaws.services.simpleworkflow.flow.worker.GenericActivityWorker;
 import com.amazonaws.services.simpleworkflow.model.ActivityType;
+import com.uber.cadence.WorkflowService;
 
 public class ActivityWorker implements WorkerBase {
 
@@ -99,7 +100,7 @@ public class ActivityWorker implements WorkerBase {
     }
 
     @Override
-    public AmazonSimpleWorkflow getService() {
+    public WorkflowService.Iface getService() {
         return genericWorker.getService();
     }
 

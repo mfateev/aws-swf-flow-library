@@ -23,8 +23,8 @@ import com.amazonaws.services.simpleworkflow.flow.generic.GenericWorkflowClient;
 import com.amazonaws.services.simpleworkflow.flow.generic.SignalExternalWorkflowParameters;
 import com.amazonaws.services.simpleworkflow.flow.generic.StartChildWorkflowExecutionParameters;
 import com.amazonaws.services.simpleworkflow.flow.generic.StartChildWorkflowReply;
-import com.amazonaws.services.simpleworkflow.model.WorkflowExecution;
-import com.amazonaws.services.simpleworkflow.model.WorkflowType;
+import com.uber.cadence.WorkflowExecution;
+import com.uber.cadence.WorkflowType;
 
 public class DynamicWorkflowClientImpl implements DynamicWorkflowClient {
 
@@ -181,7 +181,7 @@ public class DynamicWorkflowClientImpl implements DynamicWorkflowClient {
             protected void doTry() throws Throwable {
                 StartChildWorkflowExecutionParameters parameters = new StartChildWorkflowExecutionParameters();
                 parameters.setWorkflowType(workflowType);
-                String convertedArguments = dataConverter.toData(arguments);
+                byte[] convertedArguments = dataConverter.toData(arguments);
                 parameters.setInput(convertedArguments);
                 parameters.setWorkflowId(workflowExecution.getWorkflowId());
                 final StartChildWorkflowExecutionParameters startParameters = parameters.createStartChildWorkflowExecutionParametersFromOptions(
@@ -208,7 +208,7 @@ public class DynamicWorkflowClientImpl implements DynamicWorkflowClient {
                 if (e instanceof ChildWorkflowFailedException) {
                     ChildWorkflowFailedException taskFailedException = (ChildWorkflowFailedException) e;
                     try {
-                        String details = taskFailedException.getDetails();
+                        byte[] details = taskFailedException.getDetails();
                         if (details != null) {
                             Throwable cause = dataConverter.fromData(details, Throwable.class);
                             if (cause != null && taskFailedException.getCause() == null) {
@@ -252,7 +252,7 @@ public class DynamicWorkflowClientImpl implements DynamicWorkflowClient {
             protected void doExecute() throws Throwable {
                 SignalExternalWorkflowParameters parameters = new SignalExternalWorkflowParameters();
                 parameters.setSignalName(signalName);
-                String input = dataConverter.toData(arguments);
+                byte[] input = dataConverter.toData(arguments);
                 parameters.setInput(input);
                 parameters.setWorkflowId(workflowExecution.getWorkflowId());
                 parameters.setRunId(workflowExecution.getRunId());
