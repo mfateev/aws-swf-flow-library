@@ -4,13 +4,13 @@
   xmlns="http://maven.apache.org/POM/4.0.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.amazonaws</groupId>
-  <artifactId>swf-flow-library</artifactId>
-  <version>2.0.0</version>
+  <groupId>com.uber</groupId>
+  <artifactId>cadence-flow-library</artifactId>
+  <version>0.0.1</version>
   <packaging>jar</packaging>
-  <name>Java Libraries for Amazon Simple WorkFlow</name>
-  <description>This artifact contains the higher level libraries that can be used in Amazon Simple
-    WorkFlow Service
+  <name>Java Libraries for Uber Cadence</name>
+  <description>This artifact contains the higher level libraries that can be used in Cadence Service.
+Based on Flow Framwork for Amazon Simple WorkFlow Service
   </description>
   <url>https://github.com/aws/aws-swf-flow-library</url>
   <licenses>
