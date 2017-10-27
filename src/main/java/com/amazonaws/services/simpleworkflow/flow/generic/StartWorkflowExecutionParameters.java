@@ -37,9 +37,7 @@ public class StartWorkflowExecutionParameters {
     
     private int taskPriority;
 
-    private String lambdaRole;
-
-    private ChildPolicy childPolicy;
+//    private ChildPolicy childPolicy;
 
     /**
      * Returns the value of the WorkflowId property for this object.
@@ -250,18 +248,18 @@ public class StartWorkflowExecutionParameters {
         return this;
     }
 
-    public ChildPolicy getChildPolicy() {
-        return childPolicy;
-    }
- 
-    public void setChildPolicy(ChildPolicy childPolicy) {
-        this.childPolicy = childPolicy;
-    }
-    
-    public StartWorkflowExecutionParameters withChildPolicy(ChildPolicy childPolicy) {
-        this.childPolicy = childPolicy;
-        return this;
-    }
+//    public ChildPolicy getChildPolicy() {
+//        return childPolicy;
+//    }
+//
+//    public void setChildPolicy(ChildPolicy childPolicy) {
+//        this.childPolicy = childPolicy;
+//    }
+//
+//    public StartWorkflowExecutionParameters withChildPolicy(ChildPolicy childPolicy) {
+//        this.childPolicy = childPolicy;
+//        return this;
+//    }
     
     /**
      * Returns the value of the TagList property for this object.
@@ -349,19 +347,6 @@ public class StartWorkflowExecutionParameters {
         this.taskPriority = taskPriority;
         return this;
     }
-    
-    public String getLambdaRole() {
-        return lambdaRole;
-    }
-
-    public void setLambdaRole(String lambdaRole) {
-        this.lambdaRole = lambdaRole;
-    }
-
-    public StartWorkflowExecutionParameters withLambdaRole(String lambdaRole) {
-        this.lambdaRole = lambdaRole;
-        return this;
-    }
 
     public StartWorkflowExecutionParameters createStartWorkflowExecutionParametersFromOptions(StartWorkflowOptions options, 
     		StartWorkflowOptions optionsOverride) {
@@ -388,20 +373,16 @@ public class StartWorkflowExecutionParameters {
     			parameters.setTaskList(taskList);
     		}
     		
-            Integer taskPriority = options.getTaskPriority();
-            if (taskPriority != null) {
-                parameters.setTaskPriority(taskPriority);
-            }
+//            Integer taskPriority = options.getTaskPriority();
+//            if (taskPriority != null) {
+//                parameters.setTaskPriority(taskPriority);
+//            }
 
-    		ChildPolicy childPolicy = options.getChildPolicy();
-    		if (childPolicy != null) {
-    		    parameters.setChildPolicy(childPolicy);
-    		}
+//    		ChildPolicy childPolicy = options.getChildPolicy();
+//    		if (childPolicy != null) {
+//    		    parameters.setChildPolicy(childPolicy);
+//    		}
 
-            String lambdaRole = options.getLambdaRole();
-            if (lambdaRole != null && !lambdaRole.isEmpty()) {
-                parameters.setLambdaRole(lambdaRole);
-            }
         }
     	
     	if (optionsOverride != null) {
@@ -425,20 +406,16 @@ public class StartWorkflowExecutionParameters {
     			parameters.setTaskList(taskList);
     		}
     		
-            Integer taskPriority = optionsOverride.getTaskPriority();
-            if (taskPriority != null) {
-                parameters.setTaskPriority(taskPriority);
-            }
+//            Integer taskPriority = optionsOverride.getTaskPriority();
+//            if (taskPriority != null) {
+//                parameters.setTaskPriority(taskPriority);
+//            }
+//
+//    		ChildPolicy childPolicy = optionsOverride.getChildPolicy();
+//    		if (childPolicy != null) {
+//    		    parameters.setChildPolicy(childPolicy);
+//    		}
 
-    		ChildPolicy childPolicy = optionsOverride.getChildPolicy();
-    		if (childPolicy != null) {
-    		    parameters.setChildPolicy(childPolicy);
-    		}
-
-            String lambdaRole = optionsOverride.getLambdaRole();
-            if (lambdaRole != null && !lambdaRole.isEmpty()) {
-                parameters.setLambdaRole(lambdaRole);
-            }
         }
     	
     	return parameters;
@@ -463,8 +440,7 @@ public class StartWorkflowExecutionParameters {
         sb.append("StartToCloseTimeout: " + executionStartToCloseTimeoutSeconds + ", ");
         sb.append("TagList: " + tagList + ", ");
         sb.append("TaskPriority: " + taskPriority + ", ");
-        sb.append("ChildPolicy: " + childPolicy + ", ");
-        sb.append("LambdaRole: " + lambdaRole + ", ");
+//        sb.append("ChildPolicy: " + childPolicy + ", ");
         sb.append("}");
         return sb.toString();
     }
@@ -479,8 +455,7 @@ public class StartWorkflowExecutionParameters {
         result.setWorkflowId(workflowId);
         result.setWorkflowType(workflowType);
         result.setTaskPriority(taskPriority);
-        result.setChildPolicy(childPolicy);
-        result.setLambdaRole(lambdaRole);
+//        result.setChildPolicy(childPolicy);
         return result;
     }
 

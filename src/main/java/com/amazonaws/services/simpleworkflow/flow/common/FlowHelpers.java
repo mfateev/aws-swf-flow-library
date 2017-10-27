@@ -16,9 +16,6 @@ package com.amazonaws.services.simpleworkflow.flow.common;
 
 import java.lang.reflect.Method;
 
-import com.amazonaws.services.simpleworkflow.model.PredefinedDuration;
-
-
 public final class FlowHelpers {
     
     public static Object[] validateInput(Method method, Object[] args) {

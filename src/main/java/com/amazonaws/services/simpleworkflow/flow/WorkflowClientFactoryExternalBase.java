@@ -16,6 +16,7 @@ package com.amazonaws.services.simpleworkflow.flow;
 
 import com.amazonaws.services.simpleworkflow.flow.generic.GenericWorkflowClientExternal;
 import com.amazonaws.services.simpleworkflow.flow.worker.GenericWorkflowClientExternalImpl;
+import com.uber.cadence.WorkflowExecution;
 import com.uber.cadence.WorkflowService;
 
 public abstract class WorkflowClientFactoryExternalBase<T> implements WorkflowClientFactoryExternal<T> {
@@ -69,7 +70,7 @@ public abstract class WorkflowClientFactoryExternalBase<T> implements WorkflowCl
     public T getClient() {
         checkGenericClient();
         String workflowId = genericClient.generateUniqueId();
-        WorkflowExecution workflowExecution = new WorkflowExecution().withWorkflowId(workflowId);
+        WorkflowExecution workflowExecution = new WorkflowExecution().setWorkflowId(workflowId);
         return getClient(workflowExecution, startWorkflowOptions, dataConverter, genericClient);
     }
 
@@ -78,7 +79,7 @@ public abstract class WorkflowClientFactoryExternalBase<T> implements WorkflowCl
         if (workflowId == null || workflowId.isEmpty()) {
             throw new IllegalArgumentException("workflowId");
         }
-        WorkflowExecution workflowExecution = new WorkflowExecution().withWorkflowId(workflowId);
+        WorkflowExecution workflowExecution = new WorkflowExecution().setWorkflowId(workflowId);
         return getClient(workflowExecution, startWorkflowOptions, dataConverter, genericClient);
     }
 

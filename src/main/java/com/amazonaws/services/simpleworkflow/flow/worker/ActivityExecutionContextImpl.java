@@ -14,7 +14,6 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
-import com.amazonaws.services.simpleworkflow.model.ActivityTask;
 import com.uber.cadence.PollForActivityTaskResponse;
 import com.uber.cadence.RecordActivityTaskHeartbeatRequest;
 import com.uber.cadence.RecordActivityTaskHeartbeatResponse;
@@ -22,7 +21,7 @@ import com.uber.cadence.WorkflowExecution;
 import com.uber.cadence.WorkflowService.Iface;
 import java.util.concurrent.CancellationException;
 
-import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
+import com.uber.cadence.WorkflowService;
 import com.amazonaws.services.simpleworkflow.flow.ActivityExecutionContext;
 import org.apache.thrift.TException;
 
@@ -46,10 +45,10 @@ class ActivityExecutionContextImpl extends ActivityExecutionContext {
      * Create an ActivityExecutionContextImpl with the given attributes.
      * 
      * @param service
-     *            The {@link AmazonSimpleWorkflow} this
+     *            The {@link WorkflowService.Iface} this
      *            ActivityExecutionContextImpl will send service calls to.
      * @param task
-     *            The {@link ActivityTask} this ActivityExecutionContextImpl
+     *            The {@link PollForActivityTaskResponse} this ActivityExecutionContextImpl
      *            will be used for.
      *
      * @see ActivityExecutionContext
@@ -62,15 +61,15 @@ class ActivityExecutionContextImpl extends ActivityExecutionContext {
 
     /**
      * @throws CancellationException
-     * @see ActivityExecutionContext#recordActivityHeartbeat(int)
+     * @see ActivityExecutionContext#recordActivityHeartbeat(byte[])
      */
     @Override
-    public void recordActivityHeartbeat(String details) throws CancellationException {
+    public void recordActivityHeartbeat(byte[] details) throws CancellationException {
         //TODO: call service with the specified minimal interval (through @ActivityExecutionOptions)
         // allowing more frequent calls of this method.
         RecordActivityTaskHeartbeatRequest r = new RecordActivityTaskHeartbeatRequest();
         r.setTaskToken(task.getTaskToken());
-        r.setDetails(details.getBytes(TaskPoller.UTF8_CHARSET));
+        r.setDetails(details);
         RecordActivityTaskHeartbeatResponse status;
         try {
             status = service.RecordActivityTaskHeartbeat(r);
@@ -99,8 +98,8 @@ class ActivityExecutionContextImpl extends ActivityExecutionContext {
     }
 
     @Override
-    public String getTaskToken() {
-        return new String(task.getTaskToken(), TaskPoller.UTF8_CHARSET);
+    public byte[] getTaskToken() {
+        return task.getTaskToken();
     }
 
     @Override

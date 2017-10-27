@@ -96,10 +96,6 @@ public class SpringTestPOJOWorkflowImplementationGenericWorkflowClient implement
         return genericClient.startChildWorkflow(workflow, input);
     }
 
-    public Promise<Void> signalWorkflowExecution(SignalExternalWorkflowParameters signalParameters) {
-        return genericClient.signalWorkflowExecution(signalParameters);
-    }
-
     public void requestCancelWorkflowExecution(WorkflowExecution execution) {
         genericClient.requestCancelWorkflowExecution(execution);
     }

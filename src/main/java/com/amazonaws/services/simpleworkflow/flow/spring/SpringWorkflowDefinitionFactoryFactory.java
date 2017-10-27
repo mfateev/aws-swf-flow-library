@@ -22,7 +22,7 @@ import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinitionFact
 import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinitionFactoryFactory;
 import com.amazonaws.services.simpleworkflow.flow.pojo.POJOWorkflowDefinitionFactoryFactory;
 import com.amazonaws.services.simpleworkflow.flow.pojo.POJOWorkflowImplementationFactory;
-import com.amazonaws.services.simpleworkflow.model.WorkflowType;
+import com.uber.cadence.WorkflowType;
 
 class SpringWorkflowDefinitionFactoryFactory extends WorkflowDefinitionFactoryFactory {
 
@@ -45,11 +45,6 @@ class SpringWorkflowDefinitionFactoryFactory extends WorkflowDefinitionFactoryFa
     @Override
     public WorkflowDefinitionFactory getWorkflowDefinitionFactory(WorkflowType workflowType) {
         return impl.getWorkflowDefinitionFactory(workflowType);
-    }
-
-    @Override
-    public Iterable<WorkflowType> getWorkflowTypesToRegister() {
-        return impl.getWorkflowTypesToRegister();
     }
 
     public void setWorkflowImplementations(Iterable<Object> workflowImplementations)

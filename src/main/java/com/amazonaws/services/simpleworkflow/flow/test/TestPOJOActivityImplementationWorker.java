@@ -69,10 +69,6 @@ public class TestPOJOActivityImplementationWorker {
         return factory.addActivitiesImplementation(activitiesImplementation, converter);
     }
 
-    public Iterable<ActivityType> getActivityTypesToRegister() {
-        return factory.getActivityTypesToRegister();
-    }
-
     public ActivityImplementation getActivityImplementation(ActivityType activityType) {
         return factory.getActivityImplementation(activityType);
     }

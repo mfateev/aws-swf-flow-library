@@ -14,14 +14,12 @@
  */
 package com.amazonaws.services.simpleworkflow.flow;
 
-import java.util.Collection;
-
-import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
 import com.amazonaws.services.simpleworkflow.flow.pojo.POJOWorkflowDefinitionFactoryFactory;
 import com.amazonaws.services.simpleworkflow.flow.worker.AsyncDecisionTaskHandler;
 import com.amazonaws.services.simpleworkflow.flow.worker.DecisionTaskPoller;
-import com.amazonaws.services.simpleworkflow.flow.worker.GenericWorkflowWorker;
-import com.amazonaws.services.simpleworkflow.model.WorkflowType;
+import com.uber.cadence.WorkflowService;
+
+import java.util.Collection;
 
 
 public class SynchronousWorkflowWorker {
@@ -35,7 +33,7 @@ public class SynchronousWorkflowWorker {
         poller.setDecisionTaskHandler(new AsyncDecisionTaskHandler(factoryFactory));
     }
     
-    public SynchronousWorkflowWorker(AmazonSimpleWorkflow service, String domain, String taskListToPoll) {
+    public SynchronousWorkflowWorker(WorkflowService.Iface service, String domain, String taskListToPoll) {
         poller = new DecisionTaskPoller(service, domain, taskListToPoll, new AsyncDecisionTaskHandler(factoryFactory));
     }
 
@@ -47,7 +45,7 @@ public class SynchronousWorkflowWorker {
         poller.setIdentity(identity);
     }
 
-    public AmazonSimpleWorkflow getService() {
+    public WorkflowService.Iface getService() {
         return poller.getService();
     }
 
@@ -55,7 +53,7 @@ public class SynchronousWorkflowWorker {
         return poller.getDomain();
     }
 
-    public void setService(AmazonSimpleWorkflow service) {
+    public void setService(WorkflowService.Iface service) {
         poller.setService(service);
     }
 
@@ -79,10 +77,6 @@ public class SynchronousWorkflowWorker {
         factoryFactory.setDataConverter(converter);
     }
 
-    public Iterable<WorkflowType> getWorkflowTypesToRegister() {
-        return factoryFactory.getWorkflowTypesToRegister();
-    }
-
     public void addWorkflowImplementationType(Class<?> workflowImplementationType)
             throws InstantiationException, IllegalAccessException {
         factoryFactory.addWorkflowImplementationType(workflowImplementationType);
@@ -102,8 +96,4 @@ public class SynchronousWorkflowWorker {
         return factoryFactory.getWorkflowImplementationTypes();
     }
  
-    public void registerTypesToPoll() throws Exception {
-        GenericWorkflowWorker.registerWorkflowTypes(getService(), getDomain(), getTaskListToPoll(), factoryFactory);
-    }
-
 }

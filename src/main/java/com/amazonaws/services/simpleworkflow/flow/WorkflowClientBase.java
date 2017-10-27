@@ -71,9 +71,4 @@ public abstract class WorkflowClientBase implements WorkflowClient {
             Class<T> returnType, Promise<?>... waitFor) {
         return dynamicWorkflowClient.startWorkflowExecution(arguments, startOptionsOverride, returnType, waitFor);
     }
-
-    protected void signalWorkflowExecution(String signalName, Object[] arguments, Promise<?>... waitFor) {
-        dynamicWorkflowClient.signalWorkflowExecution(signalName, arguments, waitFor);
-    }
-
 }

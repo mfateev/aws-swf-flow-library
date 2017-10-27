@@ -18,9 +18,9 @@ import com.amazonaws.services.simpleworkflow.flow.generic.GenericWorkflowClientE
 import com.amazonaws.services.simpleworkflow.flow.generic.SignalExternalWorkflowParameters;
 import com.amazonaws.services.simpleworkflow.flow.generic.StartWorkflowExecutionParameters;
 import com.amazonaws.services.simpleworkflow.flow.generic.TerminateWorkflowExecutionParameters;
-import com.amazonaws.services.simpleworkflow.model.ChildPolicy;
-import com.amazonaws.services.simpleworkflow.model.WorkflowExecution;
-import com.amazonaws.services.simpleworkflow.model.WorkflowType;
+import com.uber.cadence.ChildPolicy;
+import com.uber.cadence.WorkflowExecution;
+import com.uber.cadence.WorkflowType;
 
 public class DynamicWorkflowClientExternalImpl implements DynamicWorkflowClientExternal {
 
@@ -35,7 +35,7 @@ public class DynamicWorkflowClientExternalImpl implements DynamicWorkflowClientE
     protected WorkflowType workflowType;
 
     public DynamicWorkflowClientExternalImpl(String workflowId, WorkflowType workflowType) {
-        this(new WorkflowExecution().withWorkflowId(workflowId), workflowType, null, null);
+        this(new WorkflowExecution().setWorkflowId(workflowId), workflowType, null, null);
     }
 
     public DynamicWorkflowClientExternalImpl(WorkflowExecution workflowExecution) {
@@ -43,7 +43,7 @@ public class DynamicWorkflowClientExternalImpl implements DynamicWorkflowClientE
     }
 
     public DynamicWorkflowClientExternalImpl(String workflowId, WorkflowType workflowType, StartWorkflowOptions options) {
-        this(new WorkflowExecution().withWorkflowId(workflowId), workflowType, options, null, null);
+        this(new WorkflowExecution().setWorkflowId(workflowId), workflowType, options, null, null);
     }
 
     public DynamicWorkflowClientExternalImpl(WorkflowExecution workflowExecution, WorkflowType workflowType,
@@ -167,7 +167,7 @@ public class DynamicWorkflowClientExternalImpl implements DynamicWorkflowClientE
 
     @Override
     public <T> T getWorkflowExecutionState(Class<T> returnType) throws Throwable {
-        String state = genericClient.getWorkflowState(workflowExecution);
+        byte[] state = genericClient.getWorkflowState(workflowExecution);
         if (state == null)
             return null;
 

@@ -18,7 +18,8 @@ import com.uber.cadence.EventType;
 import com.uber.cadence.HistoryEvent;
 import com.uber.cadence.PollForDecisionTaskResponse;
 import java.util.Iterator;
-import java.util.List;
+import java.util.LinkedList;
+import java.util.Queue;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -31,89 +32,58 @@ class HistoryHelper {
 
     class EventsIterator implements Iterator<HistoryEvent> {
 
-        private final Iterator<PollForDecisionTaskResponse> decisionTasks;
+        private final DecisionTaskWithHistoryIterator decisionTaskWithHistoryIterator;
 
-        private PollForDecisionTaskResponse decisionTask;
+        private Iterator<HistoryEvent> events;
 
-        private List<HistoryEvent> events;
+        private Queue<HistoryEvent> bufferedEvents = new LinkedList<>();
 
-        private int index;
-
-        public EventsIterator(Iterator<PollForDecisionTaskResponse> decisionTasks) {
-            this.decisionTasks = decisionTasks;
-            if (decisionTasks.hasNext()) {
-                decisionTask = decisionTasks.next();
-                events = decisionTask.getHistory().getEvents();
-                if (historyLog.isTraceEnabled()) {
-                    historyLog.trace(WorkflowExecutionUtils.prettyPrintHistory(events, true));
-                }
-            }
-            else {
-                decisionTask = null;
-            }
+        public EventsIterator(DecisionTaskWithHistoryIterator decisionTaskWithHistoryIterator) {
+            this.decisionTaskWithHistoryIterator = decisionTaskWithHistoryIterator;
+            this.events = decisionTaskWithHistoryIterator.getHistory();
         }
 
         @Override
         public boolean hasNext() {
-            return decisionTask != null && (index < events.size() || decisionTasks.hasNext());
+            return !bufferedEvents.isEmpty() || events.hasNext();
         }
 
         @Override
         public HistoryEvent next() {
-            if (index == events.size()) {
-                decisionTask = decisionTasks.next();
-                events = decisionTask.getHistory().getEvents();
-                if (historyLog.isTraceEnabled()) {
-                    historyLog.trace(WorkflowExecutionUtils.prettyPrintHistory(events, true));
-                }
-                index = 0;
+            if (bufferedEvents.isEmpty()) {
+                return events.next();
             }
-            return events.get(index++);
+            return bufferedEvents.poll();
         }
 
         public PollForDecisionTaskResponse getDecisionTask() {
-            return decisionTask;
-        }
-
-        public List<HistoryEvent> getEvents() {
-            return events;
+            return decisionTaskWithHistoryIterator.getDecisionTask();
         }
 
         public boolean isNextDecisionTimedOut() {
-            int i = index;
-            while (true) {
-                for (; i < events.size(); i++) {
-                    HistoryEvent event = events.get(i);
-                    EventType eventType = event.getEventType();
-                    if (eventType.equals(EventType.DecisionTaskTimedOut)) {
-                        return true;
-                    }
-                    else if (eventType.equals(EventType.DecisionTaskCompleted)) {
-                        return false;
-                    }
+            while (events.hasNext()) {
+                HistoryEvent event = events.next();
+                bufferedEvents.add(event);
+                EventType eventType = event.getEventType();
+                if (eventType.equals(EventType.DecisionTaskTimedOut)) {
+                    return true;
                 }
-                if (!decisionTasks.hasNext()) {
+                else if (eventType.equals(EventType.DecisionTaskCompleted)) {
                     return false;
                 }
-                decisionTask = decisionTasks.next();
-                List<HistoryEvent> nextPageEvents = decisionTask.getHistory().getEvents();
-                if (historyLog.isTraceEnabled()) {
-                    historyLog.trace(WorkflowExecutionUtils.prettyPrintHistory(nextPageEvents, true));
-                }
-                events.addAll(nextPageEvents);
             }
+            return false;
         }
 
         @Override
         public void remove() {
             throw new UnsupportedOperationException();
         }
-
     }
 
     private final EventsIterator events;
 
-    public HistoryHelper(Iterator<PollForDecisionTaskResponse> decisionTasks) {
+    public HistoryHelper(DecisionTaskWithHistoryIterator decisionTasks) {
         this.events = new EventsIterator(decisionTasks);
     }
 
@@ -122,7 +92,7 @@ class HistoryHelper {
     }
 
     public String toString() {
-        return WorkflowExecutionUtils.prettyPrintHistory(events.getEvents(), true);
+        return WorkflowExecutionUtils.prettyPrintHistory(events.getDecisionTask().getHistory().getEvents().iterator(), true);
     }
 
     public PollForDecisionTaskResponse getDecisionTask() {

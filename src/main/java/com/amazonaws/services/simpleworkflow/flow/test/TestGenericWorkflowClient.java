@@ -42,7 +42,6 @@ import com.amazonaws.services.simpleworkflow.flow.generic.StartChildWorkflowRepl
 import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinition;
 import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinitionFactory;
 import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinitionFactoryFactory;
-import com.amazonaws.services.simpleworkflow.flow.worker.LambdaFunctionClient;
 import com.uber.cadence.ChildWorkflowExecutionFailedCause;
 import com.uber.cadence.WorkflowExecution;
 import com.uber.cadence.WorkflowType;
@@ -51,11 +50,11 @@ public class TestGenericWorkflowClient implements GenericWorkflowClient {
 
     private static class StartChildWorkflowReplyImpl implements StartChildWorkflowReply {
 
-        private final Settable<String> result;
+        private final Settable<byte[]> result;
 
         private final String runId;
 
-        private StartChildWorkflowReplyImpl(Settable<String> result, String runId) {
+        private StartChildWorkflowReplyImpl(Settable<byte[]> result, String runId) {
             this.result = result;
             this.runId = runId;
         }
@@ -66,7 +65,7 @@ public class TestGenericWorkflowClient implements GenericWorkflowClient {
         }
 
         @Override
-        public Promise<String> getResult() {
+        public Settable<byte[]> getResult() {
             return result;
         }
     }
@@ -77,13 +76,13 @@ public class TestGenericWorkflowClient implements GenericWorkflowClient {
 
         private final WorkflowExecution childExecution;
 
-        private final Settable<String> result;
+        private final Settable<byte[]> result;
 
         /**
          * Child workflow doesn't set result to ready state before completing
          * all its tasks. So we need to set external result only in doFinally.
          */
-        private final Settable<String> executeResult = new Settable<String>();
+        private final Settable<byte[]> executeResult = new Settable<byte[]>();
 
         private final WorkflowDefinition childWorkflowDefinition;
 
@@ -94,7 +93,7 @@ public class TestGenericWorkflowClient implements GenericWorkflowClient {
         private final Settable<ContinueAsNewWorkflowExecutionParameters> continueAsNew = new Settable<ContinueAsNewWorkflowExecutionParameters>();
 
         private ChildWorkflowTryCatchFinally(StartChildWorkflowExecutionParameters parameters, WorkflowExecution childExecution,
-                WorkflowDefinition childWorkflowDefinition, DecisionContext context, Settable<String> result) {
+                                             WorkflowDefinition childWorkflowDefinition, DecisionContext context, Settable<byte[]> result) {
             this.parameters = parameters;
             this.childExecution = childExecution;
             this.childWorkflowDefinition = childWorkflowDefinition;
@@ -120,7 +119,7 @@ public class TestGenericWorkflowClient implements GenericWorkflowClient {
             }
             // Unless there is problem in the framework or generic workflow implementation this shouldn't be executed
             Exception failure = new ChildWorkflowFailedException(0, childExecution, parameters.getWorkflowType(), e.getMessage(),
-                    "null");
+                     null);
             failure.initCause(e);
             throw failure;
         }
@@ -209,13 +208,13 @@ public class TestGenericWorkflowClient implements GenericWorkflowClient {
     @Override
     public Promise<StartChildWorkflowReply> startChildWorkflow(final StartChildWorkflowExecutionParameters parameters) {
         Settable<StartChildWorkflowReply> reply = new Settable<StartChildWorkflowReply>();
-        Settable<String> result = new Settable<String>();
+        Settable<byte[]> result = new Settable<>();
         startChildWorkflow(parameters, reply, result);
         return reply;
     }
 
     private void startChildWorkflow(final StartChildWorkflowExecutionParameters parameters,
-            final Settable<StartChildWorkflowReply> reply, final Settable<String> result) {
+            final Settable<StartChildWorkflowReply> reply, final Settable<byte[]> result) {
         String workflowId = parameters.getWorkflowId();
         WorkflowType workflowType = parameters.getWorkflowType();
         WorkflowExecution childExecution = new WorkflowExecution();
@@ -231,24 +230,22 @@ public class TestGenericWorkflowClient implements GenericWorkflowClient {
 
             final GenericActivityClient activityClient = parentDecisionContext.getActivityClient();
             final WorkflowClock workflowClock = parentDecisionContext.getWorkflowClock();
-            final LambdaFunctionClient lambdaFunctionClient = parentDecisionContext.getLambdaFunctionClient();
             WorkflowDefinitionFactory factory;
             if (factoryFactory == null) {
                 throw new IllegalStateException("required property factoryFactory is null");
             }
             factory = factoryFactory.getWorkflowDefinitionFactory(workflowType);
             if (factory == null) {
-                String cause = "Unknown worklfow type";
-                throw new StartChildWorkflowFailedException(0, childExecution, workflowType, cause);
+                throw new RuntimeException("Unknown workflow type: " + workflowType);
             }
             TestWorkflowContext workflowContext = new TestWorkflowContext();
             workflowContext.setWorkflowExecution(childExecution);
             workflowContext.setWorkflowType(parameters.getWorkflowType());
             workflowContext.setParentWorkflowExecution(parentDecisionContext.getWorkflowContext().getWorkflowExecution());
-            workflowContext.setTagList(parameters.getTagList());
+//            workflowContext.setTagList(parameters.getTagList());
             workflowContext.setTaskList(parameters.getTaskList());
             DecisionContext context = new TestDecisionContext(activityClient, TestGenericWorkflowClient.this, workflowClock,
-                    workflowContext, lambdaFunctionClient);
+                    workflowContext);
             //this, parameters, childExecution, workflowClock, activityClient);
             final WorkflowDefinition childWorkflowDefinition = factory.getWorkflowDefinition(context);
             final ChildWorkflowTryCatchFinally tryCatch = new ChildWorkflowTryCatchFinally(parameters, childExecution,
@@ -256,7 +253,7 @@ public class TestGenericWorkflowClient implements GenericWorkflowClient {
             workflowContext.setRootTryCatch(tryCatch);
             ChildWorkflowTryCatchFinally currentRun = workflowExecutions.get(workflowId);
             if (currentRun != null) {
-                String cause = ChildWorkflowExecutionFailedCause.WORKFLOW_ALREADY_RUNNING.toString();
+                ChildWorkflowExecutionFailedCause cause = ChildWorkflowExecutionFailedCause.WORKFLOW_ALREADY_RUNNING;
                 throw new StartChildWorkflowFailedException(0, childExecution, workflowType, cause);
             }
             workflowExecutions.put(workflowId, tryCatch);
@@ -266,10 +263,7 @@ public class TestGenericWorkflowClient implements GenericWorkflowClient {
             throw e;
         }
         catch (Throwable e) {
-            // This cause is chosen to represent internal error for sub-workflow creation
-            String cause = "Unknown";
-            StartChildWorkflowFailedException failure = new StartChildWorkflowFailedException(0, childExecution, workflowType,
-                    cause);
+            StartChildWorkflowFailedException failure = new StartChildWorkflowFailedException(0, childExecution, workflowType, null);
             failure.initCause(e);
             throw failure;
         }
@@ -278,7 +272,7 @@ public class TestGenericWorkflowClient implements GenericWorkflowClient {
         }
     }
 
-    private void continueAsNewWorkflowExecution(final ChildWorkflowTryCatchFinally tryCatch, final Settable<String> result) {
+    private void continueAsNewWorkflowExecution(final ChildWorkflowTryCatchFinally tryCatch, final Settable<byte[]> result) {
         // It is always set to ready with null if no continuation is necessary
         final Promise<ContinueAsNewWorkflowExecutionParameters> continueAsNew = tryCatch.getContinueAsNew();
         new Task(continueAsNew) {
@@ -296,19 +290,19 @@ public class TestGenericWorkflowClient implements GenericWorkflowClient {
                 nextParameters.setWorkflowId(workflowId);
                 StartChildWorkflowExecutionParameters previousParameters = tryCatch.getParameters();
                 nextParameters.setWorkflowType(previousParameters.getWorkflowType());
-                long startToClose = cp.getExecutionStartToCloseTimeoutSeconds();
+                int startToClose = cp.getExecutionStartToCloseTimeoutSeconds();
                 if (startToClose == FlowConstants.NONE) {
                     startToClose = previousParameters.getExecutionStartToCloseTimeoutSeconds();
                 }
                 nextParameters.setExecutionStartToCloseTimeoutSeconds(startToClose);
-                long taskStartToClose = cp.getTaskStartToCloseTimeoutSeconds();
+                int taskStartToClose = cp.getTaskStartToCloseTimeoutSeconds();
                 if (taskStartToClose == FlowConstants.NONE) {
                     taskStartToClose = previousParameters.getTaskStartToCloseTimeoutSeconds();
                 }
                 nextParameters.setTaskStartToCloseTimeoutSeconds(taskStartToClose);
-                int taskPriority = cp.getTaskPriority();
-                nextParameters.setTaskPriority(taskPriority);
-                Settable<StartChildWorkflowReply> reply = new Settable<StartChildWorkflowReply>();
+//                int taskPriority = cp.getTaskPriority();
+//                nextParameters.setTaskPriority(taskPriority);
+                Settable<StartChildWorkflowReply> reply = new Settable<>();
                 startChildWorkflow(nextParameters, reply, result);
             }
 
@@ -323,38 +317,38 @@ public class TestGenericWorkflowClient implements GenericWorkflowClient {
         parameters.setWorkflowType(workflowType);
         parameters.setInput(input);
         Settable<StartChildWorkflowReply> reply = new Settable<StartChildWorkflowReply>();
-        Settable<String> result = new Settable<String>();
+        Settable<byte[]> result = new Settable<>();
         startChildWorkflow(parameters, reply, result);
         return result;
     }
 
     @Override
     public Promise<byte[]> startChildWorkflow(final String workflow, final Promise<byte[]> input) {
-        return new Functor<String>(input) {
+        return new Functor<byte[]>(input) {
 
             @Override
-            protected Promise<String> doExecute() throws Throwable {
+            protected Promise<byte[]> doExecute() throws Throwable {
                 return startChildWorkflow(workflow, input.get());
             }
         };
     }
 
-    @Override
-    public Promise<Void> signalWorkflowExecution(final SignalExternalWorkflowParameters signalParameters) {
-        WorkflowExecution signaledExecution = new WorkflowExecution();
-        signaledExecution.setWorkflowId(signalParameters.getWorkflowId());
-        signaledExecution.setRunId(signalParameters.getRunId());
-        final ChildWorkflowTryCatchFinally childTryCatch = workflowExecutions.get(signalParameters.getWorkflowId());
-        if (childTryCatch == null) {
-            throw new SignalExternalWorkflowException(0, signaledExecution, "UNKNOWN_EXTERNAL_WORKFLOW_EXECUTION");
-        }
-        String openExecutionRunId = childTryCatch.getWorkflowExecution().getRunId();
-        if (signalParameters.getRunId() != null && !openExecutionRunId.equals(signalParameters.getRunId())) {
-            throw new SignalExternalWorkflowException(0, signaledExecution, "Unknown Execution (runId doesn't match)");
-        }
-        childTryCatch.signalRecieved(signalParameters.getSignalName(), signalParameters.getInput());
-        return Promise.Void();
-    }
+//    @Override
+//    public Promise<Void> signalWorkflowExecution(final SignalExternalWorkflowParameters signalParameters) {
+//        WorkflowExecution signaledExecution = new WorkflowExecution();
+//        signaledExecution.setWorkflowId(signalParameters.getWorkflowId());
+//        signaledExecution.setRunId(signalParameters.getRunId());
+//        final ChildWorkflowTryCatchFinally childTryCatch = workflowExecutions.get(signalParameters.getWorkflowId());
+//        if (childTryCatch == null) {
+//            throw new SignalExternalWorkflowException(0, signaledExecution, "UNKNOWN_EXTERNAL_WORKFLOW_EXECUTION");
+//        }
+//        String openExecutionRunId = childTryCatch.getWorkflowExecution().getRunId();
+//        if (signalParameters.getRunId() != null && !openExecutionRunId.equals(signalParameters.getRunId())) {
+//            throw new SignalExternalWorkflowException(0, signaledExecution, "Unknown Execution (runId doesn't match)");
+//        }
+//        childTryCatch.signalRecieved(signalParameters.getSignalName(), signalParameters.getInput());
+//        return Promise.Void();
+//    }
 
     @Override
     public void requestCancelWorkflowExecution(WorkflowExecution execution) {

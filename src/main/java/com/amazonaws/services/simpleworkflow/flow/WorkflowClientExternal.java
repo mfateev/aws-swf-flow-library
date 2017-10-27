@@ -15,8 +15,8 @@
 package com.amazonaws.services.simpleworkflow.flow;
 
 import com.amazonaws.services.simpleworkflow.flow.generic.GenericWorkflowClientExternal;
-import com.amazonaws.services.simpleworkflow.model.ChildPolicy;
-import com.amazonaws.services.simpleworkflow.model.WorkflowExecution;
+import com.uber.cadence.ChildPolicy;
+import com.uber.cadence.WorkflowExecution;
 
 public interface WorkflowClientExternal {
     

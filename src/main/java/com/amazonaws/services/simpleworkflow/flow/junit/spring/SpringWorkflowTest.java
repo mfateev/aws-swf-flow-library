@@ -23,12 +23,11 @@ import com.amazonaws.services.simpleworkflow.flow.DecisionContext;
 import com.amazonaws.services.simpleworkflow.flow.junit.WorkflowTestBase;
 import com.amazonaws.services.simpleworkflow.flow.spring.WorkflowScope;
 import com.amazonaws.services.simpleworkflow.flow.test.TestDecisionContext;
-import com.amazonaws.services.simpleworkflow.flow.test.TestLambdaFunctionClient;
 import com.amazonaws.services.simpleworkflow.flow.test.TestPOJOActivityImplementationGenericActivityClient;
 import com.amazonaws.services.simpleworkflow.flow.test.TestPOJOActivityImplementationWorker;
 import com.amazonaws.services.simpleworkflow.flow.test.TestWorkflowClock;
 import com.amazonaws.services.simpleworkflow.flow.test.TestWorkflowContext;
-import com.amazonaws.services.simpleworkflow.model.WorkflowType;
+import com.uber.cadence.WorkflowType;
 
 /**
  * JUnit Rule that should be present as a public field of the test class
@@ -49,7 +48,7 @@ public class SpringWorkflowTest extends WorkflowTestBase {
     public SpringWorkflowTest() {
         super(new TestDecisionContext(new TestPOJOActivityImplementationGenericActivityClient(),
                 new SpringTestPOJOWorkflowImplementationGenericWorkflowClient(), new TestWorkflowClock(),
-                new TestWorkflowContext(), new TestLambdaFunctionClient()));
+                new TestWorkflowContext()));
         activityClient = (TestPOJOActivityImplementationGenericActivityClient) decisionContext.getActivityClient();
         workflowClient = (SpringTestPOJOWorkflowImplementationGenericWorkflowClient) decisionContext.getWorkflowClient();
     }
@@ -140,10 +139,6 @@ public class SpringWorkflowTest extends WorkflowTestBase {
     public void setDataConverter(DataConverter converter) {
         dataConverter = converter;
         workflowClient.setDataConverter(converter);
-    }
-
-    public Iterable<WorkflowType> getWorkflowTypesToRegister() {
-        return workflowClient.getWorkflowTypesToRegister();
     }
 
     @Override

@@ -29,7 +29,7 @@ public final class NullDataConverter extends DataConverter {
     }
     
     @Override
-    public <T> T fromData(String content, Class<T> valueType) throws DataConverterException {
+    public <T> T fromData(byte[] content, Class<T> valueType) throws DataConverterException {
         throw new UnsupportedOperationException("not implemented");
     }
 

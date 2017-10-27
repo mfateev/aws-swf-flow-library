@@ -243,24 +243,24 @@ public class DynamicWorkflowClientImpl implements DynamicWorkflowClient {
         return result;
     }
 
-    @Override
-    public void signalWorkflowExecution(final String signalName, final Object[] arguments, Promise<?>... waitFor) {
-        checkWorkflowExecution();
-        new Task(waitFor) {
-
-            @Override
-            protected void doExecute() throws Throwable {
-                SignalExternalWorkflowParameters parameters = new SignalExternalWorkflowParameters();
-                parameters.setSignalName(signalName);
-                byte[] input = dataConverter.toData(arguments);
-                parameters.setInput(input);
-                parameters.setWorkflowId(workflowExecution.getWorkflowId());
-                parameters.setRunId(workflowExecution.getRunId());
-                GenericWorkflowClient client = getGenericClientToUse();
-                client.signalWorkflowExecution(parameters);
-            }
-        };
-    }
+//    @Override
+//    public void signalWorkflowExecution(final String signalName, final Object[] arguments, Promise<?>... waitFor) {
+//        checkWorkflowExecution();
+//        new Task(waitFor) {
+//
+//            @Override
+//            protected void doExecute() throws Throwable {
+//                SignalExternalWorkflowParameters parameters = new SignalExternalWorkflowParameters();
+//                parameters.setSignalName(signalName);
+//                byte[] input = dataConverter.toData(arguments);
+//                parameters.setInput(input);
+//                parameters.setWorkflowId(workflowExecution.getWorkflowId());
+//                parameters.setRunId(workflowExecution.getRunId());
+//                GenericWorkflowClient client = getGenericClientToUse();
+//                client.signalWorkflowExecution(parameters);
+//            }
+//        };
+//    }
 
     private void checkState() {
         if (workflowType == null) {

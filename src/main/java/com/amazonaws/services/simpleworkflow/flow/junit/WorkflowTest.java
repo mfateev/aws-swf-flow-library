@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.amazonaws.services.simpleworkflow.flow.test.TestDecisionContext;
-import com.amazonaws.services.simpleworkflow.flow.test.TestLambdaFunctionClient;
 import com.amazonaws.services.simpleworkflow.flow.test.TestPOJOActivityImplementationGenericActivityClient;
 import com.amazonaws.services.simpleworkflow.flow.test.TestPOJOActivityImplementationWorker;
 import com.amazonaws.services.simpleworkflow.flow.test.TestPOJOWorkflowImplementationGenericWorkflowClient;
@@ -44,7 +43,7 @@ public class WorkflowTest extends WorkflowTestBase {
 
     public WorkflowTest() {
         super(new TestDecisionContext(new TestPOJOActivityImplementationGenericActivityClient(),
-                new TestPOJOWorkflowImplementationGenericWorkflowClient(), new TestWorkflowClock(), new TestWorkflowContext(), new TestLambdaFunctionClient()));
+                new TestPOJOWorkflowImplementationGenericWorkflowClient(), new TestWorkflowClock(), new TestWorkflowContext()));
         activityClient = (TestPOJOActivityImplementationGenericActivityClient) decisionContext.getActivityClient();
         workflowClient = (TestPOJOWorkflowImplementationGenericWorkflowClient) decisionContext.getWorkflowClient();
     }

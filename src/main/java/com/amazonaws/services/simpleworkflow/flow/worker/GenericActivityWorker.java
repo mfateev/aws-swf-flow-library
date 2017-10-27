@@ -93,10 +93,6 @@ public class GenericActivityWorker extends GenericWorker {
     }
 
     @Override
-    public void registerTypesToPoll() {
-    }
-
-    @Override
     protected void checkRequredProperties() {
         checkRequiredProperty(activityImplementationFactory, "activityImplementationFactory");
     }

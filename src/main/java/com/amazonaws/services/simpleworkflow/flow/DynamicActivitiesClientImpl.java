@@ -6,7 +6,7 @@ import com.amazonaws.services.simpleworkflow.flow.core.Settable;
 import com.amazonaws.services.simpleworkflow.flow.core.TryCatchFinally;
 import com.amazonaws.services.simpleworkflow.flow.generic.ExecuteActivityParameters;
 import com.amazonaws.services.simpleworkflow.flow.generic.GenericActivityClient;
-import com.amazonaws.services.simpleworkflow.model.ActivityType;
+import com.uber.cadence.ActivityType;
 
 public class DynamicActivitiesClientImpl implements DynamicActivitiesClient {
 
@@ -100,7 +100,7 @@ public class DynamicActivitiesClientImpl implements DynamicActivitiesClient {
         final Settable<T> result = new Settable<T>();
         new TryCatchFinally(waitFor) {
 
-            Promise<String> stringOutput;
+            Promise<byte[]> byteOutput;
 
             @Override
             protected void doTry() throws Throwable {
@@ -117,8 +117,8 @@ public class DynamicActivitiesClientImpl implements DynamicActivitiesClient {
                 } else {
                     client = genericClient;
                 }
-                stringOutput = client.scheduleActivityTask(_scheduleParameters_);
-                result.setDescription(stringOutput.getDescription());
+                byteOutput = client.scheduleActivityTask(_scheduleParameters_);
+                result.setDescription(byteOutput.getDescription());
             }
 
             @Override
@@ -126,7 +126,7 @@ public class DynamicActivitiesClientImpl implements DynamicActivitiesClient {
                 if (e instanceof ActivityTaskFailedException) {
                     ActivityTaskFailedException taskFailedException = (ActivityTaskFailedException) e;
                     try {
-                        String details = taskFailedException.getDetails();
+                        byte[] details = taskFailedException.getDetails();
                         if (details != null) {
                             Throwable cause = dataConverter.fromData(details, Throwable.class);
                             if (cause != null && taskFailedException.getCause() == null) {
@@ -147,12 +147,12 @@ public class DynamicActivitiesClientImpl implements DynamicActivitiesClient {
 
             @Override
             protected void doFinally() throws Throwable {
-                if (stringOutput != null && stringOutput.isReady()) {
+                if (byteOutput != null && byteOutput.isReady()) {
                     if (returnType.equals(Void.class)) {
                         result.set(null);
                     }
                     else {
-                        T output = dataConverter.fromData(stringOutput.get(), returnType);
+                        T output = dataConverter.fromData(byteOutput.get(), returnType);
                         result.set(output);
                     }
                 }

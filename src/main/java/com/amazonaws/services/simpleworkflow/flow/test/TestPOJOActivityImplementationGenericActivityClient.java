@@ -35,12 +35,12 @@ public class TestPOJOActivityImplementationGenericActivityClient implements Gene
         return genericClient.scheduleActivityTask(parameters);
     }
 
-    public Promise<String> scheduleActivityTask(String activity, String version, String input) {
-        return genericClient.scheduleActivityTask(activity, version, input);
+    public Promise<byte[]> scheduleActivityTask(String activity, byte[] input) {
+        return genericClient.scheduleActivityTask(activity, input);
     }
 
-    public Promise<String> scheduleActivityTask(String activity, String version, Promise<String> input) {
-        return genericClient.scheduleActivityTask(activity, version, input);
+    public Promise<byte[]> scheduleActivityTask(String activity, Promise<byte[]> input) {
+        return genericClient.scheduleActivityTask(activity, input);
     }
 
     

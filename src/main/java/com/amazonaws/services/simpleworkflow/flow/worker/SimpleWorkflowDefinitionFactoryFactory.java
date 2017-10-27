@@ -14,30 +14,21 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinitionFactory;
 import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinitionFactoryFactory;
-import com.amazonaws.services.simpleworkflow.model.WorkflowType;
+import com.uber.cadence.WorkflowType;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SimpleWorkflowDefinitionFactoryFactory extends WorkflowDefinitionFactoryFactory {
 
     private final Map<WorkflowType, WorkflowDefinitionFactory> factoriesMap = new HashMap<WorkflowType, WorkflowDefinitionFactory>();
 
-    private final List<WorkflowType> typesToRegister = new ArrayList<WorkflowType>();
-
     @Override
     public WorkflowDefinitionFactory getWorkflowDefinitionFactory(WorkflowType workflowType) {
         return factoriesMap.get(workflowType);
-    }
-
-    @Override
-    public Iterable<WorkflowType> getWorkflowTypesToRegister() {
-        return typesToRegister;
     }
 
     public void setWorkflowDefinitionFactories(Collection<WorkflowDefinitionFactory> factories) {
@@ -53,9 +44,5 @@ public class SimpleWorkflowDefinitionFactoryFactory extends WorkflowDefinitionFa
     public void addWorkflowDefinitionFactory(WorkflowDefinitionFactory factory) {
         WorkflowType workflowType = factory.getWorkflowType();
         factoriesMap.put(workflowType, factory);
-        WorkflowTypeRegistrationOptions registrationOptions = factory.getWorkflowRegistrationOptions();
-        if (registrationOptions != null) {
-            typesToRegister.add(workflowType);
-        }
     }
 }

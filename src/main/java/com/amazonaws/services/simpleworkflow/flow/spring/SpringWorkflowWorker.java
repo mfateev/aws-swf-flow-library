@@ -14,17 +14,15 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.spring;
 
-import java.lang.Thread.UncaughtExceptionHandler;
-import java.util.concurrent.TimeUnit;
-
-import com.uber.cadence.WorkflowService;
-import org.springframework.context.SmartLifecycle;
-
-import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
 import com.amazonaws.services.simpleworkflow.flow.DataConverter;
 import com.amazonaws.services.simpleworkflow.flow.WorkerBase;
 import com.amazonaws.services.simpleworkflow.flow.worker.GenericWorkflowWorker;
-import com.amazonaws.services.simpleworkflow.model.WorkflowType;
+import com.uber.cadence.WorkflowService;
+import com.uber.cadence.WorkflowType;
+import org.springframework.context.SmartLifecycle;
+
+import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.concurrent.TimeUnit;
 
 /**
  * To be used with Spring. Assumes that injected implementation bean has
@@ -49,7 +47,7 @@ public class SpringWorkflowWorker implements WorkerBase, SmartLifecycle {
         genericWorker.setWorkflowDefinitionFactoryFactory(factoryFactory);
     }
 
-    public SpringWorkflowWorker(AmazonSimpleWorkflow service, String domain, String taskListToPoll) {
+    public SpringWorkflowWorker(WorkflowService.Iface service, String domain, String taskListToPoll) {
         genericWorker = new GenericWorkflowWorker(service, domain, taskListToPoll);
         genericWorker.setWorkflowDefinitionFactoryFactory(factoryFactory);
     }
@@ -58,7 +56,7 @@ public class SpringWorkflowWorker implements WorkerBase, SmartLifecycle {
         return genericWorker.getService();
     }
 
-    public void setService(AmazonSimpleWorkflow service) {
+    public void setService(WorkflowService.Iface service) {
         genericWorker.setService(service);
     }
 
@@ -81,11 +79,11 @@ public class SpringWorkflowWorker implements WorkerBase, SmartLifecycle {
     }
 
     @Override
-    public long getDomainRetentionPeriodInDays() {
+    public int getDomainRetentionPeriodInDays() {
         return genericWorker.getDomainRetentionPeriodInDays();
     }
 
-    public void setDomainRetentionPeriodInDays(long domainRetentionPeriodInDays) {
+    public void setDomainRetentionPeriodInDays(int domainRetentionPeriodInDays) {
         genericWorker.setDomainRetentionPeriodInDays(domainRetentionPeriodInDays);
     }
 
@@ -167,26 +165,6 @@ public class SpringWorkflowWorker implements WorkerBase, SmartLifecycle {
     }
 
     @Override
-    public boolean isDisableServiceShutdownOnStop() {
-        return genericWorker.isDisableServiceShutdownOnStop();
-    }
-
-    @Override
-    public void setDisableServiceShutdownOnStop(boolean disableServiceShutdownOnStop) {
-        genericWorker.setDisableServiceShutdownOnStop(disableServiceShutdownOnStop);
-    }
-
-    @Override
-    public void setDisableTypeRegistrationOnStart(boolean disableTypeRegistrationOnStart) {
-        genericWorker.setDisableTypeRegistrationOnStart(disableTypeRegistrationOnStart);
-    }
-
-    @Override
-    public boolean isDisableTypeRegistrationOnStart() {
-        return genericWorker.isDisableTypeRegistrationOnStart();
-    }
-
-    @Override
     public double getPollBackoffCoefficient() {
         return genericWorker.getPollBackoffCoefficient();
     }
@@ -214,10 +192,6 @@ public class SpringWorkflowWorker implements WorkerBase, SmartLifecycle {
     @Override
     public void resumePolling() {
         genericWorker.resumePolling();
-    }
-
-    public Iterable<WorkflowType> getWorkflowTypesToRegister() {
-        return factoryFactory.getWorkflowTypesToRegister();
     }
 
     @Override
@@ -321,11 +295,6 @@ public class SpringWorkflowWorker implements WorkerBase, SmartLifecycle {
     public void stop(Runnable callback) {
         stop();
         callback.run();
-    }
-
-    @Override
-    public void registerTypesToPoll() {
-        genericWorker.registerTypesToPoll();
     }
 
 }

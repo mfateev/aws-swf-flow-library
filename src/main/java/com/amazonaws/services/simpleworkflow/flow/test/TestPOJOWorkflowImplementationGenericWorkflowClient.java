@@ -22,7 +22,6 @@ import com.amazonaws.services.simpleworkflow.flow.WorkflowException;
 import com.amazonaws.services.simpleworkflow.flow.core.Promise;
 import com.amazonaws.services.simpleworkflow.flow.generic.ContinueAsNewWorkflowExecutionParameters;
 import com.amazonaws.services.simpleworkflow.flow.generic.GenericWorkflowClient;
-import com.amazonaws.services.simpleworkflow.flow.generic.SignalExternalWorkflowParameters;
 import com.amazonaws.services.simpleworkflow.flow.generic.StartChildWorkflowExecutionParameters;
 import com.amazonaws.services.simpleworkflow.flow.generic.StartChildWorkflowReply;
 import com.amazonaws.services.simpleworkflow.flow.pojo.POJOWorkflowDefinitionFactoryFactory;
@@ -58,9 +57,9 @@ public class TestPOJOWorkflowImplementationGenericWorkflowClient implements Gene
         return genericClient.startChildWorkflow(workflow, input);
     }
 
-    public Promise<Void> signalWorkflowExecution(SignalExternalWorkflowParameters signalParameters) {
-        return genericClient.signalWorkflowExecution(signalParameters);
-    }
+//    public Promise<Void> signalWorkflowExecution(SignalExternalWorkflowParameters signalParameters) {
+//        return genericClient.signalWorkflowExecution(signalParameters);
+//    }
 
     public void requestCancelWorkflowExecution(WorkflowExecution execution) {
         genericClient.requestCancelWorkflowExecution(execution);

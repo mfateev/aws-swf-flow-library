@@ -24,6 +24,6 @@ public interface DynamicWorkflowClient extends WorkflowClient {
     <T> Promise<T> startWorkflowExecution(final Object[] arguments, final StartWorkflowOptions startOptionsOverride,
             final Class<T> returnType, Promise<?>... waitFor);
 
-    void signalWorkflowExecution(String signalName, Object[] arguments, Promise<?>... waitFor);
+//    void signalWorkflowExecution(String signalName, Object[] arguments, Promise<?>... waitFor);
 
 }

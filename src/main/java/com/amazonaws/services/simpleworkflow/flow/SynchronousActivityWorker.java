@@ -16,13 +16,13 @@ package com.amazonaws.services.simpleworkflow.flow;
 
 import java.util.List;
 
-import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
+import com.uber.cadence.WorkflowService;
 import com.amazonaws.services.simpleworkflow.flow.generic.ActivityImplementation;
 import com.amazonaws.services.simpleworkflow.flow.pojo.POJOActivityImplementationFactory;
 import com.amazonaws.services.simpleworkflow.flow.worker.ExponentialRetryParameters;
 import com.amazonaws.services.simpleworkflow.flow.worker.GenericActivityWorker;
 import com.amazonaws.services.simpleworkflow.flow.worker.SynchronousActivityTaskPoller;
-import com.amazonaws.services.simpleworkflow.model.ActivityType;
+import com.uber.cadence.ActivityType;
 
 public class SynchronousActivityWorker {
 
@@ -35,7 +35,7 @@ public class SynchronousActivityWorker {
         poller.setActivityImplementationFactory(factory);
     }
 
-    public SynchronousActivityWorker(AmazonSimpleWorkflow service, String domain, String taskListToPoll) {
+    public SynchronousActivityWorker(WorkflowService.Iface service, String domain, String taskListToPoll) {
         poller = new SynchronousActivityTaskPoller(service, domain, taskListToPoll, factory);
     }
 
@@ -72,19 +72,15 @@ public class SynchronousActivityWorker {
         return factory.addActivitiesImplementation(activitiesImplementation, converter);
     }
 
-    public Iterable<ActivityType> getActivityTypesToRegister() {
-        return factory.getActivityTypesToRegister();
-    }
-
     public ActivityImplementation getActivityImplementation(ActivityType activityType) {
         return factory.getActivityImplementation(activityType);
     }
 
-    public AmazonSimpleWorkflow getService() {
+    public WorkflowService.Iface getService() {
         return poller.getService();
     }
 
-    public void setService(AmazonSimpleWorkflow service) {
+    public void setService(WorkflowService.Iface service) {
         poller.setService(service);
     }
 
@@ -137,7 +133,4 @@ public class SynchronousActivityWorker {
         return this.getClass().getSimpleName() + "[poller=" + poller + ", factory=" + factory + "]";
     }
 
-    public void registerTypesToPoll() throws Exception {
-        GenericActivityWorker.registerActivityTypes(getService(), getDomain(), getTaskListToPoll(), factory);
-    }
 }

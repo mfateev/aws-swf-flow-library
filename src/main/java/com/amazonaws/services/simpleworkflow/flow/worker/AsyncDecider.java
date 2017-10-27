@@ -136,8 +136,6 @@ class AsyncDecider {
 
     private final GenericWorkflowClientImpl workflowClient;
 
-    private final LambdaFunctionClientImpl lambdaFunctionClient;
-
     private final WorkflowClockImpl workflowClock;
 
     private final DecisionContext context;
@@ -164,9 +162,7 @@ class AsyncDecider {
         workflowContext = new WorkfowContextImpl(decisionTask);
         this.workflowClient = new GenericWorkflowClientImpl(decisionsHelper, workflowContext);
         this.workflowClock = new WorkflowClockImpl(decisionsHelper);
-        this.lambdaFunctionClient = new LambdaFunctionClientImpl(decisionsHelper);
-        context = new DecisionContextImpl(activityClient, workflowClient, workflowClock, 
-        		workflowContext, lambdaFunctionClient);
+        context = new DecisionContextImpl(activityClient, workflowClient, workflowClock, workflowContext);
     }
 
     public boolean isCancelRequested() {

@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
-import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
+import com.uber.cadence.WorkflowService;
 import com.amazonaws.services.simpleworkflow.flow.pojo.POJOWorkflowDefinitionFactoryFactory;
 import com.amazonaws.services.simpleworkflow.flow.worker.GenericWorkflowWorker;
 import com.uber.cadence.WorkflowService;
@@ -32,7 +32,7 @@ public class WorkflowWorker implements WorkerBase {
 
     private final Collection<Class<?>> workflowImplementationTypes = new ArrayList<Class<?>>();
 
-    public WorkflowWorker(AmazonSimpleWorkflow service, String domain, String taskListToPoll) {
+    public WorkflowWorker(WorkflowService.Iface service, String domain, String taskListToPoll) {
         genericWorker = new GenericWorkflowWorker(service, domain, taskListToPoll);
         genericWorker.setWorkflowDefinitionFactoryFactory(factoryFactory);
     }
@@ -58,12 +58,12 @@ public class WorkflowWorker implements WorkerBase {
     }
 
     @Override
-    public long getDomainRetentionPeriodInDays() {
+    public int getDomainRetentionPeriodInDays() {
         return genericWorker.getDomainRetentionPeriodInDays();
     }
 
     @Override
-    public void setDomainRetentionPeriodInDays(long domainRetentionPeriodInDays) {
+    public void setDomainRetentionPeriodInDays(int domainRetentionPeriodInDays) {
         genericWorker.setDomainRetentionPeriodInDays(domainRetentionPeriodInDays);
     }
 
@@ -133,16 +133,6 @@ public class WorkflowWorker implements WorkerBase {
     }
 
     @Override
-    public boolean isDisableServiceShutdownOnStop() {
-        return genericWorker.isDisableServiceShutdownOnStop();
-    }
-
-    @Override
-    public void setDisableServiceShutdownOnStop(boolean disableServiceShutdownOnStop) {
-        genericWorker.setDisableServiceShutdownOnStop(disableServiceShutdownOnStop);
-    }
-
-    @Override
     public double getPollBackoffCoefficient() {
         return genericWorker.getPollBackoffCoefficient();
     }
@@ -160,11 +150,6 @@ public class WorkflowWorker implements WorkerBase {
     @Override
     public void setPollThreadCount(int threadCount) {
         genericWorker.setPollThreadCount(threadCount);
-    }
-
-    @Override
-    public void registerTypesToPoll() {
-        genericWorker.registerTypesToPoll();
     }
 
     @Override
@@ -242,16 +227,6 @@ public class WorkflowWorker implements WorkerBase {
 
     public void setDefaultConverter(DataConverter converter) {
         factoryFactory.setDataConverter(converter);
-    }
-
-    @Override
-    public void setDisableTypeRegistrationOnStart(boolean disableTypeRegistrationOnStart) {
-        genericWorker.setDisableTypeRegistrationOnStart(disableTypeRegistrationOnStart);
-    }
-
-    @Override
-    public boolean isDisableTypeRegistrationOnStart() {
-        return genericWorker.isDisableTypeRegistrationOnStart();
     }
 
 }

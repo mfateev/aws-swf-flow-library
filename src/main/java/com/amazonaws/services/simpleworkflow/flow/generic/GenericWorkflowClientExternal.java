@@ -24,7 +24,7 @@ public interface GenericWorkflowClientExternal {
     
     public void requestCancelWorkflowExecution(WorkflowExecution execution);
     
-    public String getWorkflowState(WorkflowExecution execution);
+    public byte[] getWorkflowState(WorkflowExecution execution);
     
     public void terminateWorkflowExecution(TerminateWorkflowExecutionParameters terminateParameters);
 

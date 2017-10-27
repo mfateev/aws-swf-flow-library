@@ -18,12 +18,11 @@ import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
+import com.uber.cadence.WorkflowService;
 import com.amazonaws.services.simpleworkflow.flow.generic.ActivityImplementation;
 import com.amazonaws.services.simpleworkflow.flow.pojo.POJOActivityImplementationFactory;
 import com.amazonaws.services.simpleworkflow.flow.worker.GenericActivityWorker;
-import com.amazonaws.services.simpleworkflow.model.ActivityType;
-import com.uber.cadence.WorkflowService;
+import com.uber.cadence.ActivityType;
 
 public class ActivityWorker implements WorkerBase {
 
@@ -31,7 +30,7 @@ public class ActivityWorker implements WorkerBase {
 
     private final POJOActivityImplementationFactory factory = new POJOActivityImplementationFactory();
 
-    public ActivityWorker(AmazonSimpleWorkflow service, String domain, String taskListToPoll) {
+    public ActivityWorker(WorkflowService.Iface service, String domain, String taskListToPoll) {
         genericWorker = new GenericActivityWorker(service, domain, taskListToPoll);
         genericWorker.setActivityImplementationFactory(factory);
     }
@@ -63,10 +62,6 @@ public class ActivityWorker implements WorkerBase {
     public List<ActivityType> addActivitiesImplementation(Object activitiesImplementation, DataConverter converter)
             throws InstantiationException, IllegalAccessException, SecurityException, NoSuchMethodException {
         return factory.addActivitiesImplementation(activitiesImplementation, converter);
-    }
-
-    public Iterable<ActivityType> getActivityTypesToRegister() {
-        return factory.getActivityTypesToRegister();
     }
 
     public ActivityImplementation getActivityImplementation(ActivityType activityType) {
@@ -125,12 +120,12 @@ public class ActivityWorker implements WorkerBase {
     }
 
     @Override
-    public long getDomainRetentionPeriodInDays() {
+    public int getDomainRetentionPeriodInDays() {
         return genericWorker.getDomainRetentionPeriodInDays();
     }
 
     @Override
-    public void setDomainRetentionPeriodInDays(long days) {
+    public void setDomainRetentionPeriodInDays(int days) {
         genericWorker.setDomainRetentionPeriodInDays(days);
     }
 
@@ -200,16 +195,6 @@ public class ActivityWorker implements WorkerBase {
     }
 
     @Override
-    public boolean isDisableServiceShutdownOnStop() {
-        return genericWorker.isDisableServiceShutdownOnStop();
-    }
-
-    @Override
-    public void setDisableServiceShutdownOnStop(boolean disableServiceShutdownOnStop) {
-        genericWorker.setDisableServiceShutdownOnStop(disableServiceShutdownOnStop);
-    }
-
-    @Override
     public double getPollBackoffCoefficient() {
         return genericWorker.getPollBackoffCoefficient();
     }
@@ -227,21 +212,6 @@ public class ActivityWorker implements WorkerBase {
     @Override
     public void setPollThreadCount(int threadCount) {
         genericWorker.setPollThreadCount(threadCount);
-    }
-
-    @Override
-    public void setDisableTypeRegistrationOnStart(boolean disableTypeRegistrationOnStart) {
-        genericWorker.setDisableTypeRegistrationOnStart(disableTypeRegistrationOnStart);
-    }
-
-    @Override
-    public boolean isDisableTypeRegistrationOnStart() {
-        return genericWorker.isDisableTypeRegistrationOnStart();
-    }
-    
-    @Override
-    public void registerTypesToPoll() {
-        genericWorker.registerTypesToPoll();
     }
 
     @Override

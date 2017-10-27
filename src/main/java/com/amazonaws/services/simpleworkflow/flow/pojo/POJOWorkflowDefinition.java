@@ -53,7 +53,7 @@ public class POJOWorkflowDefinition extends WorkflowDefinition {
     }
 
     @Override
-    public Settable<byte[]> execute(final String input) throws WorkflowException {
+    public Settable<byte[]> execute(final byte[] input) throws WorkflowException {
         final DataConverter c;
         if (workflowMethod.getConverter() == null) {
             c = converter;
@@ -100,7 +100,7 @@ public class POJOWorkflowDefinition extends WorkflowDefinition {
     }
 
     @Override
-    public void signalRecieved(String signalName, String details) throws WorkflowException {
+    public void signalRecieved(String signalName, byte[] details) throws WorkflowException {
         MethodConverterPair signalMethod = signals.get(signalName);
         if (signalMethod != null) {
             DataConverter c = signalMethod.getConverter();

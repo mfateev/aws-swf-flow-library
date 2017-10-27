@@ -29,7 +29,7 @@ public class TestWorkflowContext implements WorkflowContext {
     private WorkflowType workflowType;
     private ContinueAsNewWorkflowExecutionParameters continueAsNewOnCompletion;
     private WorkflowExecution parentWorkflowExecution;
-    private List<String> tagList;
+//    private List<String> tagList;
     private ChildPolicy childPolicy;
     private String continuedExecutionRunId;
     private long executionStartToCloseTimeout;
@@ -70,13 +70,13 @@ public class TestWorkflowContext implements WorkflowContext {
         this.parentWorkflowExecution = parentWorkflowExecution;
     }
     
-    public List<String> getTagList() {
-        return tagList;
-    }
-    
-    public void setTagList(List<String> tagList) {
-        this.tagList = tagList;
-    }
+//    public List<String> getTagList() {
+//        return tagList;
+//    }
+//
+//    public void setTagList(List<String> tagList) {
+//        this.tagList = tagList;
+//    }
     
     public ChildPolicy getChildPolicy() {
         return childPolicy;
@@ -94,11 +94,11 @@ public class TestWorkflowContext implements WorkflowContext {
         this.continuedExecutionRunId = continuedExecutionRunId;
     }
     
-    public long getExecutionStartToCloseTimeout() {
+    public long getExecutionStartToCloseTimeoutSeconds() {
         return executionStartToCloseTimeout;
     }
     
-    public void setExecutionStartToCloseTimeout(long executionStartToCloseTimeout) {
+    public void setExecutionStartToCloseTimeoutSeconds(long executionStartToCloseTimeout) {
         this.executionStartToCloseTimeout = executionStartToCloseTimeout;
     }
     

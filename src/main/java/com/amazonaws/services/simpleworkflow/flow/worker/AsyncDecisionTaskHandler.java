@@ -14,10 +14,9 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
+import com.uber.cadence.PollForDecisionTaskResponse;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -25,10 +24,9 @@ import com.amazonaws.services.simpleworkflow.flow.core.AsyncTaskInfo;
 import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinition;
 import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinitionFactory;
 import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinitionFactoryFactory;
-import com.amazonaws.services.simpleworkflow.model.Decision;
-import com.amazonaws.services.simpleworkflow.model.DecisionTask;
-import com.amazonaws.services.simpleworkflow.model.RespondDecisionTaskCompletedRequest;
-import com.amazonaws.services.simpleworkflow.model.WorkflowType;
+import com.uber.cadence.Decision;
+import com.uber.cadence.RespondDecisionTaskCompletedRequest;
+import com.uber.cadence.WorkflowType;
 
 public class AsyncDecisionTaskHandler extends DecisionTaskHandler {
 
@@ -44,14 +42,14 @@ public class AsyncDecisionTaskHandler extends DecisionTaskHandler {
     }
 
     @Override
-    public RespondDecisionTaskCompletedRequest handleDecisionTask(Iterator<DecisionTask> decisionTaskIterator) throws Exception {
+    public RespondDecisionTaskCompletedRequest handleDecisionTask(DecisionTaskWithHistoryIterator decisionTaskIterator) throws Exception {
         HistoryHelper historyHelper = new HistoryHelper(decisionTaskIterator);
         AsyncDecider decider = createDecider(historyHelper);
         decider.decide();
         DecisionsHelper decisionsHelper = decider.getDecisionsHelper();
-        Collection<Decision> decisions = decisionsHelper.getDecisions();
-        String context = decisionsHelper.getWorkflowContextDataToReturn();
-        DecisionTask decisionTask = historyHelper.getDecisionTask();
+        List<Decision> decisions = decisionsHelper.getDecisions();
+        byte[] context = decisionsHelper.getWorkflowContextDataToReturn();
+        PollForDecisionTaskResponse decisionTask = historyHelper.getDecisionTask();
         if (log.isDebugEnabled()) {
             log.debug("WorkflowTask taskId=" + decisionTask.getStartedEventId() + ", taskToken=" + decisionTask.getTaskToken()
                     + " completed with " + decisions.size() + " new decisions");
@@ -68,7 +66,7 @@ public class AsyncDecisionTaskHandler extends DecisionTaskHandler {
     }
 
     @Override
-    public WorkflowDefinition loadWorkflowThroughReplay(Iterator<DecisionTask> decisionTaskIterator) throws Exception {
+    public WorkflowDefinition loadWorkflowThroughReplay(DecisionTaskWithHistoryIterator decisionTaskIterator) throws Exception {
         HistoryHelper historyHelper = new HistoryHelper(decisionTaskIterator);
         AsyncDecider decider = createDecider(historyHelper);
         decider.decide();
@@ -80,7 +78,7 @@ public class AsyncDecisionTaskHandler extends DecisionTaskHandler {
     }
 
     @Override
-    public List<AsyncTaskInfo> getAsynchronousThreadDump(Iterator<DecisionTask> decisionTaskIterator) throws Exception {
+    public List<AsyncTaskInfo> getAsynchronousThreadDump(DecisionTaskWithHistoryIterator decisionTaskIterator) throws Exception {
         HistoryHelper historyHelper = new HistoryHelper(decisionTaskIterator);
         AsyncDecider decider = createDecider(historyHelper);
         decider.decide();
@@ -88,7 +86,7 @@ public class AsyncDecisionTaskHandler extends DecisionTaskHandler {
     }
 
     @Override
-    public String getAsynchronousThreadDumpAsString(Iterator<DecisionTask> decisionTaskIterator) throws Exception {
+    public String getAsynchronousThreadDumpAsString(DecisionTaskWithHistoryIterator decisionTaskIterator) throws Exception {
         HistoryHelper historyHelper = new HistoryHelper(decisionTaskIterator);
         AsyncDecider decider = createDecider(historyHelper);
         decider.decide();
@@ -96,7 +94,7 @@ public class AsyncDecisionTaskHandler extends DecisionTaskHandler {
     }
 
     private AsyncDecider createDecider(HistoryHelper historyHelper) throws Exception {
-        DecisionTask decisionTask = historyHelper.getDecisionTask();
+        PollForDecisionTaskResponse decisionTask = historyHelper.getDecisionTask();
         WorkflowType workflowType = decisionTask.getWorkflowType();
         if (log.isDebugEnabled()) {
             log.debug("WorkflowTask received: taskId=" + decisionTask.getStartedEventId() + ", taskToken="

@@ -57,7 +57,7 @@ public abstract class ActivityExecutionContext {
      *             workflow.Should be rethrown from activity implementation to
      *             indicate successful cancellation.
      */
-    public abstract void recordActivityHeartbeat(String details)
+    public abstract void recordActivityHeartbeat(byte[] details)
             throws CancellationException;
 
     /**

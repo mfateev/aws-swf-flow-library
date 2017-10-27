@@ -133,21 +133,6 @@ public class POJOWorkflowDefinitionFactoryFactory extends WorkflowDefinitionFact
                 DataConverter converter = createConverter(workflowAnnotation.dataConverter(), converterOverride);
                 workflowImplementationMethod = new MethodConverterPair(method, converter);
                 workflowType = getWorkflowType(interfaceName, method, executeAnnotation);
-                
-                WorkflowRegistrationOptions registrationOptionsAnnotation = interfaze.getAnnotation(WorkflowRegistrationOptions.class);
-                SkipTypeRegistration skipRegistrationAnnotation = interfaze.getAnnotation(SkipTypeRegistration.class);
-                if (skipRegistrationAnnotation == null) {
-                    if (registrationOptionsAnnotation == null) {
-                        throw new IllegalArgumentException(
-                                "@WorkflowRegistrationOptions is required for the interface that contains method annotated with @Execute");
-                    }
-                }
-                else {
-                    if (registrationOptionsAnnotation != null) {
-                        throw new IllegalArgumentException(
-                                "@WorkflowRegistrationOptions is not allowed for the interface annotated with @SkipTypeRegistration.");
-                    }
-                }
             }
             if (signalAnnotation != null) {
                 String signalName = signalAnnotation.name();

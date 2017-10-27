@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.amazonaws.services.simpleworkflow.flow.core.AsyncTaskInfo;
+import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinition;
 import com.uber.cadence.RespondDecisionTaskCompletedRequest;
 
 /**
@@ -45,6 +46,6 @@ public abstract class DecisionTaskHandler {
 
     public abstract String getAsynchronousThreadDumpAsString(DecisionTaskWithHistoryIterator decisionTaskIterator) throws Exception;
 
-    public abstract Object loadWorkflowThroughReplay(DecisionTaskWithHistoryIterator decisionTaskIterator) throws Exception;
+    public abstract WorkflowDefinition loadWorkflowThroughReplay(DecisionTaskWithHistoryIterator decisionTaskIterator) throws Exception;
 
 }

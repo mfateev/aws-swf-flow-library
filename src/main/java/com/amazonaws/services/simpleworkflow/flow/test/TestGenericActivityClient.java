@@ -44,7 +44,7 @@ public class TestGenericActivityClient implements GenericActivityClient {
         }
 
         @Override
-        public void recordActivityHeartbeat(String details) {
+        public void recordActivityHeartbeat(byte[] details) {
             //TODO: timeouts
         }
 

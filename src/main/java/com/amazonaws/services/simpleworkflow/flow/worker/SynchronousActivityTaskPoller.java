@@ -212,7 +212,7 @@ public class SynchronousActivityTaskPoller implements TaskPoller {
                         + task.getWorkflowExecution().getWorkflowId() + ", activity=" + activityType
                         + ", activityInstanceId=" + task.getActivityId(), e);
             }
-            respondActivityTaskFailedWithRetry(task.getTaskToken(), e.getReason(), e.getDetails().getBytes(UTF8_CHARSET));
+            respondActivityTaskFailedWithRetry(task.getTaskToken(), e.getReason(), e.getDetails());
         }
         catch (Exception e) {
             if (log.isErrorEnabled()) {

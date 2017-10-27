@@ -35,6 +35,7 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
@@ -134,9 +135,14 @@ public class WorkflowExecutionUtils {
 //            return null;
 //        }
 
-        List<HistoryEvent> events = getHistory(service, domain, workflowExecution);
+        Iterator<HistoryEvent> events = getHistory(service, domain, workflowExecution);
+        return getInstanceCloseEvent(events);
+    }
+
+    public static HistoryEvent getInstanceCloseEvent(Iterator<HistoryEvent> events) {
         HistoryEvent result = null;
-        for (HistoryEvent event : events) {
+        while (events.hasNext()) {
+            HistoryEvent event = events.next();
             if (isWorkflowExecutionCompletedEvent(event)) {
                 result = event;
                 break;
@@ -254,20 +260,38 @@ public class WorkflowExecutionUtils {
             WorkflowExecution workflowExecution, long timeoutSeconds) 
                 throws InterruptedException, TimeoutException {
         long start = System.currentTimeMillis();
-        WorkflowExecutionInfo executionInfo = null;
-        do {
+        HistoryEvent closeEvent = null;
+        while(closeEvent == null) {
             if (timeoutSeconds > 0 && System.currentTimeMillis() - start >= timeoutSeconds * 1000) {
                 String historyDump = WorkflowExecutionUtils.prettyPrintHistory(service, domain, workflowExecution);
                 throw new TimeoutException("Workflow instance is not complete after " + timeoutSeconds + " seconds: \n"
                         + historyDump);
             }
-            if (executionInfo != null) {
+            closeEvent = getInstanceCloseEvent(service, domain, workflowExecution);
+            if (closeEvent == null) {
                 Thread.sleep(1000);
             }
-            executionInfo = describeWorkflowInstance(service, domain, workflowExecution);
         }
-        while (!executionInfo.isSetCloseStatus());
-        return executionInfo.getCloseStatus();
+        return getCloseStatus(closeEvent);
+    }
+
+    private static WorkflowExecutionCloseStatus getCloseStatus(HistoryEvent event) {
+        switch (event.getEventType()) {
+            case WorkflowExecutionCanceled:
+                return WorkflowExecutionCloseStatus.CANCELED;
+            case WorkflowExecutionFailed:
+                return WorkflowExecutionCloseStatus.FAILED;
+            case WorkflowExecutionTimedOut:
+                return WorkflowExecutionCloseStatus.TIMED_OUT;
+            case WorkflowExecutionContinuedAsNew:
+                return WorkflowExecutionCloseStatus.CONTINUED_AS_NEW;
+            case WorkflowExecutionCompleted:
+                return WorkflowExecutionCloseStatus.COMPLETED;
+            case WorkflowExecutionTerminated:
+                return WorkflowExecutionCloseStatus.TERMINATED;
+            default:
+                throw new IllegalArgumentException("Not close event: " + event);
+        }
     }
 
     /**
@@ -369,21 +393,41 @@ public class WorkflowExecutionUtils {
      */
     public static String prettyPrintHistory(Iface service, String domain, WorkflowExecution workflowExecution,
             boolean showWorkflowTasks) {
-        List<HistoryEvent> events = getHistory(service, domain, workflowExecution);
+        Iterator<HistoryEvent> events = getHistory(service, domain, workflowExecution);
         return prettyPrintHistory(events, showWorkflowTasks);
     }
 
-    public static List<HistoryEvent> getHistory(Iface service, String domain,
-            WorkflowExecution workflowExecution) {
-        List<HistoryEvent> events = new ArrayList<HistoryEvent>();
-        byte[] nextPageToken = null;
-        do {
-            GetWorkflowExecutionHistoryResponse history = getHistoryPage(nextPageToken, service, domain, workflowExecution);
-            events.addAll(history.getHistory().getEvents());
-            nextPageToken = history.getNextPageToken();
-        }
-        while (nextPageToken != null);
-        return events;
+    public static Iterator<HistoryEvent> getHistory(Iface service, String domain,
+                                                    WorkflowExecution workflowExecution) {
+        return new Iterator<HistoryEvent>() {
+            byte[] nextPageToken;
+            Iterator<HistoryEvent> current;
+
+            {
+                getNextPage();
+            }
+
+            @Override
+            public boolean hasNext() {
+                return current.hasNext() || nextPageToken != null;
+            }
+
+            @Override
+            public HistoryEvent next() {
+                if (current.hasNext()) {
+                    return current.next();
+                }
+                getNextPage();
+                return current.next();
+            }
+
+            private void getNextPage() {
+                GetWorkflowExecutionHistoryResponse history = getHistoryPage(nextPageToken, service, domain, workflowExecution);
+                current = history.getHistory().getEvents().iterator();
+                nextPageToken = history.getNextPageToken();
+            }
+
+        };
     }
 
     public static GetWorkflowExecutionHistoryResponse getHistoryPage(byte[] nextPageToken, Iface service, String domain,
@@ -415,14 +459,15 @@ public class WorkflowExecutionUtils {
      *            not included
      */
     public static String prettyPrintHistory(History history, boolean showWorkflowTasks) {
-        return prettyPrintHistory(history.getEvents(), showWorkflowTasks);
+        return prettyPrintHistory(history.getEvents().iterator(), showWorkflowTasks);
     }
 
-    public static String prettyPrintHistory(Iterable<HistoryEvent> events, boolean showWorkflowTasks) {
+    public static String prettyPrintHistory(Iterator<HistoryEvent> events, boolean showWorkflowTasks) {
         StringBuffer result = new StringBuffer();
         result.append("{");
         boolean first = true;
-        for (HistoryEvent event : events) {
+        while(events.hasNext()) {
+            HistoryEvent event = events.next();
             if (!showWorkflowTasks && event.getEventType().toString().startsWith("WorkflowTask")) {
                 continue;
             }
@@ -474,8 +519,8 @@ public class WorkflowExecutionUtils {
     /**
      * Returns single decision in a human readable format
      * 
-     * @param event
-     *            event to pretty print
+     * @param decision
+     *            decision to pretty print
      */
     public static String prettyPrintDecision(Decision decision) {
         return prettyPrintObject(decision, "getType", true, "    ", true);

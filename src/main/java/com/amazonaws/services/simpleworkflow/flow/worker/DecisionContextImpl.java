@@ -30,15 +30,12 @@ class DecisionContextImpl extends DecisionContext {
     
     private final WorkflowContext workflowContext;
 
-    private final LambdaFunctionClient lambdaFunctionClient;
-
     DecisionContextImpl(GenericActivityClient activityClient, GenericWorkflowClient workflowClient,
-            WorkflowClock workflowClock, WorkflowContext workflowContext, LambdaFunctionClient lambdaFunctionClient) {
+            WorkflowClock workflowClock, WorkflowContext workflowContext) {
         this.activityClient = activityClient;
         this.workflowClient = workflowClient;
         this.workflowClock = workflowClock;
         this.workflowContext = workflowContext;
-        this.lambdaFunctionClient = lambdaFunctionClient;
     }
 
     @Override
@@ -59,10 +56,5 @@ class DecisionContextImpl extends DecisionContext {
     @Override
     public WorkflowContext getWorkflowContext() {
         return workflowContext;
-    }
-
-    @Override
-    public LambdaFunctionClient getLambdaFunctionClient() {
-    	return lambdaFunctionClient;
     }
 }
