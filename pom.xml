@@ -46,6 +46,11 @@ Based on Flow Framwork for Amazon Simple WorkFlow Service
 
   <dependencies>
     <dependency>
+      <groupId>com.uber.tchannel</groupId>
+      <artifactId>tchannel-core</artifactId>
+      <version>0.7.6</version>
+    </dependency>
+    <dependency>
       <groupId>org.apache.thrift</groupId>
       <artifactId>libthrift</artifactId>
       <version>0.10.0</version>
