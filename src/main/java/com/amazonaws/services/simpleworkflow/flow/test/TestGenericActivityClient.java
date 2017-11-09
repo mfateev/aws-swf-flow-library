@@ -14,6 +14,7 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.test;
 
+import com.amazonaws.services.simpleworkflow.flow.ActivityTask;
 import com.uber.cadence.ActivityType;
 import com.uber.cadence.PollForActivityTaskResponse;
 import com.uber.cadence.WorkflowExecution;
@@ -34,11 +35,11 @@ public class TestGenericActivityClient implements GenericActivityClient {
 
     private final class TestActivityExecutionContext extends ActivityExecutionContext {
 
-        private final PollForActivityTaskResponse activityTask;
+        private final ActivityTask activityTask;
 
         private final WorkflowExecution workflowExecution;
 
-        private TestActivityExecutionContext(PollForActivityTaskResponse activityTask, WorkflowExecution workflowExecution) {
+        private TestActivityExecutionContext(ActivityTask activityTask, WorkflowExecution workflowExecution) {
             this.activityTask = activityTask;
             this.workflowExecution = workflowExecution;
         }
@@ -49,7 +50,7 @@ public class TestGenericActivityClient implements GenericActivityClient {
         }
 
         @Override
-        public PollForActivityTaskResponse getTask() {
+        public ActivityTask getTask() {
             return activityTask;
         }
 
@@ -98,19 +99,19 @@ public class TestGenericActivityClient implements GenericActivityClient {
     public Promise<byte[]> scheduleActivityTask(final ExecuteActivityParameters parameters) {
         final ActivityType activityType = parameters.getActivityType();
         final Settable<byte[]> result = new Settable<>();
-        final PollForActivityTaskResponse activityTask = new PollForActivityTaskResponse();
+        final PollForActivityTaskResponse pollResponse = new PollForActivityTaskResponse();
         String activityId = parameters.getActivityId();
         if (activityId == null) {
             activityId = decisionContextProvider.getDecisionContext().getWorkflowClient().generateUniqueId();
         }
-        activityTask.setActivityId(activityId);
-        activityTask.setActivityType(activityType);
-        activityTask.setInput(parameters.getInput());
-        activityTask.setStartedEventId(0L);
-        activityTask.setTaskToken("dummyTaskToken".getBytes());
+        pollResponse.setActivityId(activityId);
+        pollResponse.setActivityType(activityType);
+        pollResponse.setInput(parameters.getInput());
+        pollResponse.setStartedEventId(0L);
+        pollResponse.setTaskToken("dummyTaskToken".getBytes());
         DecisionContext decisionContext = decisionContextProvider.getDecisionContext();
         final WorkflowExecution workflowExecution = decisionContext.getWorkflowContext().getWorkflowExecution();
-        activityTask.setWorkflowExecution(workflowExecution);
+        pollResponse.setWorkflowExecution(workflowExecution);
         String taskList = parameters.getTaskList();
         if (taskList == null || taskList.isEmpty()) {
                 throw new IllegalArgumentException("empty or null task list");
@@ -126,7 +127,8 @@ public class TestGenericActivityClient implements GenericActivityClient {
         if (impl == null) {
             throw new IllegalStateException("Unknown activity type: " + activityType);
         }
-        ActivityExecutionContext executionContext = new TestActivityExecutionContext(activityTask, workflowExecution);
+        ActivityTask task = new ActivityTask(pollResponse);
+        ActivityExecutionContext executionContext = new TestActivityExecutionContext(task, workflowExecution);
         try {
             byte[] activityResult = impl.execute(executionContext);
             result.set(activityResult);

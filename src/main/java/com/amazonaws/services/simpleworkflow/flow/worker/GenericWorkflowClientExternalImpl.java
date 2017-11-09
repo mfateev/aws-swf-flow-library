@@ -16,6 +16,7 @@ package com.amazonaws.services.simpleworkflow.flow.worker;
 
 import java.util.UUID;
 
+import com.amazonaws.services.simpleworkflow.flow.WorkflowExecutionAlreadyStartedException;
 import com.amazonaws.services.simpleworkflow.flow.common.FlowHelpers;
 import com.amazonaws.services.simpleworkflow.flow.generic.GenericWorkflowClientExternal;
 import com.amazonaws.services.simpleworkflow.flow.generic.SignalExternalWorkflowParameters;
@@ -36,7 +37,7 @@ public class GenericWorkflowClientExternalImpl implements GenericWorkflowClientE
     }
 
     @Override
-    public WorkflowExecution startWorkflow(StartWorkflowExecutionParameters startParameters) {
+    public WorkflowExecution startWorkflow(StartWorkflowExecutionParameters startParameters) throws WorkflowExecutionAlreadyStartedException{
         StartWorkflowExecutionRequest request = new StartWorkflowExecutionRequest();
         request.setDomain(domain);
 
@@ -59,6 +60,8 @@ public class GenericWorkflowClientExternalImpl implements GenericWorkflowClientE
         StartWorkflowExecutionResponse result = null;
         try {
             result = service.StartWorkflowExecution(request);
+        } catch (WorkflowExecutionAlreadyStartedError e) {
+            throw new WorkflowExecutionAlreadyStartedException(startParameters.getWorkflowId(), e);
         } catch (TException e) {
             throw new RuntimeException(e);
         }

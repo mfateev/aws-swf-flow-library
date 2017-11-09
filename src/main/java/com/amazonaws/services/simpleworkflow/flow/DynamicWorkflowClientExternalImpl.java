@@ -128,12 +128,12 @@ public class DynamicWorkflowClientExternalImpl implements DynamicWorkflowClientE
     }
 
     @Override
-    public void startWorkflowExecution(Object[] arguments) {
+    public void startWorkflowExecution(Object[] arguments) throws WorkflowExecutionAlreadyStartedException {
         startWorkflowExecution(arguments, null);
     }
 
     @Override
-    public void startWorkflowExecution(Object[] arguments, StartWorkflowOptions startOptionsOverride) {
+    public void startWorkflowExecution(Object[] arguments, StartWorkflowOptions startOptionsOverride) throws WorkflowExecutionAlreadyStartedException {
         if (workflowType == null) {
             throw new IllegalStateException("Required property workflowType is null");
         }

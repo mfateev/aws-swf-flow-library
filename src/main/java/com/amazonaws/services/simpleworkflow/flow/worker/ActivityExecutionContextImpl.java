@@ -14,6 +14,7 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
+import com.amazonaws.services.simpleworkflow.flow.ActivityTask;
 import com.uber.cadence.PollForActivityTaskResponse;
 import com.uber.cadence.RecordActivityTaskHeartbeatRequest;
 import com.uber.cadence.RecordActivityTaskHeartbeatResponse;
@@ -39,7 +40,7 @@ class ActivityExecutionContextImpl extends ActivityExecutionContext {
 
     private final String domain;
     
-    private final PollForActivityTaskResponse task;
+    private final ActivityTask task;
 
     /**
      * Create an ActivityExecutionContextImpl with the given attributes.
@@ -53,10 +54,10 @@ class ActivityExecutionContextImpl extends ActivityExecutionContext {
      *
      * @see ActivityExecutionContext
      */
-    public ActivityExecutionContextImpl(Iface service, String domain, PollForActivityTaskResponse task) {
+    public ActivityExecutionContextImpl(Iface service, String domain, PollForActivityTaskResponse response) {
         this.domain = domain;
         this.service = service;
-        this.task = task;
+        this.task = new ActivityTask(response);
     }
 
     /**
@@ -85,7 +86,7 @@ class ActivityExecutionContextImpl extends ActivityExecutionContext {
      * @see ActivityExecutionContext#getTask()
      */
     @Override
-    public PollForActivityTaskResponse getTask() {
+    public ActivityTask getTask() {
         return task;
     }
 

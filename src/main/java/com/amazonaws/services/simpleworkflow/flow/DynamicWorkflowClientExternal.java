@@ -17,9 +17,9 @@ package com.amazonaws.services.simpleworkflow.flow;
 
 public interface DynamicWorkflowClientExternal extends WorkflowClientExternal {
     
-    void startWorkflowExecution(Object[] arguments, StartWorkflowOptions startOptionsOverride);
+    void startWorkflowExecution(Object[] arguments, StartWorkflowOptions startOptionsOverride) throws WorkflowExecutionAlreadyStartedException;
     
-    void startWorkflowExecution(Object[] arguments);
+    void startWorkflowExecution(Object[] arguments) throws WorkflowExecutionAlreadyStartedException;
 
     void signalWorkflowExecution(String signalName, Object[] arguments);
     

@@ -44,7 +44,7 @@ public abstract class ActivityExecutionContext {
     /**
      * @return task that caused activity execution
      */
-    public abstract PollForActivityTaskResponse getTask();
+    public abstract ActivityTask getTask();
 
     /**
      * Use to notify Simple Workflow that activity execution is alive.

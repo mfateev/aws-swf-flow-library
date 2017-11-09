@@ -14,11 +14,12 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.generic;
 
+import com.amazonaws.services.simpleworkflow.flow.WorkflowExecutionAlreadyStartedException;
 import com.uber.cadence.WorkflowExecution;
 
 public interface GenericWorkflowClientExternal {
     
-    public WorkflowExecution startWorkflow(StartWorkflowExecutionParameters startParameters);
+    public WorkflowExecution startWorkflow(StartWorkflowExecutionParameters startParameters) throws WorkflowExecutionAlreadyStartedException;
     
     public void signalWorkflowExecution(SignalExternalWorkflowParameters signalParameters);
     

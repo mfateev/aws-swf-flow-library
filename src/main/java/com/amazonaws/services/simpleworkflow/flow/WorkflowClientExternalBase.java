@@ -75,11 +75,11 @@ public abstract class WorkflowClientExternalBase implements WorkflowClientExtern
         return dynamicWorkflowClient.getWorkflowExecution();
     }
 
-    protected void startWorkflowExecution(Object[] arguments, StartWorkflowOptions startOptionsOverride) {
+    protected void startWorkflowExecution(Object[] arguments, StartWorkflowOptions startOptionsOverride) throws WorkflowExecutionAlreadyStartedException {
         dynamicWorkflowClient.startWorkflowExecution(arguments, startOptionsOverride);
     }
 
-    protected void startWorkflowExecution(Object[] arguments) {
+    protected void startWorkflowExecution(Object[] arguments) throws WorkflowExecutionAlreadyStartedException {
         dynamicWorkflowClient.startWorkflowExecution(arguments);
     }
 
