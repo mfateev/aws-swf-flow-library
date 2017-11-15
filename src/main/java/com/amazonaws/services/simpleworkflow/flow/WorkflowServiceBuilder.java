@@ -17,19 +17,21 @@ public class WorkflowServiceBuilder {
 
     private final String host;
     private final int port;
+    private final String serviceName;
     private final WorkflowServiceTChannel.ClientOptions options;
 
-    public WorkflowServiceBuilder(String host, int port) {
-        this(host, port, new WorkflowServiceTChannel.ClientOptions.Builder().build());
+    public WorkflowServiceBuilder(String host, int port, String serviceName) {
+        this(host, port, serviceName, new WorkflowServiceTChannel.ClientOptions.Builder().build());
     }
 
-    public WorkflowServiceBuilder(String host, int port, WorkflowServiceTChannel.ClientOptions options) {
+    public WorkflowServiceBuilder(String host, int port, String serviceName, WorkflowServiceTChannel.ClientOptions options) {
         this.host = host;
         this.port = port;
+        this.serviceName = serviceName;
         this.options = options;
     }
     
     public WorkflowService.Iface build() {
-        return new WorkflowServiceTChannel(host, port, options);
+        return new WorkflowServiceTChannel(host, port, serviceName, options);
     }
 }

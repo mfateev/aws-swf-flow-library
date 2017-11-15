@@ -19,6 +19,7 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -176,8 +177,7 @@ public class WorkflowServiceTChannel implements WorkflowService.Iface {
         }
     }
 
-    private static final String FRONTEND_SERVICE_NAME = "cadence-frontendhost";
-    private static final String INTERFACE_NAME = "CadenceFrontend";
+    private static final String INTERFACE_NAME = "WorkflowService";
 
     private static final Logger logger = LoggerFactory.getLogger(WorkflowServiceTChannel.class);
 
@@ -187,11 +187,11 @@ public class WorkflowServiceTChannel implements WorkflowService.Iface {
     private final SubChannel subChannel;
     private final String serviceName;
 
-    public WorkflowServiceTChannel(String host, int port, ClientOptions options) {
+    public WorkflowServiceTChannel(String host, int port, String serviceName, ClientOptions options) {
+        this.serviceName = serviceName;
         this.options = options;
         String envUserName = System.getenv("USER");
         String envHostname;
-        this.serviceName = getFrontendServiceName(options.getDeploymentStr());
         try {
             envHostname = InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {
@@ -214,14 +214,6 @@ public class WorkflowServiceTChannel implements WorkflowService.Iface {
             tChannel.shutdown();
             throw new RuntimeException("Unable to get name of host " + host, e);
         }
-    }
-
-    private String getFrontendServiceName(String deploymentString) {
-        String deploymentStr = deploymentString;
-        if (this.isProd(deploymentStr)) {
-            return FRONTEND_SERVICE_NAME;
-        }
-        return String.format("%s_%s", FRONTEND_SERVICE_NAME, deploymentStr);
     }
 
     private boolean isProd(String deploymentStr) {
@@ -383,6 +375,7 @@ public class WorkflowServiceTChannel implements WorkflowService.Iface {
 
     @Override
     public StartWorkflowExecutionResponse StartWorkflowExecution(StartWorkflowExecutionRequest startRequest) throws BadRequestError, InternalServiceError, WorkflowExecutionAlreadyStartedError, ServiceBusyError, TException {
+        startRequest.setRequestId(UUID.randomUUID().toString());
         ThriftResponse<WorkflowService.StartWorkflowExecution_result> response = null;
         try {
             ThriftRequest<WorkflowService.StartWorkflowExecution_args> request = buildThriftRequest("StartWorkflowExecution", new WorkflowService.StartWorkflowExecution_args(startRequest));
@@ -632,6 +625,7 @@ public class WorkflowServiceTChannel implements WorkflowService.Iface {
 
     @Override
     public void RequestCancelWorkflowExecution(RequestCancelWorkflowExecutionRequest cancelRequest) throws BadRequestError, InternalServiceError, EntityNotExistsError, CancellationAlreadyRequestedError, ServiceBusyError, TException {
+        cancelRequest.setRequestId(UUID.randomUUID().toString());
         ThriftResponse<WorkflowService.RequestCancelWorkflowExecution_result> response = null;
         try {
             ThriftRequest<WorkflowService.RequestCancelWorkflowExecution_args> request = buildThriftRequest("RequestCancelWorkflowExecution", new WorkflowService.RequestCancelWorkflowExecution_args(cancelRequest));
