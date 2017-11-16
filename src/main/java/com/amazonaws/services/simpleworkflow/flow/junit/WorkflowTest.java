@@ -48,10 +48,6 @@ public class WorkflowTest extends WorkflowTestBase {
         workflowClient = (TestPOJOWorkflowImplementationGenericWorkflowClient) decisionContext.getWorkflowClient();
     }
 
-    public void addActivitiesImplementation(Object activitiesImplementation) {
-        addActivitiesImplementation(defaultActivitiesTaskListToPoll, activitiesImplementation);
-    }
-
     public void addActivitiesImplementation(String taskList, Object activitiesImplementation) {
         try {
             TestPOJOActivityImplementationWorker worker = getActivityWorker(taskList);
@@ -85,11 +81,6 @@ public class WorkflowTest extends WorkflowTestBase {
         }
     }
 
-    public void setActivitiesImplementations(Iterable<Object> activitiesImplementationObjects) {
-        workers.clear();
-        addActivitiesImplementations(defaultActivitiesTaskListToPoll, activitiesImplementationObjects);
-    }
-
     public void setTaskListActivitiesImplementationMap(Map<String, Object> map) {
         workers.clear();
         for (Entry<String, Object> taskImplPair : map.entrySet()) {
@@ -117,11 +108,6 @@ public class WorkflowTest extends WorkflowTestBase {
         catch (Exception e) {
             throw new IllegalArgumentException("Invalid activities implementation: " + activityImplementationObjects, e);
         }
-    }
-
-    public Iterable<Object> getActivitiesImplementations() {
-        TestPOJOActivityImplementationWorker worker = getActivityWorker(defaultActivitiesTaskListToPoll);
-        return worker.getActivitiesImplementations();
     }
 
     public void setWorkflowImplementationTypes(Collection<Class<?>> workflowImplementationTypes)

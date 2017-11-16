@@ -36,8 +36,4 @@ public class GenericWorkflowTest extends WorkflowTestBase {
         activityClient.addFactory(taskListToListen, factory);
     }
 
-    public void addFactory(ActivityImplementationFactory factory) {
-        addFactory(defaultActivitiesTaskListToPoll, factory);
-    }
-
 }

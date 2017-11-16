@@ -37,8 +37,6 @@ import com.amazonaws.services.simpleworkflow.flow.worker.CurrentDecisionContext;
 
 public abstract class WorkflowTestBase implements MethodRule {
 
-    protected String defaultActivitiesTaskListToPoll = "TestTaskList";
-
     boolean disableOutstandingTasksCheck;
 
     protected DecisionContext decisionContext;
@@ -106,14 +104,6 @@ public abstract class WorkflowTestBase implements MethodRule {
 
     public WorkflowType getWorkflowType() {
         return workflowContext.getWorkflowType();
-    }
-
-    public String getDefaultActivitiesTaskListToPoll() {
-        return defaultActivitiesTaskListToPoll;
-    }
-
-    public void setDefaultActivitiesTaskListToPoll(String defaultActivitiesTaskListToPoll) {
-        this.defaultActivitiesTaskListToPoll = defaultActivitiesTaskListToPoll;
     }
 
     public double getClockAcceleration() {

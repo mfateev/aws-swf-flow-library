@@ -53,10 +53,6 @@ public class SpringWorkflowTest extends WorkflowTestBase {
         workflowClient = (SpringTestPOJOWorkflowImplementationGenericWorkflowClient) decisionContext.getWorkflowClient();
     }
 
-    public void addActivitiesImplementation(Object activitiesImplementation) {
-        addActivitiesImplementation(defaultActivitiesTaskListToPoll, activitiesImplementation);
-    }
-
     public void addActivitiesImplementation(String taskList, Object activitiesImplementation) {
         try {
             TestPOJOActivityImplementationWorker worker = getActivityWorker(taskList);
@@ -78,11 +74,6 @@ public class SpringWorkflowTest extends WorkflowTestBase {
             workers.put(taskList, result);
         }
         return result;
-    }
-
-    public void setActivitiesImplementations(Iterable<Object> activityImplementationObjects) {
-        workers.clear();
-        addActivitiesImplementations(defaultActivitiesTaskListToPoll, activityImplementationObjects);
     }
 
     public void addActivitiesImplementations(String taskList, Iterable<Object> activityImplementationObjects) {
@@ -112,11 +103,6 @@ public class SpringWorkflowTest extends WorkflowTestBase {
             }
         }
         return result;
-    }
-    
-    public Iterable<Object> getActivitiesImplementations() {
-        TestPOJOActivityImplementationWorker worker = getActivityWorker(defaultActivitiesTaskListToPoll);
-        return worker.getActivitiesImplementations();
     }
 
     public void setWorkflowImplementations(Iterable<Object> workflowImplementations)
