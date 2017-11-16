@@ -222,7 +222,7 @@ public class DecisionTaskPoller implements TaskPoller {
 
         @Override
         public PollForDecisionTaskResponse getDecisionTask() {
-            return null;
+            return task;
         }
 
         @Override

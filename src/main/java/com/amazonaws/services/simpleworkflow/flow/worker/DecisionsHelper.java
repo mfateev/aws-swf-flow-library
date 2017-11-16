@@ -248,6 +248,7 @@ class DecisionsHelper {
 
     void continueAsNewWorkflowExecution(ContinueAsNewWorkflowExecutionParameters continueParameters) {
         ContinueAsNewWorkflowExecutionDecisionAttributes attributes = new ContinueAsNewWorkflowExecutionDecisionAttributes();
+        attributes.setWorkflowType(task.getWorkflowType());
         attributes.setInput(continueParameters.getInput());
         attributes.setExecutionStartToCloseTimeoutSeconds(continueParameters.getExecutionStartToCloseTimeoutSeconds());
         attributes.setTaskStartToCloseTimeoutSeconds(continueParameters.getTaskStartToCloseTimeoutSeconds());

@@ -124,6 +124,8 @@ class AsyncDecider {
 
     private static final Log log = LogFactory.getLog(AsyncDecider.class);
 
+    private static final int MILLION = 1000000;
+
     private final WorkflowDefinitionFactory workflowDefinitionFactory;
 
     private WorkflowDefinition definition;
@@ -412,7 +414,8 @@ class AsyncDecider {
                         decisionsHelper.handleDecisionTaskStartedEvent();
 
                         if (!eventsIterator.isNextDecisionTimedOut()) {
-                            long replayCurrentTimeMilliseconds = event.getTimestamp();
+                            // Cadence timestamp is in nanoseconds
+                            long replayCurrentTimeMilliseconds = event.getTimestamp() / MILLION;
                             workflowClock.setReplayCurrentTimeMilliseconds(replayCurrentTimeMilliseconds);
                             break;
                         }
