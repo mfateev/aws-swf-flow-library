@@ -1,5 +1,0 @@
-1. WorkflowExecutionStartedEventAttributes.getParentWorkflow is missing in Cadence?
-2. WorkflowExecutionStartedEventAttributes.getChildPolicy is missing in Cadence?
-3. WorkflowExecutionStartedEventAttributes.getContinuedExecution is missing in Cadence?
-
-ContinueAsNew should by default take parameters like timeouts from the previouse.
