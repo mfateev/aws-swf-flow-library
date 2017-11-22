@@ -833,4 +833,31 @@ public class WorkflowServiceTChannel implements WorkflowService.Iface {
             }
         }
     }
+
+    @Override
+    public DescribeWorkflowExecutionResponse DescribeWorkflowExecution(DescribeWorkflowExecutionRequest describeRequest) throws BadRequestError, InternalServiceError, EntityNotExistsError, TException {
+        ThriftResponse<WorkflowService.DescribeWorkflowExecution_result> response = null;
+        try {
+            ThriftRequest<WorkflowService.DescribeWorkflowExecution_args> request = buildThriftRequest("DescribeWorkflowExecution", new WorkflowService.DescribeWorkflowExecution_args(describeRequest));
+            response = doRemoteCall(request);
+            WorkflowService.DescribeWorkflowExecution_result result = response.getBody(WorkflowService.DescribeWorkflowExecution_result.class);
+            if (response.getResponseCode() == ResponseCode.OK) {
+                return result.getSuccess();
+            }
+            if (result.isSetBadRequestError()) {
+                throw result.getBadRequestError();
+            }
+            if (result.isSetInternalServiceError()) {
+                throw result.getInternalServiceError();
+            }
+            if (result.isSetEntityNotExistError()) {
+                throw result.getEntityNotExistError();
+            }
+            throw new TException("DescribeWorkflowExecution failed with unknown error:" + result);
+        } finally {
+            if (response != null) {
+                response.release();
+            }
+        }
+    }
 }
