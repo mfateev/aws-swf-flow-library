@@ -191,6 +191,13 @@ struct WorkflowExecutionInfo {
   60: optional i64 (js.type = "Long") historyLength
 }
 
+struct WorkflowExecutionConfiguration {
+  10: optional TaskList taskList
+  20: optional i32 executionStartToCloseTimeoutSeconds
+  30: optional i32 taskStartToCloseTimeoutSeconds
+  40: optional ChildPolicy childPolicy
+}
+
 struct ScheduleActivityTaskDecisionAttributes {
   10: optional string activityId
   20: optional ActivityType activityType
@@ -691,9 +698,15 @@ struct PollForDecisionTaskResponse {
   30: optional WorkflowType workflowType
   40: optional i64 (js.type = "Long") previousStartedEventId
   50: optional i64 (js.type = "Long") startedEventId
+  54: optional i64 (js.type = "Long") backlogCountHint
   60: optional History history
   70: optional binary nextPageToken
   80: optional WorkflowQuery query
+}
+
+struct StickyExecutionAttributes {
+  10: optional TaskList workerTaskList
+  20: optional i32 scheduleToStartTimeoutSeconds
 }
 
 struct RespondDecisionTaskCompletedRequest {
@@ -701,6 +714,7 @@ struct RespondDecisionTaskCompletedRequest {
   20: optional list<Decision> decisions
   30: optional binary executionContext
   40: optional string identity
+  50: optional StickyExecutionAttributes stickyAttributes
 }
 
 struct PollForActivityTaskRequest {
@@ -715,7 +729,6 @@ struct PollForActivityTaskResponse {
   30:  optional string activityId
   40:  optional ActivityType activityType
   50:  optional binary input
-  60:  optional i64 (js.type = "Long") startedEventId
   70:  optional i64 (js.type = "Long") scheduledTimestamp
   80:  optional i32 scheduleToCloseTimeoutSeconds
   90:  optional i64 (js.type = "Long") startedTimestamp
@@ -836,5 +849,15 @@ struct RespondQueryTaskCompletedRequest {
   20: optional QueryTaskCompletedType completedType
   30: optional binary queryResult
   40: optional string errorMessage
+}
+
+struct DescribeWorkflowExecutionRequest {
+  10: optional string domain
+  20: optional WorkflowExecution execution
+}
+
+struct DescribeWorkflowExecutionResponse {
+  10: optional WorkflowExecutionConfiguration executionConfiguration
+  20: optional WorkflowExecutionInfo workflowExecutionInfo
 }
 
