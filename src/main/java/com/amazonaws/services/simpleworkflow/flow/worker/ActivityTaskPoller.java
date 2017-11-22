@@ -119,7 +119,7 @@ public class ActivityTaskPoller extends SynchronousActivityTaskPoller {
         com.uber.cadence.WorkflowExecution execution = task.getWorkflowExecution();
 
         RuntimeException e2 = new RuntimeException(
-                "Failure taskId=\"" + task.getStartedEventId() + "\" workflowExecutionRunId=\"" + execution.getRunId()
+                "Failure taskId=\"" + "\" workflowExecutionRunId=\"" + execution.getRunId()
                         + "\" workflowExecutionId=\"" + execution.getWorkflowId() + "\"", failure);
         return e2;
     }

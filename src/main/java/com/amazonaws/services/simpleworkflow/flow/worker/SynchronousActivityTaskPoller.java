@@ -208,7 +208,7 @@ public class SynchronousActivityTaskPoller implements TaskPoller {
         }
         catch (ActivityFailureException e) {
             if (log.isErrorEnabled()) {
-                log.error("Failure processing activity task with taskId=" + task.getStartedEventId() + ", workflowGenerationId="
+                log.error("Failure processing activity task with taskId=" + ", workflowGenerationId="
                         + task.getWorkflowExecution().getWorkflowId() + ", activity=" + activityType
                         + ", activityInstanceId=" + task.getActivityId(), e);
             }
@@ -216,7 +216,7 @@ public class SynchronousActivityTaskPoller implements TaskPoller {
         }
         catch (Exception e) {
             if (log.isErrorEnabled()) {
-                log.error("Failure processing activity task with taskId=" + task.getStartedEventId() + ", workflowGenerationId="
+                log.error("Failure processing activity task with taskId=" + ", workflowGenerationId="
                         + task.getWorkflowExecution().getWorkflowId() + ", activity=" + activityType
                         + ", activityInstanceId=" + task.getActivityId(), e);
             }

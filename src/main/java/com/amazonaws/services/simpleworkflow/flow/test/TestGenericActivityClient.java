@@ -107,7 +107,6 @@ public class TestGenericActivityClient implements GenericActivityClient {
         pollResponse.setActivityId(activityId);
         pollResponse.setActivityType(activityType);
         pollResponse.setInput(parameters.getInput());
-        pollResponse.setStartedEventId(0L);
         pollResponse.setTaskToken("dummyTaskToken".getBytes());
         DecisionContext decisionContext = decisionContextProvider.getDecisionContext();
         final WorkflowExecution workflowExecution = decisionContext.getWorkflowContext().getWorkflowExecution();
