@@ -39,13 +39,11 @@ public interface WorkflowContext {
 
 //    String getContinuedExecutionRunId();
 
-    long getExecutionStartToCloseTimeoutSeconds();
+    int getExecutionStartToCloseTimeoutSeconds();
 
     String getTaskList();
 
-    //TODO: Cadence doesn't support task priority and lambdas
+    //TODO: Cadence doesn't support task priority
 //    int getTaskPriority();
-
-//    String getLambdaRole();
 
 }

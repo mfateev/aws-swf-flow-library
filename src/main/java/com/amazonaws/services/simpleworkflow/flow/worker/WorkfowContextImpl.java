@@ -84,7 +84,7 @@ class WorkfowContextImpl implements WorkflowContext {
 //    }
     
     @Override
-    public long getExecutionStartToCloseTimeoutSeconds() {
+    public int getExecutionStartToCloseTimeoutSeconds() {
         WorkflowExecutionStartedEventAttributes attributes = getWorkflowStartedEventAttributes();
         return attributes.getExecutionStartToCloseTimeoutSeconds();
     }

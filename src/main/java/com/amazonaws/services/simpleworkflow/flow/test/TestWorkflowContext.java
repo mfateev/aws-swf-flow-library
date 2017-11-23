@@ -32,10 +32,9 @@ public class TestWorkflowContext implements WorkflowContext {
 //    private List<String> tagList;
     private ChildPolicy childPolicy;
     private String continuedExecutionRunId;
-    private long executionStartToCloseTimeout;
+    private int executionStartToCloseTimeout;
     private String taskList;
-    private int taskPriority;
-    private String lambdaRole;
+//    private int taskPriority;
     private TryCatchFinally rootTryCatch;
     
     public com.uber.cadence.WorkflowExecution getWorkflowExecution() {
@@ -94,11 +93,11 @@ public class TestWorkflowContext implements WorkflowContext {
         this.continuedExecutionRunId = continuedExecutionRunId;
     }
     
-    public long getExecutionStartToCloseTimeoutSeconds() {
+    public int getExecutionStartToCloseTimeoutSeconds() {
         return executionStartToCloseTimeout;
     }
     
-    public void setExecutionStartToCloseTimeoutSeconds(long executionStartToCloseTimeout) {
+    public void setExecutionStartToCloseTimeoutSeconds(int executionStartToCloseTimeout) {
         this.executionStartToCloseTimeout = executionStartToCloseTimeout;
     }
     
@@ -110,14 +109,6 @@ public class TestWorkflowContext implements WorkflowContext {
         this.taskList = taskList;
     }
 
-    public String getLambdaRole() {
-        return lambdaRole;
-    }
-
-    public void setLambdaRole(String lambdaRole) {
-        this.lambdaRole = lambdaRole;
-    }
-    
     public boolean isCancelRequested() {
         return rootTryCatch.isCancelRequested();
     }
@@ -126,11 +117,11 @@ public class TestWorkflowContext implements WorkflowContext {
         this.rootTryCatch = rootTryCatch;
     }
 
-    public int getTaskPriority() {
-        return taskPriority;
-    }
-
-    public void setTaskPriority(int taskPriority) {
-        this.taskPriority = taskPriority;
-    }
+//    public int getTaskPriority() {
+//        return taskPriority;
+//    }
+//
+//    public void setTaskPriority(int taskPriority) {
+//        this.taskPriority = taskPriority;
+//    }
 }
