@@ -42,9 +42,7 @@ public abstract class DecisionTaskHandler {
      */
     public abstract RespondDecisionTaskCompletedRequest handleDecisionTask(DecisionTaskWithHistoryIterator decisionTaskIterator) throws Exception;
 
-    public abstract List<AsyncTaskInfo> getAsynchronousThreadDump(DecisionTaskWithHistoryIterator decisionTaskIterator) throws Exception;
-
-    public abstract String getAsynchronousThreadDumpAsString(DecisionTaskWithHistoryIterator decisionTaskIterator) throws Exception;
+    public abstract String getAsynchronousThreadDump(DecisionTaskWithHistoryIterator decisionTaskIterator) throws Exception;
 
     public abstract WorkflowDefinition loadWorkflowThroughReplay(DecisionTaskWithHistoryIterator decisionTaskIterator) throws Exception;
 

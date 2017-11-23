@@ -78,15 +78,7 @@ public class AsyncDecisionTaskHandler extends DecisionTaskHandler {
     }
 
     @Override
-    public List<AsyncTaskInfo> getAsynchronousThreadDump(DecisionTaskWithHistoryIterator decisionTaskIterator) throws Exception {
-        HistoryHelper historyHelper = new HistoryHelper(decisionTaskIterator);
-        AsyncDecider decider = createDecider(historyHelper);
-        decider.decide();
-        return decider.getAsynchronousThreadDump();
-    }
-
-    @Override
-    public String getAsynchronousThreadDumpAsString(DecisionTaskWithHistoryIterator decisionTaskIterator) throws Exception {
+    public String getAsynchronousThreadDump(DecisionTaskWithHistoryIterator decisionTaskIterator) throws Exception {
         HistoryHelper historyHelper = new HistoryHelper(decisionTaskIterator);
         AsyncDecider decider = createDecider(historyHelper);
         decider.decide();

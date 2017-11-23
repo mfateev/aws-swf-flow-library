@@ -41,23 +41,76 @@ import com.amazonaws.services.simpleworkflow.flow.worker.HistoryHelper.EventsIte
 
 class AsyncDecider {
 
-    private static abstract class WorkflowAsyncScope extends AsyncScope {
+    public interface AsyncWorkflow {
+        boolean eventLoop() throws Throwable;
 
-        public WorkflowAsyncScope() {
-            super(false, true);
-        }
+        /**
+         *
+         * @return null means no output yet
+         */
+        byte[] getOutput();
 
-        public abstract Promise<byte[]> getOutput();
+        void cancel(CancellationException e);
 
+        Throwable getFailure();
+
+        boolean isCancelRequested();
+
+        String getAsynchronousThreadDump();
     }
 
-    private final class WorkflowExecuteAsyncScope extends WorkflowAsyncScope {
+    private static class PromiseAsyncWorkflow implements AsyncWorkflow {
+
+        private final WorkflowAsyncScope scope;
+
+        private PromiseAsyncWorkflow(WorkflowAsyncScope scope) {
+            this.scope = scope;
+        }
+
+        @Override
+        public boolean eventLoop() throws Throwable {
+            return scope.eventLoop();
+        }
+
+        @Override
+        public byte[] getOutput() {
+            Promise<byte[]> output = scope.getOutput();
+            if (output.isReady()) {
+                return output.get();
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        public void cancel(CancellationException e) {
+            scope.cancel(e);
+        }
+
+        @Override
+        public Throwable getFailure() {
+            return scope.getFailure();
+        }
+
+        @Override
+        public boolean isCancelRequested() {
+            return scope.isCancelRequested();
+        }
+
+        @Override
+        public String getAsynchronousThreadDump() {
+            return scope.getAsynchronousThreadDumpAsString();
+        }
+    }
+
+    private final class WorkflowAsyncScope extends AsyncScope {
 
         private final WorkflowExecutionStartedEventAttributes attributes;
 
         private Promise<byte[]> output;
 
-        public WorkflowExecuteAsyncScope(HistoryEvent event) {
+        public WorkflowAsyncScope(HistoryEvent event) {
+            super(false, true);
             assert event.getEventType().equals(EventType.WorkflowExecutionStarted.toString());
             this.attributes = event.getWorkflowExecutionStartedEventAttributes();
         }
@@ -67,57 +120,8 @@ class AsyncDecider {
             output = definition.execute(attributes.getInput());
         }
 
-        @Override
         public Promise<byte[]> getOutput() {
             return output;
-        }
-
-    }
-
-    private final class UnhandledSignalAsyncScope extends WorkflowAsyncScope {
-
-        private final Promise<byte[]> output;
-
-        private Throwable failure;
-
-        private boolean cancellation;
-
-        public UnhandledSignalAsyncScope(Promise<byte[]> output, Throwable failure, boolean cancellation) {
-            this.output = output;
-            this.failure = failure;
-            this.cancellation = cancellation;
-        }
-
-        @Override
-        protected void doAsync() throws Throwable {
-        }
-
-        @Override
-        public Promise<byte[]> getOutput() {
-            return output;
-        }
-
-        @Override
-        public boolean isCancelRequested() {
-            return super.isCancelRequested() || cancellation;
-        }
-
-        @Override
-        public Throwable getFailure() {
-            Throwable result = super.getFailure();
-            if (failure != null) {
-                result = failure;
-            }
-            return result;
-        }
-
-        @Override
-        public boolean eventLoop() throws Throwable {
-            boolean completed = super.eventLoop();
-            if (completed && failure != null) {
-                throw failure;
-            }
-            return completed;
         }
 
     }
@@ -142,7 +146,7 @@ class AsyncDecider {
 
     private final DecisionContext context;
 
-    private WorkflowAsyncScope workflowAsyncScope;
+    private AsyncWorkflow workflowAsyncScope;
 
     private boolean cancelRequested;
 
@@ -172,7 +176,7 @@ class AsyncDecider {
     }
 
     private void handleWorkflowExecutionStarted(HistoryEvent event) {
-        workflowAsyncScope = new WorkflowExecuteAsyncScope(event);
+        workflowAsyncScope = new PromiseAsyncWorkflow(new WorkflowAsyncScope(event));
     }
 
     private void processEvent(HistoryEvent event, EventType eventType) throws Throwable {
@@ -324,14 +328,8 @@ class AsyncDecider {
                     decisionsHelper.continueAsNewWorkflowExecution(continueAsNewOnCompletion);
                 }
                 else {
-                    Promise<byte[]> output = workflowAsyncScope.getOutput();
-                    if (output != null && output.isReady()) {
-                        byte[] workflowOutput = output.get();
-                        decisionsHelper.completeWorkflowExecution(workflowOutput);
-                    }
-                    else {
-                        decisionsHelper.completeWorkflowExecution(null);
-                    }
+                    byte[] workflowOutput = workflowAsyncScope.getOutput();
+                    decisionsHelper.completeWorkflowExecution(workflowOutput);
                 }
             }
         }
@@ -368,19 +366,8 @@ class AsyncDecider {
         assert (event.getEventType().equals(EventType.WorkflowExecutionSignaled.toString()));
         final WorkflowExecutionSignaledEventAttributes signalAttributes = event.getWorkflowExecutionSignaledEventAttributes();
         if (completed) {
-            workflowAsyncScope = new UnhandledSignalAsyncScope(workflowAsyncScope.getOutput(), workflowAsyncScope.getFailure(),
-                    workflowAsyncScope.isCancelRequested());
-            completed = false;
+           throw new IllegalStateException("Signal received after workflow is closed. TODO: Change signal handling from callback to a queue to fix the issue.");
         }
-        // This task is attached to the root context of the workflowAsyncScope
-        new Task(workflowAsyncScope) {
-
-            @Override
-            protected void doExecute() throws Throwable {
-                definition.signalRecieved(signalAttributes.getSignalName(), signalAttributes.getInput());
-            }
-
-        };
     }
 
     private void handleDecisionTaskCompleted(HistoryEvent event) {
@@ -528,14 +515,9 @@ class AsyncDecider {
         }
     }
 
-    public List<AsyncTaskInfo> getAsynchronousThreadDump() {
-        checkAsynchronousThreadDumpState();
-        return workflowAsyncScope.getAsynchronousThreadDump();
-    }
-
     public String getAsynchronousThreadDumpAsString() {
         checkAsynchronousThreadDumpState();
-        return workflowAsyncScope.getAsynchronousThreadDumpAsString();
+        return workflowAsyncScope.getAsynchronousThreadDump();
     }
 
     private void checkAsynchronousThreadDumpState() {
