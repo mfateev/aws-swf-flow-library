@@ -17,7 +17,10 @@ package com.amazonaws.services.simpleworkflow.flow.worker;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
+import java.util.function.Consumer;
 
+import com.amazonaws.services.simpleworkflow.flow.AsyncWorkflowClock;
+import com.amazonaws.services.simpleworkflow.flow.core.Settable;
 import com.uber.cadence.HistoryEvent;
 import com.uber.cadence.StartTimerDecisionAttributes;
 import com.uber.cadence.TimerCanceledEventAttributes;
@@ -33,58 +36,20 @@ import com.amazonaws.services.simpleworkflow.flow.core.Promise;
 
 class WorkflowClockImpl implements WorkflowClock {
 
-    private static final Log log = LogFactory.getLog(WorkflowClockImpl.class);
+    private final AsyncWorkflowClock clock;
 
-    private final class TimerCancellationHandler implements ExternalTaskCancellationHandler {
-
-        private final String timerId;
-
-        private TimerCancellationHandler(String timerId) {
-            this.timerId = timerId;
-        }
-
-        @Override
-        public void handleCancellation(Throwable cause) {
-            decisions.cancelTimer(timerId, new Runnable() {
-
-                @Override
-                public void run() {
-                    OpenRequestInfo<?, ?> scheduled = scheduledTimers.remove(timerId);
-                    ExternalTaskCompletionHandle context = scheduled.getCompletionCallback();
-                    context.complete();
-                }
-            });
-        }
-    }
-
-    private final DecisionsHelper decisions;
-
-    private final Map<String, OpenRequestInfo<?, ?>> scheduledTimers = new HashMap<String, OpenRequestInfo<?, ?>>();
-
-    private long replayCurrentTimeMilliseconds;
-
-    private boolean replaying = true;
-
-    WorkflowClockImpl(DecisionsHelper decisions) {
-        this.decisions = decisions;
+    WorkflowClockImpl(AsyncWorkflowClock clock) {
+        this.clock = clock;
     }
 
     @Override
     public long currentTimeMillis() {
-        return replayCurrentTimeMilliseconds;
-    }
-
-    void setReplayCurrentTimeMilliseconds(long replayCurrentTimeMilliseconds) {
-        this.replayCurrentTimeMilliseconds = replayCurrentTimeMilliseconds;
+        return clock.currentTimeMillis();
     }
 
     @Override
     public boolean isReplaying() {
-        return replaying;
-    }
-
-    void setReplaying(boolean replaying) {
-        this.replaying = replaying;
+        return clock.isReplaying();
     }
 
     @Override
@@ -94,63 +59,28 @@ class WorkflowClockImpl implements WorkflowClock {
 
     @Override
     public <T> Promise<T> createTimer(final long delaySeconds, final T userContext) {
-        if (delaySeconds < 0) {
-            throw new IllegalArgumentException("Negative delaySeconds: " + delaySeconds);
-        }
-        if (delaySeconds == 0) {
-            return Promise.asPromise(userContext);
-        }
-        final OpenRequestInfo<T, Object> context = new OpenRequestInfo<T, Object>(userContext);
-        final StartTimerDecisionAttributes timer = new StartTimerDecisionAttributes();
-        timer.setStartToFireTimeoutSeconds(delaySeconds);
-        final String timerId = decisions.getNextId();
-        timer.setTimerId(timerId);
-        String taskName = "timerId=" + timer.getTimerId() + ", delaySeconds=" + timer.getStartToFireTimeoutSeconds();
-        new ExternalTask() {
+        final Settable<T> result = new Settable<>();
 
+        new ExternalTask() {
             @Override
             protected ExternalTaskCancellationHandler doExecute(ExternalTaskCompletionHandle handle) throws Throwable {
-
-                decisions.startTimer(timer, userContext);
-                context.setCompletionHandle(handle);
-                scheduledTimers.put(timerId, context);
-                return new TimerCancellationHandler(timerId);
+                AsyncWorkflowClock.IdCancellationCallbackPair pair = clock.createTimer(delaySeconds, userContext,
+                        (uc, failure) -> {
+                            if (uc != null) {
+                                result.set(uc);
+                                handle.complete();
+                            } else {
+                                handle.fail(failure);
+                            }
+                        });
+                String taskName = "timerId=" + pair.getId() + " delaySeconds=" + delaySeconds;
+                setName(taskName);
+                result.setDescription("createTimer " + taskName);
+                return cause -> {
+                    pair.getCancellationCallback().accept(cause);
+                };
             }
-        }.setName(taskName);
-        context.setResultDescription("createTimer " + taskName);
-        return context.getResult();
+        };
+        return result;
     }
-
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    void handleTimerFired(Long eventId, TimerFiredEventAttributes attributes) {
-        String timerId = attributes.getTimerId();
-        if (decisions.handleTimerClosed(timerId)) {
-            OpenRequestInfo scheduled = scheduledTimers.remove(timerId);
-            if (scheduled != null) {
-                ExternalTaskCompletionHandle completionHandle = scheduled.getCompletionCallback();
-                scheduled.getResult().set(scheduled.getUserContext());
-                completionHandle.complete();
-            }
-        }
-        else {
-            log.debug("handleTimerFired not complete");
-        }
-    }
-
-    void handleTimerCanceled(HistoryEvent event) {
-        TimerCanceledEventAttributes attributes = event.getTimerCanceledEventAttributes();
-        String timerId = attributes.getTimerId();
-        if (decisions.handleTimerCanceled(event)) {
-            OpenRequestInfo<?, ?> scheduled = scheduledTimers.remove(timerId);
-            if (scheduled != null) {
-                ExternalTaskCompletionHandle completionHandle = scheduled.getCompletionCallback();
-                CancellationException exception = new CancellationException();
-                completionHandle.fail(exception);
-            }
-        }
-        else {
-            log.debug("handleTimerCanceled not complete");
-        }
-    }
-
 }

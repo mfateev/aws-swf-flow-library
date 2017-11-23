@@ -34,7 +34,7 @@ class DecisionContextImpl extends DecisionContext {
     public DecisionContextImpl(AsyncDecisionContext context) {
         this.activityClient = new GenericActivityClientImpl(context.getActivityClient());
         this.workflowClient = new GenericWorkflowClientImpl(context.getWorkflowClient());
-        this.workflowClock = context.getWorkflowClock();
+        this.workflowClock = new WorkflowClockImpl(context.getWorkflowClock());
         this.workflowContext = context.getWorkflowContext();
     }
 

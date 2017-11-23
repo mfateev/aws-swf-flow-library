@@ -28,7 +28,6 @@ import com.uber.cadence.WorkflowExecutionSignaledEventAttributes;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.amazonaws.services.simpleworkflow.flow.DecisionContext;
 import com.amazonaws.services.simpleworkflow.flow.WorkflowException;
 import com.amazonaws.services.simpleworkflow.flow.generic.ContinueAsNewWorkflowExecutionParameters;
 import com.amazonaws.services.simpleworkflow.flow.worker.HistoryHelper.EventsIterator;
@@ -47,7 +46,7 @@ class AsyncDecider {
 
     private final GenericAsyncWorkflowClientImpl workflowClient;
 
-    private final WorkflowClockImpl workflowClock;
+    private final AsyncWorkflowClockImpl workflowClock;
 
     private final AsyncDecisionContext context;
 
@@ -71,7 +70,7 @@ class AsyncDecider {
         PollForDecisionTaskResponse decisionTask = historyHelper.getDecisionTask();
         workflowContext = new WorkfowContextImpl(decisionTask);
         this.workflowClient = new GenericAsyncWorkflowClientImpl(decisionsHelper, workflowContext);
-        this.workflowClock = new WorkflowClockImpl(decisionsHelper);
+        this.workflowClock = new AsyncWorkflowClockImpl(decisionsHelper);
         context = new AsyncDecisionContextImpl(activityClient, workflowClient, workflowClock, workflowContext);
     }
 

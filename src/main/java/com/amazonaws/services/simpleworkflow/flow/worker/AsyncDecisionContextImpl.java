@@ -15,7 +15,7 @@
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
 import com.amazonaws.services.simpleworkflow.flow.AsyncDecisionContext;
-import com.amazonaws.services.simpleworkflow.flow.WorkflowClock;
+import com.amazonaws.services.simpleworkflow.flow.AsyncWorkflowClock;
 import com.amazonaws.services.simpleworkflow.flow.WorkflowContext;
 import com.amazonaws.services.simpleworkflow.flow.generic.GenericAsyncActivityClient;
 import com.amazonaws.services.simpleworkflow.flow.generic.GenericAsyncWorkflowClient;
@@ -26,12 +26,12 @@ class AsyncDecisionContextImpl extends AsyncDecisionContext {
 
     private final GenericAsyncWorkflowClient workflowClient;
 
-    private final WorkflowClock workflowClock;
+    private final AsyncWorkflowClock workflowClock;
 
     private final WorkflowContext workflowContext;
 
     AsyncDecisionContextImpl(GenericAsyncActivityClient activityClient, GenericAsyncWorkflowClient workflowClient,
-                             WorkflowClock workflowClock, WorkflowContext workflowContext) {
+                             AsyncWorkflowClock workflowClock, WorkflowContext workflowContext) {
         this.activityClient = activityClient;
         this.workflowClient = workflowClient;
         this.workflowClock = workflowClock;
@@ -49,7 +49,7 @@ class AsyncDecisionContextImpl extends AsyncDecisionContext {
     }
 
     @Override
-    public WorkflowClock getWorkflowClock() {
+    public AsyncWorkflowClock getWorkflowClock() {
         return workflowClock;
     }
 

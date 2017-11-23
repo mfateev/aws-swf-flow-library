@@ -14,10 +14,8 @@
  */
 package com.amazonaws.services.simpleworkflow.flow;
 
-import com.amazonaws.services.simpleworkflow.flow.generic.GenericActivityClient;
 import com.amazonaws.services.simpleworkflow.flow.generic.GenericAsyncActivityClient;
 import com.amazonaws.services.simpleworkflow.flow.generic.GenericAsyncWorkflowClient;
-import com.amazonaws.services.simpleworkflow.flow.generic.GenericWorkflowClient;
 
 /**
  * Represents the context for decider. Should only be used within the scope of
@@ -30,7 +28,7 @@ public abstract class AsyncDecisionContext {
 
     public abstract GenericAsyncWorkflowClient getWorkflowClient();
 
-    public abstract WorkflowClock getWorkflowClock();
+    public abstract AsyncWorkflowClock getWorkflowClock();
 
     public abstract WorkflowContext getWorkflowContext();
 
