@@ -20,10 +20,8 @@ import com.uber.cadence.PollForDecisionTaskResponse;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.amazonaws.services.simpleworkflow.flow.core.AsyncTaskInfo;
 import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinition;
 import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinitionFactory;
-import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinitionFactoryFactory;
 import com.uber.cadence.Decision;
 import com.uber.cadence.RespondDecisionTaskCompletedRequest;
 import com.uber.cadence.WorkflowType;
@@ -35,10 +33,10 @@ public class AsyncDecisionTaskHandler extends DecisionTaskHandler {
     private static final Log asyncThreadDumpLog = LogFactory.getLog(AsyncDecisionTaskHandler.class.getName()
             + ".waitingTasksStacks");
 
-    private final WorkflowDefinitionFactoryFactory definitionFactoryFactory;
+    private final AsyncWorkflowFactory asyncWorkflowFactory;
 
-    public AsyncDecisionTaskHandler(WorkflowDefinitionFactoryFactory definitionFactoryFactory) {
-        this.definitionFactoryFactory = definitionFactoryFactory;
+    public AsyncDecisionTaskHandler(AsyncWorkflowFactory asyncWorkflowFactory) {
+        this.asyncWorkflowFactory = asyncWorkflowFactory;
     }
 
     @Override
@@ -90,21 +88,8 @@ public class AsyncDecisionTaskHandler extends DecisionTaskHandler {
     private AsyncDecider createDecider(HistoryHelper historyHelper) throws Exception {
         PollForDecisionTaskResponse decisionTask = historyHelper.getDecisionTask();
         WorkflowType workflowType = decisionTask.getWorkflowType();
-        if (log.isDebugEnabled()) {
-            log.debug("WorkflowTask received: taskId=" + decisionTask.getStartedEventId() + ", taskToken="
-                    + decisionTask.getTaskToken() + ", workflowExecution=" + decisionTask.getWorkflowExecution());
-        }
-        WorkflowDefinitionFactory workflowDefinitionFactory = definitionFactoryFactory.getWorkflowDefinitionFactory(workflowType);
-        if (workflowDefinitionFactory == null) {
-            log.error("Received decision task for workflow type not configured with a worker: workflowType="
-                    + decisionTask.getWorkflowType() + ", taskToken=" + decisionTask.getTaskToken() + ", workflowExecution="
-                    + decisionTask.getWorkflowExecution());
-            if (workflowDefinitionFactory == null) {
-                throw new IllegalArgumentException("No implementation was found for " + decisionTask.getWorkflowType());
-            }
-        }
         DecisionsHelper decisionsHelper = new DecisionsHelper(decisionTask);
-        AsyncDecider decider = new AsyncDecider(workflowDefinitionFactory, historyHelper, decisionsHelper);
+        AsyncDecider decider = new AsyncDecider(asyncWorkflowFactory.getWorkflow(workflowType), historyHelper, decisionsHelper);
         return decider;
     }
 }

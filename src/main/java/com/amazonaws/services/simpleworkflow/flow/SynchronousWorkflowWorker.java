@@ -16,7 +16,9 @@ package com.amazonaws.services.simpleworkflow.flow;
 
 import com.amazonaws.services.simpleworkflow.flow.pojo.POJOWorkflowDefinitionFactoryFactory;
 import com.amazonaws.services.simpleworkflow.flow.worker.AsyncDecisionTaskHandler;
+import com.amazonaws.services.simpleworkflow.flow.worker.AsyncWorkflowFactory;
 import com.amazonaws.services.simpleworkflow.flow.worker.DecisionTaskPoller;
+import com.amazonaws.services.simpleworkflow.flow.worker.PromiseAsyncWorkflowFactory;
 import com.uber.cadence.WorkflowService;
 
 import java.util.Collection;
@@ -30,11 +32,14 @@ public class SynchronousWorkflowWorker {
 
     public SynchronousWorkflowWorker() {
         poller = new DecisionTaskPoller();
-        poller.setDecisionTaskHandler(new AsyncDecisionTaskHandler(factoryFactory));
+        AsyncWorkflowFactory awf = new PromiseAsyncWorkflowFactory(factoryFactory);
+        poller.setDecisionTaskHandler(new AsyncDecisionTaskHandler(awf));
     }
     
     public SynchronousWorkflowWorker(WorkflowService.Iface service, String domain, String taskListToPoll) {
-        poller = new DecisionTaskPoller(service, domain, taskListToPoll, new AsyncDecisionTaskHandler(factoryFactory));
+        PromiseAsyncWorkflowFactory asyncWorkflowFactory = new PromiseAsyncWorkflowFactory(factoryFactory);
+        AsyncDecisionTaskHandler decisionTaskHandler = new AsyncDecisionTaskHandler(asyncWorkflowFactory);
+        poller = new DecisionTaskPoller(service, domain, taskListToPoll, decisionTaskHandler);
     }
 
     public String getIdentity() {

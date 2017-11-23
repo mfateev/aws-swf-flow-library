@@ -67,7 +67,8 @@ public class GenericWorkflowWorker extends GenericWorker {
     @Override
     protected TaskPoller createPoller() {
         DecisionTaskPoller result = new DecisionTaskPoller();
-        result.setDecisionTaskHandler(new AsyncDecisionTaskHandler(workflowDefinitionFactoryFactory));
+        AsyncWorkflowFactory workflowFactory = new PromiseAsyncWorkflowFactory(workflowDefinitionFactoryFactory);
+        result.setDecisionTaskHandler(new AsyncDecisionTaskHandler(workflowFactory));
         result.setDomain(getDomain());
         result.setIdentity(getIdentity());
         result.setService(getService());

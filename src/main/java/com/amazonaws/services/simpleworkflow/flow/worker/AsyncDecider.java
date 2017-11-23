@@ -40,127 +40,6 @@ import com.amazonaws.services.simpleworkflow.flow.worker.HistoryHelper.EventsIte
 
 class AsyncDecider {
 
-    //TODO: remove from this class
-    private final WorkflowDefinitionFactory workflowDefinitionFactory;
-
-    public interface AsyncWorkflow {
-        boolean eventLoop() throws Throwable;
-
-        /**
-         *
-         * @return null means no output yet
-         */
-        byte[] getOutput();
-
-        void cancel(CancellationException e);
-
-        Throwable getFailure();
-
-        boolean isCancelRequested();
-
-        String getAsynchronousThreadDump();
-
-        byte[] getWorkflowState() throws  WorkflowException;
-
-        void close();
-    }
-
-    private static class PromiseAsyncWorkflow implements AsyncWorkflow {
-
-        private final WorkflowAsyncScope scope;
-        private final WorkflowDefinitionFactory workflowDefinitionFactory;
-
-
-        private PromiseAsyncWorkflow(HistoryEvent event, WorkflowDefinitionFactory workflowDefinitionFactory, DecisionContext context) throws Exception {
-            this.scope = new WorkflowAsyncScope(event, workflowDefinitionFactory.getWorkflowDefinition(context), event.getWorkflowExecutionStartedEventAttributes().getWorkflowType());
-            this.workflowDefinitionFactory = workflowDefinitionFactory;
-        }
-
-        @Override
-        public boolean eventLoop() throws Throwable {
-            return scope.eventLoop();
-        }
-
-        @Override
-        public byte[] getOutput() {
-            Promise<byte[]> output = scope.getOutput();
-            if (output.isReady()) {
-                return output.get();
-            } else {
-                return null;
-            }
-        }
-
-        @Override
-        public void cancel(CancellationException e) {
-            scope.cancel(e);
-        }
-
-        @Override
-        public Throwable getFailure() {
-            return scope.getFailure();
-        }
-
-        @Override
-        public boolean isCancelRequested() {
-            return scope.isCancelRequested();
-        }
-
-        @Override
-        public String getAsynchronousThreadDump() {
-            return scope.getAsynchronousThreadDumpAsString();
-        }
-
-        @Override
-        public byte[] getWorkflowState() throws  WorkflowException {
-            return scope.getWorkflowState();
-        }
-
-        @Override
-        public void close() {
-            workflowDefinitionFactory.deleteWorkflowDefinition(scope.getWorkflowDefinition());
-        }
-    }
-
-    private static final class WorkflowAsyncScope extends AsyncScope {
-
-        private final WorkflowExecutionStartedEventAttributes attributes;
-        private WorkflowDefinition definition;
-
-        private Promise<byte[]> output;
-
-        public WorkflowAsyncScope(HistoryEvent event, WorkflowDefinition definition, WorkflowType workflowType) {
-            super(false, true);
-            if (definition == null) {
-                throw new IllegalStateException("Unknown workflow type: " + workflowType);
-            }
-
-            this.definition = definition;
-            assert event.getEventType().equals(EventType.WorkflowExecutionStarted.toString());
-            this.attributes = event.getWorkflowExecutionStartedEventAttributes();
-        }
-
-        @Override
-        protected void doAsync() throws Throwable {
-            output = definition.execute(attributes.getInput());
-        }
-
-        public Promise<byte[]> getOutput() {
-            return output;
-        }
-
-        public byte[] getWorkflowState() throws WorkflowException {
-            return definition.getWorkflowState();
-        }
-
-        public void close() {
-        }
-
-        public WorkflowDefinition getWorkflowDefinition() {
-            return definition;
-        }
-    }
-
     private static final Log log = LogFactory.getLog(AsyncDecider.class);
 
     private static final int MILLION = 1000000;
@@ -177,7 +56,7 @@ class AsyncDecider {
 
     private final DecisionContext context;
 
-    private AsyncWorkflow workflowAsyncScope;
+    private AsyncWorkflow workflow;
 
     private boolean cancelRequested;
 
@@ -189,9 +68,8 @@ class AsyncDecider {
 
     private Throwable failure;
 
-    public AsyncDecider(WorkflowDefinitionFactory workflowDefinitionFactory, HistoryHelper historyHelper,
-            DecisionsHelper decisionsHelper) throws Exception {
-        this.workflowDefinitionFactory = workflowDefinitionFactory;
+    public AsyncDecider(AsyncWorkflow workflow, HistoryHelper historyHelper, DecisionsHelper decisionsHelper) throws Exception {
+        this.workflow = workflow;
         this.historyHelper = historyHelper;
         this.decisionsHelper = decisionsHelper;
         this.activityClient = new GenericActivityClientImpl(decisionsHelper);
@@ -207,7 +85,7 @@ class AsyncDecider {
     }
 
     private void handleWorkflowExecutionStarted(HistoryEvent event) throws Exception {
-        workflowAsyncScope = new PromiseAsyncWorkflow(event, workflowDefinitionFactory, context);
+        workflow.start(event, context);
     }
 
     private void processEvent(HistoryEvent event, EventType eventType) throws Throwable {
@@ -331,7 +209,7 @@ class AsyncDecider {
             return;
         }
         try {
-            completed = workflowAsyncScope.eventLoop();
+            completed = workflow.eventLoop();
         }
         catch (CancellationException e) {
             if (!cancelRequested) {
@@ -359,7 +237,7 @@ class AsyncDecider {
                     decisionsHelper.continueAsNewWorkflowExecution(continueAsNewOnCompletion);
                 }
                 else {
-                    byte[] workflowOutput = workflowAsyncScope.getOutput();
+                    byte[] workflowOutput = workflow.getOutput();
                     decisionsHelper.completeWorkflowExecution(workflowOutput);
                 }
             }
@@ -371,7 +249,7 @@ class AsyncDecider {
 
     private void handleWorkflowExecutionCancelRequested(HistoryEvent event) throws Throwable {
         workflowContext.setCancelRequested(true);
-        workflowAsyncScope.cancel(new CancellationException());
+        workflow.cancel(new CancellationException());
         cancelRequested = true;
     }
 
@@ -505,7 +383,7 @@ class AsyncDecider {
         }
         finally {
             try {
-                decisionsHelper.setWorkflowContextData(workflowAsyncScope.getWorkflowState());
+                decisionsHelper.setWorkflowContextData(workflow.getWorkflowState());
             }
             catch (WorkflowException e) {
                 decisionsHelper.setWorkflowContextData(e.getDetails());
@@ -513,7 +391,7 @@ class AsyncDecider {
             catch (Throwable e) {
                 decisionsHelper.setWorkflowContextData(String.valueOf(e.getMessage()).getBytes(TaskPoller.UTF8_CHARSET));
             }
-            workflowAsyncScope.close();
+            workflow.close();
         }
     }
 
@@ -544,11 +422,11 @@ class AsyncDecider {
 
     public String getAsynchronousThreadDumpAsString() {
         checkAsynchronousThreadDumpState();
-        return workflowAsyncScope.getAsynchronousThreadDump();
+        return workflow.getAsynchronousThreadDump();
     }
 
     private void checkAsynchronousThreadDumpState() {
-        if (workflowAsyncScope == null) {
+        if (workflow == null) {
             throw new IllegalStateException("workflow hasn't started yet");
         }
         if (decisionsHelper.isWorkflowFailed()) {
@@ -560,5 +438,5 @@ class AsyncDecider {
     public DecisionsHelper getDecisionsHelper() {
         return decisionsHelper;
     }
-    
+
 }
