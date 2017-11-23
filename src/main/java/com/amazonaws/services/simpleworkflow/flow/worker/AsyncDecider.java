@@ -25,21 +25,23 @@ import com.uber.cadence.TimerFiredEventAttributes;
 import com.uber.cadence.TimerStartedEventAttributes;
 import com.uber.cadence.WorkflowExecutionSignaledEventAttributes;
 import com.uber.cadence.WorkflowExecutionStartedEventAttributes;
+import com.uber.cadence.WorkflowType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.amazonaws.services.simpleworkflow.flow.DecisionContext;
 import com.amazonaws.services.simpleworkflow.flow.WorkflowException;
 import com.amazonaws.services.simpleworkflow.flow.core.AsyncScope;
-import com.amazonaws.services.simpleworkflow.flow.core.AsyncTaskInfo;
 import com.amazonaws.services.simpleworkflow.flow.core.Promise;
-import com.amazonaws.services.simpleworkflow.flow.core.Task;
 import com.amazonaws.services.simpleworkflow.flow.generic.ContinueAsNewWorkflowExecutionParameters;
 import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinition;
 import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinitionFactory;
 import com.amazonaws.services.simpleworkflow.flow.worker.HistoryHelper.EventsIterator;
 
 class AsyncDecider {
+
+    //TODO: remove from this class
+    private final WorkflowDefinitionFactory workflowDefinitionFactory;
 
     public interface AsyncWorkflow {
         boolean eventLoop() throws Throwable;
@@ -57,14 +59,21 @@ class AsyncDecider {
         boolean isCancelRequested();
 
         String getAsynchronousThreadDump();
+
+        byte[] getWorkflowState() throws  WorkflowException;
+
+        void close();
     }
 
     private static class PromiseAsyncWorkflow implements AsyncWorkflow {
 
         private final WorkflowAsyncScope scope;
+        private final WorkflowDefinitionFactory workflowDefinitionFactory;
 
-        private PromiseAsyncWorkflow(WorkflowAsyncScope scope) {
-            this.scope = scope;
+
+        private PromiseAsyncWorkflow(HistoryEvent event, WorkflowDefinitionFactory workflowDefinitionFactory, DecisionContext context) throws Exception {
+            this.scope = new WorkflowAsyncScope(event, workflowDefinitionFactory.getWorkflowDefinition(context), event.getWorkflowExecutionStartedEventAttributes().getWorkflowType());
+            this.workflowDefinitionFactory = workflowDefinitionFactory;
         }
 
         @Override
@@ -101,16 +110,32 @@ class AsyncDecider {
         public String getAsynchronousThreadDump() {
             return scope.getAsynchronousThreadDumpAsString();
         }
+
+        @Override
+        public byte[] getWorkflowState() throws  WorkflowException {
+            return scope.getWorkflowState();
+        }
+
+        @Override
+        public void close() {
+            workflowDefinitionFactory.deleteWorkflowDefinition(scope.getWorkflowDefinition());
+        }
     }
 
-    private final class WorkflowAsyncScope extends AsyncScope {
+    private static final class WorkflowAsyncScope extends AsyncScope {
 
         private final WorkflowExecutionStartedEventAttributes attributes;
+        private WorkflowDefinition definition;
 
         private Promise<byte[]> output;
 
-        public WorkflowAsyncScope(HistoryEvent event) {
+        public WorkflowAsyncScope(HistoryEvent event, WorkflowDefinition definition, WorkflowType workflowType) {
             super(false, true);
+            if (definition == null) {
+                throw new IllegalStateException("Unknown workflow type: " + workflowType);
+            }
+
+            this.definition = definition;
             assert event.getEventType().equals(EventType.WorkflowExecutionStarted.toString());
             this.attributes = event.getWorkflowExecutionStartedEventAttributes();
         }
@@ -124,15 +149,21 @@ class AsyncDecider {
             return output;
         }
 
+        public byte[] getWorkflowState() throws WorkflowException {
+            return definition.getWorkflowState();
+        }
+
+        public void close() {
+        }
+
+        public WorkflowDefinition getWorkflowDefinition() {
+            return definition;
+        }
     }
 
     private static final Log log = LogFactory.getLog(AsyncDecider.class);
 
     private static final int MILLION = 1000000;
-
-    private final WorkflowDefinitionFactory workflowDefinitionFactory;
-
-    private WorkflowDefinition definition;
 
     private final HistoryHelper historyHelper;
 
@@ -175,8 +206,8 @@ class AsyncDecider {
         return cancelRequested;
     }
 
-    private void handleWorkflowExecutionStarted(HistoryEvent event) {
-        workflowAsyncScope = new PromiseAsyncWorkflow(new WorkflowAsyncScope(event));
+    private void handleWorkflowExecutionStarted(HistoryEvent event) throws Exception {
+        workflowAsyncScope = new PromiseAsyncWorkflow(event, workflowDefinitionFactory, context);
     }
 
     private void processEvent(HistoryEvent event, EventType eventType) throws Throwable {
@@ -376,10 +407,6 @@ class AsyncDecider {
 
     public void decide() throws Exception {
         try {
-            definition = workflowDefinitionFactory.getWorkflowDefinition(context);
-            if (definition == null) {
-                throw new IllegalStateException("Unknown workflow type: " + context.getWorkflowContext().getWorkflowType());
-            }
             long lastNonReplayedEventId = historyHelper.getLastNonReplayEventId();
             // Buffer events until the next DecisionTaskStarted and then process them
             // setting current time to the time of DecisionTaskStarted event
@@ -478,7 +505,7 @@ class AsyncDecider {
         }
         finally {
             try {
-                decisionsHelper.setWorkflowContextData(definition.getWorkflowState());
+                decisionsHelper.setWorkflowContextData(workflowAsyncScope.getWorkflowState());
             }
             catch (WorkflowException e) {
                 decisionsHelper.setWorkflowContextData(e.getDetails());
@@ -486,7 +513,7 @@ class AsyncDecider {
             catch (Throwable e) {
                 decisionsHelper.setWorkflowContextData(String.valueOf(e.getMessage()).getBytes(TaskPoller.UTF8_CHARSET));
             }
-            workflowDefinitionFactory.deleteWorkflowDefinition(this.definition);
+            workflowAsyncScope.close();
         }
     }
 
@@ -533,9 +560,5 @@ class AsyncDecider {
     public DecisionsHelper getDecisionsHelper() {
         return decisionsHelper;
     }
-
-    public WorkflowDefinition getWorkflowDefinition() {
-        return definition;
-    }
-
+    
 }

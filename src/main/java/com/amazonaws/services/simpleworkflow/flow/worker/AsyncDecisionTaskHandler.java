@@ -67,14 +67,16 @@ public class AsyncDecisionTaskHandler extends DecisionTaskHandler {
 
     @Override
     public WorkflowDefinition loadWorkflowThroughReplay(DecisionTaskWithHistoryIterator decisionTaskIterator) throws Exception {
-        HistoryHelper historyHelper = new HistoryHelper(decisionTaskIterator);
-        AsyncDecider decider = createDecider(historyHelper);
-        decider.decide();
-        DecisionsHelper decisionsHelper = decider.getDecisionsHelper();
-        if (decisionsHelper.isWorkflowFailed()) {
-            throw new IllegalStateException("Cannot load failed workflow", decisionsHelper.getWorkflowFailureCause());
-        }
-        return decider.getWorkflowDefinition();
+        // TODO(Cadence): Decide if needed in this form.
+        throw new UnsupportedOperationException("not impelemented");
+//        HistoryHelper historyHelper = new HistoryHelper(decisionTaskIterator);
+//        AsyncDecider decider = createDecider(historyHelper);
+//        decider.decide();
+//        DecisionsHelper decisionsHelper = decider.getDecisionsHelper();
+//        if (decisionsHelper.isWorkflowFailed()) {
+//            throw new IllegalStateException("Cannot load failed workflow", decisionsHelper.getWorkflowFailureCause());
+//        }
+//        return decider.getWorkflowDefinition();
     }
 
     @Override
