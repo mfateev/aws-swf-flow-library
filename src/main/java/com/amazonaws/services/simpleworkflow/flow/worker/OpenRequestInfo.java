@@ -17,12 +17,12 @@ package com.amazonaws.services.simpleworkflow.flow.worker;
 import com.amazonaws.services.simpleworkflow.flow.core.ExternalTaskCompletionHandle;
 import com.amazonaws.services.simpleworkflow.flow.core.Settable;
 
+import java.util.function.BiConsumer;
+
 class OpenRequestInfo<T, C> {
 
-    ExternalTaskCompletionHandle completionHandle;
+    BiConsumer<T, Throwable> completionHandle;
 
-    final Settable<T> result = new Settable<T>();
-    
     final C userContext;
 
     OpenRequestInfo() {
@@ -33,24 +33,16 @@ class OpenRequestInfo<T, C> {
         this.userContext = userContext;
     }
 
-    ExternalTaskCompletionHandle getCompletionHandle() {
+    BiConsumer<T, Throwable> getCompletionCallback() {
         return completionHandle;
     }
 
-    void setCompletionHandle(ExternalTaskCompletionHandle context) {
+    void setCompletionHandle(BiConsumer<T, Throwable> context) {
         this.completionHandle = context;
-    }
-
-    Settable<T> getResult() {
-        return result;
     }
 
     C getUserContext() {
         return userContext;
-    }
-
-    public void setResultDescription(String description) {
-        result.setDescription(description);
     }
 
 }

@@ -1,6 +1,6 @@
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
-import com.amazonaws.services.simpleworkflow.flow.DecisionContext;
+import com.amazonaws.services.simpleworkflow.flow.AsyncDecisionContext;
 import com.amazonaws.services.simpleworkflow.flow.WorkflowException;
 import com.amazonaws.services.simpleworkflow.flow.core.AsyncScope;
 import com.amazonaws.services.simpleworkflow.flow.core.Promise;
@@ -64,9 +64,10 @@ class PromiseAsyncWorkflow implements AsyncWorkflow {
     }
 
     @Override
-    public void start(HistoryEvent event, DecisionContext context) throws Exception {
+    public void start(HistoryEvent event, AsyncDecisionContext context) throws Exception {
         WorkflowType workflowType = event.getWorkflowExecutionStartedEventAttributes().getWorkflowType();
-        this.scope = new WorkflowAsyncScope(event, workflowDefinitionFactory.getWorkflowDefinition(context),
+        this.scope = new WorkflowAsyncScope(event,
+                workflowDefinitionFactory.getWorkflowDefinition(new DecisionContextImpl(context)),
                 workflowType);
     }
 

@@ -15,36 +15,36 @@
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
 import com.amazonaws.services.simpleworkflow.flow.AsyncDecisionContext;
-import com.amazonaws.services.simpleworkflow.flow.DecisionContext;
 import com.amazonaws.services.simpleworkflow.flow.WorkflowClock;
 import com.amazonaws.services.simpleworkflow.flow.WorkflowContext;
-import com.amazonaws.services.simpleworkflow.flow.generic.GenericActivityClient;
-import com.amazonaws.services.simpleworkflow.flow.generic.GenericWorkflowClient;
+import com.amazonaws.services.simpleworkflow.flow.generic.GenericAsyncActivityClient;
+import com.amazonaws.services.simpleworkflow.flow.generic.GenericAsyncWorkflowClient;
 
-class DecisionContextImpl extends DecisionContext {
+class AsyncDecisionContextImpl extends AsyncDecisionContext {
 
-    private final GenericActivityClient activityClient;
-    
-    private final GenericWorkflowClient workflowClient;
-    
+    private final GenericAsyncActivityClient activityClient;
+
+    private final GenericAsyncWorkflowClient workflowClient;
+
     private final WorkflowClock workflowClock;
-    
+
     private final WorkflowContext workflowContext;
 
-    public DecisionContextImpl(AsyncDecisionContext context) {
-        this.activityClient = new GenericActivityClientImpl(context.getActivityClient());
-        this.workflowClient = new GenericWorkflowClientImpl(context.getWorkflowClient());
-        this.workflowClock = context.getWorkflowClock();
-        this.workflowContext = context.getWorkflowContext();
+    AsyncDecisionContextImpl(GenericAsyncActivityClient activityClient, GenericAsyncWorkflowClient workflowClient,
+                             WorkflowClock workflowClock, WorkflowContext workflowContext) {
+        this.activityClient = activityClient;
+        this.workflowClient = workflowClient;
+        this.workflowClock = workflowClock;
+        this.workflowContext = workflowContext;
     }
 
     @Override
-    public GenericActivityClient getActivityClient() {
+    public GenericAsyncActivityClient getActivityClient() {
        return activityClient;
     }
 
     @Override
-    public GenericWorkflowClient getWorkflowClient() {
+    public GenericAsyncWorkflowClient getWorkflowClient() {
         return workflowClient;
     }
 

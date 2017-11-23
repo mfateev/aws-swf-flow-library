@@ -50,7 +50,7 @@ class WorkflowClockImpl implements WorkflowClock {
                 @Override
                 public void run() {
                     OpenRequestInfo<?, ?> scheduled = scheduledTimers.remove(timerId);
-                    ExternalTaskCompletionHandle context = scheduled.getCompletionHandle();
+                    ExternalTaskCompletionHandle context = scheduled.getCompletionCallback();
                     context.complete();
                 }
             });
@@ -127,7 +127,7 @@ class WorkflowClockImpl implements WorkflowClock {
         if (decisions.handleTimerClosed(timerId)) {
             OpenRequestInfo scheduled = scheduledTimers.remove(timerId);
             if (scheduled != null) {
-                ExternalTaskCompletionHandle completionHandle = scheduled.getCompletionHandle();
+                ExternalTaskCompletionHandle completionHandle = scheduled.getCompletionCallback();
                 scheduled.getResult().set(scheduled.getUserContext());
                 completionHandle.complete();
             }
@@ -143,7 +143,7 @@ class WorkflowClockImpl implements WorkflowClock {
         if (decisions.handleTimerCanceled(event)) {
             OpenRequestInfo<?, ?> scheduled = scheduledTimers.remove(timerId);
             if (scheduled != null) {
-                ExternalTaskCompletionHandle completionHandle = scheduled.getCompletionHandle();
+                ExternalTaskCompletionHandle completionHandle = scheduled.getCompletionCallback();
                 CancellationException exception = new CancellationException();
                 completionHandle.fail(exception);
             }

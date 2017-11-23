@@ -18,24 +18,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 
+import com.amazonaws.services.simpleworkflow.flow.AsyncDecisionContext;
 import com.uber.cadence.EventType;
 import com.uber.cadence.HistoryEvent;
 import com.uber.cadence.PollForDecisionTaskResponse;
 import com.uber.cadence.TimerFiredEventAttributes;
 import com.uber.cadence.TimerStartedEventAttributes;
 import com.uber.cadence.WorkflowExecutionSignaledEventAttributes;
-import com.uber.cadence.WorkflowExecutionStartedEventAttributes;
-import com.uber.cadence.WorkflowType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.amazonaws.services.simpleworkflow.flow.DecisionContext;
 import com.amazonaws.services.simpleworkflow.flow.WorkflowException;
-import com.amazonaws.services.simpleworkflow.flow.core.AsyncScope;
-import com.amazonaws.services.simpleworkflow.flow.core.Promise;
 import com.amazonaws.services.simpleworkflow.flow.generic.ContinueAsNewWorkflowExecutionParameters;
-import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinition;
-import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinitionFactory;
 import com.amazonaws.services.simpleworkflow.flow.worker.HistoryHelper.EventsIterator;
 
 class AsyncDecider {
@@ -48,13 +43,13 @@ class AsyncDecider {
 
     private final DecisionsHelper decisionsHelper;
 
-    private final GenericActivityClientImpl activityClient;
+    private final GenericAsyncActivityClientImpl activityClient;
 
-    private final GenericWorkflowClientImpl workflowClient;
+    private final GenericAsyncWorkflowClientImpl workflowClient;
 
     private final WorkflowClockImpl workflowClock;
 
-    private final DecisionContext context;
+    private final AsyncDecisionContext context;
 
     private AsyncWorkflow workflow;
 
@@ -72,12 +67,12 @@ class AsyncDecider {
         this.workflow = workflow;
         this.historyHelper = historyHelper;
         this.decisionsHelper = decisionsHelper;
-        this.activityClient = new GenericActivityClientImpl(decisionsHelper);
+        this.activityClient = new GenericAsyncActivityClientImpl(decisionsHelper);
         PollForDecisionTaskResponse decisionTask = historyHelper.getDecisionTask();
         workflowContext = new WorkfowContextImpl(decisionTask);
-        this.workflowClient = new GenericWorkflowClientImpl(decisionsHelper, workflowContext);
+        this.workflowClient = new GenericAsyncWorkflowClientImpl(decisionsHelper, workflowContext);
         this.workflowClock = new WorkflowClockImpl(decisionsHelper);
-        context = new DecisionContextImpl(activityClient, workflowClient, workflowClock, workflowContext);
+        context = new AsyncDecisionContextImpl(activityClient, workflowClient, workflowClock, workflowContext);
     }
 
     public boolean isCancelRequested() {

@@ -1,13 +1,13 @@
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
-import com.amazonaws.services.simpleworkflow.flow.DecisionContext;
+import com.amazonaws.services.simpleworkflow.flow.AsyncDecisionContext;
 import com.amazonaws.services.simpleworkflow.flow.WorkflowException;
 import com.uber.cadence.HistoryEvent;
 
 import java.util.concurrent.CancellationException;
 
 public interface AsyncWorkflow {
-    void start(HistoryEvent event, DecisionContext context) throws Exception;
+    void start(HistoryEvent event, AsyncDecisionContext context) throws Exception;
 
     boolean eventLoop() throws Throwable;
 
