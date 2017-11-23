@@ -291,7 +291,7 @@ class AsyncDecider {
         }
     }
 
-    private void eventLoop(HistoryEvent event) throws Throwable {
+    private void eventLoop() throws Throwable {
         if (completed) {
             return;
         }
@@ -458,7 +458,7 @@ class AsyncDecider {
                     }
                     EventType eventType = event.getEventType();
                     processEvent(event, eventType);
-                    eventLoop(event);
+                    eventLoop();
                 }
                 completeWorkflow();
 
