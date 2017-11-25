@@ -18,26 +18,10 @@ public final class FlowConstants {
 
     public static final int NONE = -1;
 
-    public static final int USE_REGISTERED_DEFAULTS = -2;
-
-    /**
-     * Do not specify task list on registration. Which means that task list is
-     * required when scheduling activity.
-     */
-    public static final String NO_DEFAULT_TASK_LIST = "NO_DEFAULT_TASK_LIST";
-
-    /**
-     * Use task list of the {@link ActivityWorker} or {@link WorkflowWorker}
-     * that is used to register activity or workflow as the defalt task list for
-     * the activity or workflow type.
-     */
-    public static final String USE_WORKER_TASK_LIST = "USE_WORKER_TASK_LIST";
-
     /**
      * Use task priority 0
      */
-    public static final int DEFAULT_TASK_PRIORITY = 0;
-
-	public static final long DEFAULT_LAMBDA_FUNCTION_TIMEOUT = 300;
+    //TODO(Cadence): implement task priority
+//    public static final int DEFAULT_TASK_PRIORITY = 0;
 
 }

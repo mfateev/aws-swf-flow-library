@@ -22,11 +22,11 @@ import com.uber.cadence.ChildPolicy;
 
 public class ContinueAsNewWorkflowExecutionParameters {
     private String workflowTypeVersion;
-    private int executionStartToCloseTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
+    private int executionStartToCloseTimeoutSeconds;
     private byte[] input;
     private List<String> tagList;
     private String taskList;
-    private int taskStartToCloseTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
+    private int taskStartToCloseTimeoutSeconds;
 
     public ContinueAsNewWorkflowExecutionParameters() {
     }

@@ -69,9 +69,8 @@ class DecisionsHelper {
     }
 
     /**
-     * @return
      * @return true if cancellation already happened as schedule event was found
-     *         in the new decisions list
+     * in the new decisions list
      */
     boolean requestCancelActivityTask(String activityId, Runnable immediateCancellationCallback) {
         DecisionStateMachine decision = getDecision(new DecisionId(DecisionTarget.ACTIVITY, activityId));
@@ -139,12 +138,11 @@ class DecisionsHelper {
     }
 
     /**
-     * @return
      * @return true if cancellation already happened as schedule event was found
-     *         in the new decisions list
+     * in the new decisions list
      */
     boolean requestCancelExternalWorkflowExecution(boolean childWorkflow,
-            RequestCancelExternalWorkflowExecutionDecisionAttributes request, Runnable immediateCancellationCallback) {
+                                                   RequestCancelExternalWorkflowExecutionDecisionAttributes request, Runnable immediateCancellationCallback) {
         DecisionStateMachine decision = getDecision(new DecisionId(DecisionTarget.EXTERNAL_WORKFLOW, request.getWorkflowId()));
         decision.cancel(immediateCancellationCallback);
         return decision.isDone();
@@ -247,17 +245,27 @@ class DecisionsHelper {
     }
 
     void continueAsNewWorkflowExecution(ContinueAsNewWorkflowExecutionParameters continueParameters) {
+        WorkflowExecutionStartedEventAttributes startedEvent = task.getHistory().getEvents().get(0).getWorkflowExecutionStartedEventAttributes();
         ContinueAsNewWorkflowExecutionDecisionAttributes attributes = new ContinueAsNewWorkflowExecutionDecisionAttributes();
         attributes.setWorkflowType(task.getWorkflowType());
         attributes.setInput(continueParameters.getInput());
-        attributes.setExecutionStartToCloseTimeoutSeconds(continueParameters.getExecutionStartToCloseTimeoutSeconds());
-        attributes.setTaskStartToCloseTimeoutSeconds(continueParameters.getTaskStartToCloseTimeoutSeconds());
-        String taskList = continueParameters.getTaskList();
-        if (taskList != null && !taskList.isEmpty()) {
-            TaskList tl = new TaskList();
-            tl.setName(taskList);
-            attributes.setTaskList(tl);
+        int executionStartToClose = continueParameters.getExecutionStartToCloseTimeoutSeconds();
+        if (executionStartToClose == 0) {
+            executionStartToClose = startedEvent.getExecutionStartToCloseTimeoutSeconds();
         }
+        attributes.setExecutionStartToCloseTimeoutSeconds(executionStartToClose);
+        int taskStartToClose = continueParameters.getTaskStartToCloseTimeoutSeconds();
+        if (taskStartToClose == 0) {
+            taskStartToClose = startedEvent.getTaskStartToCloseTimeoutSeconds();
+        }
+        attributes.setTaskStartToCloseTimeoutSeconds(taskStartToClose);
+        String taskList = continueParameters.getTaskList();
+        if (taskList == null || taskList.isEmpty()) {
+            taskList = startedEvent.getTaskList().getName();
+        }
+        TaskList tl = new TaskList();
+        tl.setName(taskList);
+        attributes.setTaskList(tl);
         Decision decision = new Decision();
         decision.setDecisionType(DecisionType.ContinueAsNewWorkflowExecution);
         decision.setContinueAsNewWorkflowExecutionDecisionAttributes(attributes);
@@ -304,12 +312,12 @@ class DecisionsHelper {
 
     /**
      * @return <code>false</code> means that cancel failed, <code>true</code>
-     *         that CancelWorkflowExecution was created.
+     * that CancelWorkflowExecution was created.
      */
     void cancelWorkflowExecution() {
         Decision decision = new Decision();
         CancelWorkflowExecutionDecisionAttributes cancel = new CancelWorkflowExecutionDecisionAttributes();
-        cancel.setDetails((byte[])null);
+        cancel.setDetails((byte[]) null);
         decision.setCancelWorkflowExecutionDecisionAttributes(cancel);
         decision.setDecisionType(DecisionType.CancelWorkflowExecution);
         DecisionId decisionId = new DecisionId(DecisionTarget.SELF, null);
@@ -343,13 +351,13 @@ class DecisionsHelper {
     private boolean isCompletionEvent(Decision decision) {
         DecisionType type = decision.getDecisionType();
         switch (type) {
-        case CancelWorkflowExecution:
-        case CompleteWorkflowExecution:
-        case FailWorkflowExecution:
-        case ContinueAsNewWorkflowExecution:
-            return true;
-        default:
-            return false;
+            case CancelWorkflowExecution:
+            case CompleteWorkflowExecution:
+            case FailWorkflowExecution:
+            case ContinueAsNewWorkflowExecution:
+                return true;
+            default:
+                return false;
         }
     }
 
@@ -405,7 +413,7 @@ class DecisionsHelper {
 
     /**
      * @return new workflow state or null if it didn't change since the last
-     *         decision completion
+     * decision completion
      */
     byte[] getWorkflowContextDataToReturn() {
         if (workfowContextFromLastDecisionCompletion == null
@@ -454,8 +462,7 @@ class DecisionsHelper {
             WorkflowException f = (WorkflowException) failure;
             reason = f.getReason();
             details = f.getDetails();
-        }
-        else {
+        } else {
             reason = failure.getMessage();
             StringWriter sw = new StringWriter();
             failure.printStackTrace(new PrintWriter(sw));

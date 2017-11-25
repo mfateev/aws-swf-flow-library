@@ -25,7 +25,7 @@ public class StartChildWorkflowExecutionParameters implements Cloneable {
 
     private String control;
 
-    private int executionStartToCloseTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
+    private int executionStartToCloseTimeoutSeconds;
 
     private byte[] input;
 
@@ -33,7 +33,7 @@ public class StartChildWorkflowExecutionParameters implements Cloneable {
 
     private String taskList;
 
-    private int taskStartToCloseTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
+    private int taskStartToCloseTimeoutSeconds;
 
     private String workflowId;
 

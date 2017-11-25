@@ -22,11 +22,11 @@ public class ExecuteActivityParameters implements Cloneable {
     private String activityId;
     private ActivityType activityType;
     private String control;
-    private int heartbeatTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
+    private int heartbeatTimeoutSeconds;
     private byte[] input;
-    private int scheduleToCloseTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
-    private int scheduleToStartTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
-    private int startToCloseTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
+    private int scheduleToCloseTimeoutSeconds;
+    private int scheduleToStartTimeoutSeconds;
+    private int startToCloseTimeoutSeconds;
     private String taskList;
     private int taskPriority;
     

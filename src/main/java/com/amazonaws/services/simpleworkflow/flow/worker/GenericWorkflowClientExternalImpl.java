@@ -110,12 +110,17 @@ public class GenericWorkflowClientExternalImpl implements GenericWorkflowClientE
 
     @Override
     public byte[] getWorkflowState(WorkflowExecution execution) {
-        throw new UnsupportedOperationException("Cadence doesn't implement DescribeWorkflowExecution yet");
+        throw new UnsupportedOperationException("latestExecutionContext is not part of DescribeWorkflowExecutionResponse yet");
 //        DescribeWorkflowExecutionRequest request = new DescribeWorkflowExecutionRequest();
 //        request.setDomain(domain);
 //        request.setExecution(execution);
-//        WorkflowExecutionDetail details = service.describeWorkflowExecution(request);
-//        return details.getLatestExecutionContext();
+//        DescribeWorkflowExecutionResponse details = null;
+//        try {
+//            details = service.DescribeWorkflowExecution(request);
+//        } catch (TException e) {
+//            throw new RuntimeException(e);
+//        }
+//        return details.getGetLatestExecutionContext();
     }
 
     @Override

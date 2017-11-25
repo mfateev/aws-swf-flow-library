@@ -29,9 +29,9 @@ public class StartWorkflowExecutionParameters {
     
     private byte[] input;
     
-    private int executionStartToCloseTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
+    private int executionStartToCloseTimeoutSeconds;
     
-    private int taskStartToCloseTimeoutSeconds = FlowConstants.USE_REGISTERED_DEFAULTS;
+    private int taskStartToCloseTimeoutSeconds;
     
     private java.util.List<String> tagList;
     

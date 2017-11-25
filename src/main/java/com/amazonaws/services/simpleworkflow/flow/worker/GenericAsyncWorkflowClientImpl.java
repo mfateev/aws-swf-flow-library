@@ -194,6 +194,7 @@ class GenericAsyncWorkflowClientImpl implements GenericAsyncWorkflowClient {
 
     @Override
     public void continueAsNewOnCompletion(ContinueAsNewWorkflowExecutionParameters continueParameters) {
+
         // TODO: add validation to check if continueAsNew is not set 
         workflowContext.setContinueAsNewOnCompletion(continueParameters);
     }
