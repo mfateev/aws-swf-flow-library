@@ -14,6 +14,7 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.common;
 
+import com.uber.cadence.ActivityType;
 import com.uber.cadence.Decision;
 import com.uber.cadence.EventType;
 import com.uber.cadence.GetWorkflowExecutionHistoryRequest;
@@ -21,6 +22,7 @@ import com.uber.cadence.GetWorkflowExecutionHistoryResponse;
 import com.uber.cadence.History;
 import com.uber.cadence.HistoryEvent;
 import com.uber.cadence.StartWorkflowExecutionRequest;
+import com.uber.cadence.TaskList;
 import com.uber.cadence.WorkflowExecution;
 import com.uber.cadence.WorkflowExecutionCloseStatus;
 import com.uber.cadence.WorkflowExecutionCompletedEventAttributes;
@@ -32,6 +34,7 @@ import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -43,6 +46,7 @@ import java.util.concurrent.TimeoutException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper.DefaultTyping;
+import com.uber.cadence.WorkflowType;
 import org.apache.thrift.TException;
 
 /**
@@ -512,7 +516,7 @@ public class WorkflowExecutionUtils {
         String eventType = event.getEventType().toString();
         StringBuffer result = new StringBuffer();
         result.append(eventType);
-        result.append(prettyPrintObject(event, "getType", true, "    ", false));
+        result.append(prettyPrintObject(event, "getFieldValue", true, "    ", false, true));
         return result.toString();
     }
 
@@ -523,7 +527,7 @@ public class WorkflowExecutionUtils {
      *            decision to pretty print
      */
     public static String prettyPrintDecision(Decision decision) {
-        return prettyPrintObject(decision, "getType", true, "    ", true);
+        return prettyPrintObject(decision, "getFieldValue", true, "    ", true, true);
     }
     
     /**
@@ -531,7 +535,7 @@ public class WorkflowExecutionUtils {
      * works for events and decisions.
      */
     private static String prettyPrintObject(Object object, String methodToSkip, boolean skipNullsAndEmptyCollections,
-            String indentation, boolean skipLevel) {
+            String indentation, boolean skipLevel, boolean printTypeName) {
         StringBuffer result = new StringBuffer();
         if (object == null) {
             return "null";
@@ -546,9 +550,23 @@ public class WorkflowExecutionUtils {
         if (clz.equals(String.class)) {
             return (String) object;
         }
+        if (clz.equals(byte[].class)) {
+            return new String((byte[]) object, StandardCharsets.UTF_8);
+        }
+
         if (clz.equals(Date.class)) {
             return String.valueOf(object);
         }
+        if (clz.equals(TaskList.class)) {
+            return String.valueOf(((TaskList)object).getName());
+        }
+        if (clz.equals(ActivityType.class)) {
+            return String.valueOf(((ActivityType)object).getName());
+        }
+        if (clz.equals(WorkflowType.class)) {
+            return String.valueOf(((WorkflowType)object).getName());
+        }
+
         if (Map.class.isAssignableFrom(clz)) {
             return String.valueOf(object);
         }
@@ -556,13 +574,20 @@ public class WorkflowExecutionUtils {
             return String.valueOf(object);
         }
         if (!skipLevel) {
-            result.append(" {");
+            if (printTypeName) {
+                result.append(object.getClass().getSimpleName());
+                result.append(" ");
+            }
+            result.append("{");
         }
-        Method[] eventMethods = object.getClass().getMethods();
+        Method[] eventMethods = object.getClass().getDeclaredMethods();
         boolean first = true;
         for (Method method : eventMethods) {
             String name = method.getName();
-            if (!name.startsWith("get")) {
+            if (!name.startsWith("get") ||
+                    name.equals("getDecisionType") ||
+                    method.getParameterCount() != 0 ||
+                    !Modifier.isPublic(method.getModifiers())) {
                 continue;
             }
             if (name.equals(methodToSkip) || name.equals("getClass")) {
@@ -610,10 +635,10 @@ public class WorkflowExecutionUtils {
                 result.append("    ");
                 result.append(name.substring(3));
                 result.append(" = ");
-                result.append(prettyPrintObject(value, methodToSkip, skipNullsAndEmptyCollections, indentation + "    ", false));
+                result.append(prettyPrintObject(value, methodToSkip, skipNullsAndEmptyCollections, indentation + "    ", false, false));
             }
             else {
-                result.append(prettyPrintObject(value, methodToSkip, skipNullsAndEmptyCollections, indentation, false));
+                result.append(prettyPrintObject(value, methodToSkip, skipNullsAndEmptyCollections, indentation, false, printTypeName));
             }
         }
         if (!skipLevel) {
