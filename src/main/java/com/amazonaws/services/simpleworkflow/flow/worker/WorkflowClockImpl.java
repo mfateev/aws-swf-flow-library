@@ -66,7 +66,7 @@ class WorkflowClockImpl implements WorkflowClock {
             protected ExternalTaskCancellationHandler doExecute(ExternalTaskCompletionHandle handle) throws Throwable {
                 AsyncWorkflowClock.IdCancellationCallbackPair pair = clock.createTimer(delaySeconds, userContext,
                         (uc, failure) -> {
-                            if (uc != null) {
+                            if (failure == null) {
                                 result.set(uc);
                                 handle.complete();
                             } else {
