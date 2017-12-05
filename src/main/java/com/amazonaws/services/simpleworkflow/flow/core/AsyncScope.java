@@ -65,7 +65,7 @@ public abstract class AsyncScope extends AsyncContextAware implements Cancelable
      * <p>
      * In presence of external dependencies it is expected that
      * <code>eventLoop()</code> is called every time after change in their state
-     * can unblock the asynchronous execution.
+     * can unblocked the asynchronous execution.
      * 
      * @return true means there are no tasks originated from this scope that are
      *         not done yet.
