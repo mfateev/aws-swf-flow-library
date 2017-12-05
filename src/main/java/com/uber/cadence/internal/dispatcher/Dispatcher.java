@@ -4,7 +4,8 @@ public interface Dispatcher {
 
     // ExecuteUntilAllBlocked executes threads one by one in deterministic order
     // until all of them are completed or blocked on Channel or Selector
-    void executeUntilAllBlocked();
+    // Throws exception if one of the coroutines didn't handle an exception.
+    void runUntilAllBlocked() throws Throwable;
 
     // IsDone returns true when all of threads are completed
     boolean isDone();
