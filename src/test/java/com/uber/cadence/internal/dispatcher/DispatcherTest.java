@@ -1,5 +1,6 @@
 package com.uber.cadence.internal.dispatcher;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -11,9 +12,17 @@ public class DispatcherTest {
     private boolean unblock2;
     private Throwable failure;
 
+    @Before
+    public void setUp() {
+        unblock1 = false;
+        unblock2 = false;
+        failure = null;
+        status = "initial";
+    }
+
     @Test
     public void testRootCoroutine() throws Throwable {
-        status = "initial";
+        System.out.println("testRootCoroutine");
         Dispatcher d = new DispatcherImpl(() -> {
             status = "started";
             Coroutine.getContext().yield("reason1",
@@ -43,7 +52,8 @@ public class DispatcherTest {
 
     @Test
     public void testRootCoroutineFailure() throws Throwable {
-        status = "initial";
+        System.out.println("testRootCoroutineFailure");
+
         Dispatcher d = new DispatcherImpl(() -> {
             status = "started";
             Coroutine.getContext().yield("reason1",
@@ -65,9 +75,8 @@ public class DispatcherTest {
     }
 
 //    @Test
-//    public void testCoroutineStop() {
-//        status = "initial";
-//        Coroutine c = new Coroutine(() -> {
+//    public void testDispatcherStop() throws Throwable {
+//        Dispatcher d = new DispatcherImpl(() -> {
 //            status = "started";
 //            Coroutine.getContext().yield("reason1",
 //                    () -> unblock1
@@ -77,24 +86,21 @@ public class DispatcherTest {
 //                Coroutine.getContext().yield("reason2",
 //                        () -> unblock2
 //                );
-//            } catch (InterruptedCoroutineError e) {
+//            } catch (DestroyCoroutineError e) {
 //                failure = e;
 //                throw e;
 //            }
 //            status = "done";
 //        });
 //        assertEquals("initial", status);
-//        c.runUntilBlocked();
+//        d.runUntilAllBlocked();
 //        assertEquals("started", status);
-//        assertFalse(c.isDone());
-//        c.evaluateInCoroutineContext(reason -> assertEquals("reason1", reason));
+//        assertFalse(d.isDone());
 //        unblock1 = true;
-//        c.runUntilBlocked();
+//        d.runUntilAllBlocked();
 //        assertEquals("after1", status);
-//        c.evaluateInCoroutineContext(reason -> assertEquals("reason2", reason));
-//        c.stop();
-//        assertTrue(c.isDone());
-//        assertNull(c.getUnhandledException());
+//        d.close();
+//        assertTrue(d.isDone());
 //        assertNotNull(failure);
 //    }
 }

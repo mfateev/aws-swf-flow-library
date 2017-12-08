@@ -62,7 +62,7 @@ public class WorkflowExecutionUtils {
      * @param workflowExecution result of
      *                          {@link Iface#StartWorkflowExecution(StartWorkflowExecutionRequest)}
      * @return workflow instance result.
-     * @throws InterruptedException if thread is interrupted
+     * @throws InterruptedException if thread is destroyRequested
      * @throws RuntimeException     if workflow instance ended up in any state but completed
      */
     public static WorkflowExecutionCompletedEventAttributes waitForWorkflowExecutionResult(Iface service,
@@ -83,7 +83,7 @@ public class WorkflowExecutionUtils {
      * @param workflowExecution result of
      *                          {@link Iface#StartWorkflowExecution(StartWorkflowExecutionRequest)}
      * @return workflow instance result.
-     * @throws InterruptedException if thread is interrupted
+     * @throws InterruptedException if thread is destroyRequested
      * @throws TimeoutException     if instance is not complete after specified timeout
      * @throws RuntimeException     if workflow instance ended up in any state but completed
      */

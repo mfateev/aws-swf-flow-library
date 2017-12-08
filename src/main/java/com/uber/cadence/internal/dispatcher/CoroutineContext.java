@@ -12,10 +12,12 @@ interface CoroutineContext {
      * @param reason human readable reason for blockage (like waiting on a lock)
      * @param unblockCondition yield call returns only when passed function returns true.
      *                         Condition can be evaluated multiple times and should be thread safe.
-     * @throws InterruptedCoroutineError when coroutine was interrupted. User code must not interfere
+     * @throws DestroyCoroutineError when coroutine was destroyRequested. User code must not interfere
      * with this error.
      */
-    void yield(String reason, Supplier<Boolean> unblockCondition) throws InterruptedCoroutineError;
+    void yield(String reason, Supplier<Boolean> unblockCondition) throws DestroyCoroutineError;
 
-    boolean interrupted();
+    boolean destroyRequested();
+
+    DispatcherImpl getDispatcher();
 }

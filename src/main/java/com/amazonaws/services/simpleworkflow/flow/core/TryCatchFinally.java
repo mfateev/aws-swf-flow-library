@@ -58,7 +58,7 @@ import com.amazonaws.services.simpleworkflow.flow.annotations.Asynchronous;
  * The cancellation semantic depends on the task implementation. {@link Task}
  * (or method annotated with {@link Asynchronous}) that has not started
  * execution is never given chance to execute after cancellation. Task which is
- * already executing is not interrupted and completes (or fails).
+ * already executing is not destroyRequested and completes (or fails).
  * {@link ExternalTask} cancellation depends on the external resource. For
  * example SWF activities and child workflows that are modeled as
  * {@link ExternalTask}s are canceled through SWF API.

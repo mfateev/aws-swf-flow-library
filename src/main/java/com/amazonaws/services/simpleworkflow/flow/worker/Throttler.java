@@ -98,7 +98,7 @@ public class Throttler {
     
     /**
      * When called on each request sleeps if called faster then configured average rate.
-     * @throws InterruptedException when interrupted
+     * @throws InterruptedException when destroyRequested
      */
     public synchronized void throttle() throws InterruptedException {
         long now = System.currentTimeMillis();

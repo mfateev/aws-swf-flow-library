@@ -3,11 +3,9 @@ package com.uber.cadence.internal.dispatcher;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 class Coroutine {
-
-    static final ThreadLocal<CoroutineContext> contextThreadLocal = new ThreadLocal<>();
-    private Thread thread;
 
     class CoroutineRunnable implements Runnable {
 
@@ -17,18 +15,22 @@ class Coroutine {
         CoroutineRunnable(CoroutineContextImpl context, Runnable r) {
             this.context = context;
             this.r = r;
+            if (context.getStatus() != Status.CREATED) {
+                throw new IllegalStateException("context not in CREATED state");
+            }
         }
 
         @Override
         public void run() {
             contextThreadLocal.set(context);
             try {
-                context.yield("created", () -> context.getStatus() != Status.CREATED);
-                context.setStatus(Status.RUNNING);
+                // initialYield blocks thread until the first runUntilBlocked is called.
+                // Otherwise r starts executing without control of the dispatcher.
+                context.initialYield();
                 r.run();
                 context.setStatus(Status.DONE);
-            } catch (InterruptedCoroutineError e) {
-                if (!context.interrupted()) {
+            } catch (DestroyCoroutineError e) {
+                if (!context.destroyRequested()) {
                     context.setStatus(Status.FAILED);
                     context.setUnhandledException(e);
                 } else {
@@ -39,6 +41,15 @@ class Coroutine {
                 context.setUnhandledException(e);
             }
         }
+    }
+
+    static final ThreadLocal<CoroutineContext> contextThreadLocal = new ThreadLocal<>();
+
+    private final Thread thread;
+    private final CoroutineContextImpl context;
+
+    public static Coroutine newCoroutine(Runnable r) {
+        return getContext().getDispatcher().newCoroutine(r);
     }
 
     static CoroutineContext getContext() {
@@ -52,24 +63,61 @@ class Coroutine {
         return result;
     }
 
-    private final CoroutineContextImpl context;
 
-    public Coroutine(Runnable r) {
-        context = new CoroutineContextImpl();
+    public void interrupt() {
+       thread.interrupt();
+    }
+
+    public boolean isInterrupted() {
+        return thread.isInterrupted();
+    }
+
+    public boolean isDestroyRequested() {
+        return context.destroyRequested();
+    }
+
+    public void start() {
+        if (context.getStatus() != Status.CREATED) {
+            throw new IllegalThreadStateException("already started");
+        }
+        thread.start();
+    }
+
+    static void yield(String reason, Supplier<Boolean> unblockCondition) throws DestroyCoroutineError {
+        Coroutine.getContext().yield(reason, unblockCondition);
+    }
+
+    public Coroutine(DispatcherImpl dispatcher, Runnable r) {
+        context = new CoroutineContextImpl(dispatcher);
         CoroutineRunnable cr = new CoroutineRunnable(context, r);
         thread = new Thread(cr, "corountine");
-        thread.start();
+    }
+
+    public Thread getThread() {
+        return thread;
     }
 
     /**
      * @return true if coroutine made some progress.
      */
     public boolean runUntilBlocked() {
+        if (thread.getState() == Thread.State.NEW) {
+            // Thread is not yet started
+            return false;
+        }
         return context.runUntilBlocked();
     }
 
     public boolean isDone() {
         return context.isDone();
+    }
+
+    public Thread.State getState() {
+        if (context.getStatus() == Status.YIELDED) {
+            return Thread.State.BLOCKED;
+        } else {
+            return Thread.State.RUNNABLE;
+        }
     }
 
     public Throwable getUnhandledException() {
@@ -87,13 +135,13 @@ class Coroutine {
     }
 
     /**
-     * Interrupt coroutine by throwing InterruptedCoroutineError from a yield method
+     * Interrupt coroutine by throwing DestroyCoroutineError from a yield method
      * it is blocked on and wait for coroutine thread to finish execution.
      */
     public void stop() {
-        context.interrupt();
+        context.destroy();
         if (!context.isDone()) {
-            throw new RuntimeException("Couldn't stop the thread. " +
+            throw new RuntimeException("Couldn't destroy the thread. " +
                     "The blocked thread stack trace\n: " + getStackTrace());
         }
         try {

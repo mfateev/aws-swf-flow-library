@@ -14,7 +14,7 @@ public class CoroutineTest {
     @Test
     public void testCoroutine() {
         status = "initial";
-        Coroutine c = new Coroutine(() -> {
+        Coroutine c = new Coroutine(null, () -> {
             status = "started";
             Coroutine.getContext().yield("reason1",
                     () -> unblock1
@@ -48,7 +48,7 @@ public class CoroutineTest {
     @Test
     public void testCoroutineFailure() {
         status = "initial";
-        Coroutine c = new Coroutine(() -> {
+        Coroutine c = new Coroutine(null, () -> {
             status = "started";
             Coroutine.getContext().yield("reason1",
                     () -> unblock1
@@ -69,7 +69,7 @@ public class CoroutineTest {
     @Test
     public void testCoroutineStop() {
         status = "initial";
-        Coroutine c = new Coroutine(() -> {
+        Coroutine c = new Coroutine(null, () -> {
             status = "started";
             Coroutine.getContext().yield("reason1",
                     () -> unblock1
@@ -79,7 +79,7 @@ public class CoroutineTest {
                 Coroutine.getContext().yield("reason2",
                         () -> unblock2
                 );
-            } catch (InterruptedCoroutineError e) {
+            } catch (DestroyCoroutineError e) {
                 failure = e;
                 throw e;
             }

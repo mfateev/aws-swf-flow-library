@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 
 class CoroutineContextImpl implements CoroutineContext {
 
+    private final DispatcherImpl dispatcher;
     private Status status = Status.CREATED;
     private Throwable unhandledException;
     private Lock lock = new ReentrantLock();
@@ -17,13 +18,27 @@ class CoroutineContextImpl implements CoroutineContext {
     private Condition runCondition = lock.newCondition();
     private Condition evaluationCondition = lock.newCondition();
     private Consumer<String> evaluationFunction;
-    private boolean interrupted;
+    private boolean destroyRequested;
+    private boolean inRunUntilBlocked;
+
+    CoroutineContextImpl(DispatcherImpl dispatcher) {
+        this.dispatcher = dispatcher;
+    }
+
+    public void initialYield() {
+        System.out.println("Initial yield: status=" + getStatus());
+        if (getStatus() != Status.CREATED) {
+            throw new IllegalStateException("not in CREATED but in " + getStatus() + " state");
+        }
+        yield("created", () -> getStatus() == Status.RUNNING);
+    }
 
     @Override
     public void yield(String reason, Supplier<Boolean> unblockFunction) {
         if (unblockFunction == null) {
             throw new IllegalArgumentException("null unblockFunction");
         }
+        // Evaluates unblockFunction out of the lock to avoid deadlocks.
         while (!unblockFunction.get()) {
             lock.lock();
             try {
@@ -46,7 +61,7 @@ class CoroutineContextImpl implements CoroutineContext {
                 lock.unlock();
             }
         }
-        status = Status.RUNNING;
+        setStatus(Status.RUNNING);
     }
 
     public void evaluateInCoroutineContext(Consumer<String> function) {
@@ -61,6 +76,9 @@ class CoroutineContextImpl implements CoroutineContext {
             ;
             if (evaluationFunction != null) {
                 throw new IllegalStateException("Already evaluating");
+            }
+            if (inRunUntilBlocked) {
+                throw new IllegalStateException("Running runUntilBlocked");
             }
             evaluationFunction = function;
             status = Status.EVALUATING;
@@ -77,37 +95,68 @@ class CoroutineContextImpl implements CoroutineContext {
     }
 
     @Override
-    public boolean interrupted() {
-        return interrupted;
+    public boolean destroyRequested() {
+        lock.lock();
+        try {
+            return destroyRequested;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public DispatcherImpl getDispatcher() {
+        return dispatcher;
     }
 
     public Status getStatus() {
-        return status;
+        lock.lock();
+        try {
+            return status;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void setStatus(Status status) {
-        this.status = status;
         // Unblock runUntilBlocked if thread exited instead of yielding.
-        if (isDone()) {
-            lock.lock();
-            try {
+        lock.lock();
+        System.out.println("setStatus=" + status);
+        try {
+            this.status = status;
+            if (isDone()) {
                 runCondition.signal();
-            } finally {
-                lock.unlock();
             }
+        } finally {
+            lock.unlock();
         }
     }
 
     public boolean isDone() {
-        return status == Status.DONE || status == Status.FAILED;
+        lock.lock();
+        try {
+            return status == Status.DONE || status == Status.FAILED;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public Throwable getUnhandledException() {
-        return unhandledException;
+        lock.lock();
+        try {
+            return unhandledException;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void setUnhandledException(Throwable unhandledException) {
-        this.unhandledException = unhandledException;
+        lock.lock();
+        try {
+            this.unhandledException = unhandledException;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public boolean runUntilBlocked() {
@@ -116,28 +165,40 @@ class CoroutineContextImpl implements CoroutineContext {
             if (status == Status.FAILED || status == Status.DONE) {
                 return false;
             }
-            status = Status.RUNNING;
+            if (evaluationFunction != null) {
+                throw new IllegalStateException("Cannot runUntilBlocked while evaluating");
+            }
+            inRunUntilBlocked = true;
+            System.out.println("runUntilBlocked set state to RUNNING");
+            if (status != status.CREATED) {
+                status = Status.RUNNING;
+            }
             yieldCondition.signal();
-            while (status == status.RUNNING) {
+            while (status == status.RUNNING || status == Status.CREATED) {
                 runCondition.await();
+                if (evaluationFunction != null) {
+                    throw new IllegalStateException("Cannot runUntilBlocked while evaluating");
+                }
             }
         } catch (InterruptedException e) {
             throw new Error("Unexpected interrupt", e);
         } finally {
+            inRunUntilBlocked = false;
             lock.unlock();
         }
         return false; // TODO PROGRESS
     }
 
-    public void interrupt() {
+    public void destroy() {
         lock.lock();
         try {
-            interrupted = true;
+            destroyRequested = true;
         } finally {
             lock.unlock();
         }
         evaluateInCoroutineContext((r) -> {
-            throw new InterruptedCoroutineError();
+            throw new DestroyCoroutineError();
         });
     }
+
 }
