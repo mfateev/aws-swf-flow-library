@@ -25,6 +25,7 @@ public class CoroutineTest {
             );
             status = "done";
         });
+        c.start();
         assertEquals("initial", status);
         c.runUntilBlocked();
         assertEquals("started", status);
@@ -55,6 +56,7 @@ public class CoroutineTest {
             );
             throw new RuntimeException("simulated");
         });
+        c.start();
         assertEquals("initial", status);
         c.runUntilBlocked();
         assertEquals("started", status);
@@ -85,6 +87,7 @@ public class CoroutineTest {
             }
             status = "done";
         });
+        c.start();
         assertEquals("initial", status);
         c.runUntilBlocked();
         assertEquals("started", status);

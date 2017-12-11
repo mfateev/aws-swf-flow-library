@@ -26,11 +26,10 @@ class CoroutineContextImpl implements CoroutineContext {
     }
 
     public void initialYield() {
-        System.out.println("Initial yield: status=" + getStatus());
         if (getStatus() != Status.CREATED) {
             throw new IllegalStateException("not in CREATED but in " + getStatus() + " state");
         }
-        yield("created", () -> getStatus() == Status.RUNNING);
+        yield("created", () -> true);
     }
 
     @Override
@@ -39,22 +38,13 @@ class CoroutineContextImpl implements CoroutineContext {
             throw new IllegalArgumentException("null unblockFunction");
         }
         // Evaluates unblockFunction out of the lock to avoid deadlocks.
-        while (!unblockFunction.get()) {
+        while (!inRunUntilBlocked || !unblockFunction.get()) {
             lock.lock();
             try {
                 status = Status.YIELDED;
                 runCondition.signal();
                 yieldCondition.await();
-                if (status == Status.EVALUATING) {
-                    try {
-                        evaluationFunction.accept(reason);
-                    } catch (Exception e) {
-                        evaluationFunction.accept(e.toString());
-                    } finally {
-                        status = Status.YIELDED;
-                        evaluationCondition.signal();
-                    }
-                }
+                mayBeEvaluate(reason);
             } catch (InterruptedException e) {
                 throw new Error("Unexpected interrupt", e);
             } finally {
@@ -62,6 +52,19 @@ class CoroutineContextImpl implements CoroutineContext {
             }
         }
         setStatus(Status.RUNNING);
+    }
+
+    private void mayBeEvaluate(String reason) {
+        if (status == Status.EVALUATING) {
+            try {
+                evaluationFunction.accept(reason);
+            } catch (Exception e) {
+                evaluationFunction.accept(e.toString());
+            } finally {
+                status = Status.YIELDED;
+                evaluationCondition.signal();
+            }
+        }
     }
 
     public void evaluateInCoroutineContext(Consumer<String> function) {
@@ -121,7 +124,6 @@ class CoroutineContextImpl implements CoroutineContext {
     public void setStatus(Status status) {
         // Unblock runUntilBlocked if thread exited instead of yielding.
         lock.lock();
-        System.out.println("setStatus=" + status);
         try {
             this.status = status;
             if (isDone()) {
@@ -169,7 +171,6 @@ class CoroutineContextImpl implements CoroutineContext {
                 throw new IllegalStateException("Cannot runUntilBlocked while evaluating");
             }
             inRunUntilBlocked = true;
-            System.out.println("runUntilBlocked set state to RUNNING");
             if (status != status.CREATED) {
                 status = Status.RUNNING;
             }

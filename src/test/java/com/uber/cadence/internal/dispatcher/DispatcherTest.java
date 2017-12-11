@@ -22,7 +22,6 @@ public class DispatcherTest {
 
     @Test
     public void testRootCoroutine() throws Throwable {
-        System.out.println("testRootCoroutine");
         Dispatcher d = new DispatcherImpl(() -> {
             status = "started";
             Coroutine.getContext().yield("reason1",
@@ -52,8 +51,6 @@ public class DispatcherTest {
 
     @Test
     public void testRootCoroutineFailure() throws Throwable {
-        System.out.println("testRootCoroutineFailure");
-
         Dispatcher d = new DispatcherImpl(() -> {
             status = "started";
             Coroutine.getContext().yield("reason1",
