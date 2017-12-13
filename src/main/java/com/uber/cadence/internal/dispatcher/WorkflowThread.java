@@ -1,20 +1,16 @@
 package com.uber.cadence.internal.dispatcher;
 
+import java.util.function.Supplier;
+
 public interface WorkflowThread {
 
     void start();
 
-    void join();
+    void join() throws InterruptedException;
 
-    void join(long millis);
-
-    void sleep(long millis) throws InterruptedException;
+    void join(long millis) throws InterruptedException;
 
     void interrupt();
-
-    public static boolean interrupted() {
-        return false;
-    }
 
     boolean isInterrupted();
 
@@ -28,4 +24,19 @@ public interface WorkflowThread {
 
     Thread.State getState();
 
+    static WorkflowThread currentThread() {
+        return WorkflowThreadImpl.currentThread();
+    }
+
+    static void sleep(long millis) throws InterruptedException {
+        throw new UnsupportedOperationException("not implemented yet");
+    }
+
+    static boolean interrupted() {
+        return currentThread().isInterrupted();
+    }
+
+    static void yield(String reason, Supplier<Boolean> unblockCondition) throws InterruptedException, DestroyWorkflowThreadError {
+        WorkflowThreadImpl.currentThread().getContext().yield(reason, unblockCondition);
+    }
 }

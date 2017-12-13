@@ -4,7 +4,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class CoroutineTest {
+public class WorkflowThreadImplTest {
 
     private String status;
     private boolean unblock1;
@@ -12,18 +12,22 @@ public class CoroutineTest {
     private Throwable failure;
 
     @Test
-    public void testCoroutine() {
+    public void testRootThread() {
         status = "initial";
-        Coroutine c = new Coroutine(null, () -> {
+        WorkflowThreadImpl c = new WorkflowThreadImpl(null, () -> {
             status = "started";
-            Coroutine.getContext().yield("reason1",
-                    () -> unblock1
-            );
-            status = "after1";
-            Coroutine.getContext().yield("reason2",
-                    () -> unblock2
-            );
-            status = "done";
+            try {
+                WorkflowThread.yield("reason1",
+                        () -> unblock1
+                );
+                status = "after1";
+                WorkflowThread.yield("reason2",
+                        () -> unblock2
+                );
+                status = "done";
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         });
         c.start();
         assertEquals("initial", status);
@@ -47,13 +51,17 @@ public class CoroutineTest {
     }
 
     @Test
-    public void testCoroutineFailure() {
+    public void testRootThreadFailure() {
         status = "initial";
-        Coroutine c = new Coroutine(null, () -> {
+        WorkflowThreadImpl c = new WorkflowThreadImpl(null, () -> {
             status = "started";
-            Coroutine.getContext().yield("reason1",
-                    () -> unblock1
-            );
+            try {
+                WorkflowThread.yield("reason1",
+                        () -> unblock1
+                );
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
             throw new RuntimeException("simulated");
         });
         c.start();
@@ -69,19 +77,25 @@ public class CoroutineTest {
     }
 
     @Test
-    public void testCoroutineStop() {
+    public void testRootThreadStop() {
         status = "initial";
-        Coroutine c = new Coroutine(null, () -> {
+        WorkflowThreadImpl c = new WorkflowThreadImpl(null, () -> {
             status = "started";
-            Coroutine.getContext().yield("reason1",
-                    () -> unblock1
-            );
+            try {
+                WorkflowThread.yield("reason1",
+                        () -> unblock1
+                );
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
             status = "after1";
             try {
-                Coroutine.getContext().yield("reason2",
+                WorkflowThread.yield("reason2",
                         () -> unblock2
                 );
-            } catch (DestroyCoroutineError e) {
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            } catch (DestroyWorkflowThreadError e) {
                 failure = e;
                 throw e;
             }

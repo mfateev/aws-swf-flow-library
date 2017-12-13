@@ -1,26 +1,23 @@
 package com.uber.cadence.internal.dispatcher;
 
-import com.google.common.base.Throwables;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class DispatcherImpl implements Dispatcher {
+class DeterministicRunnerImpl implements DeterministicRunner {
 
     private final Lock lock = new ReentrantLock();
-    private List<Coroutine> coroutines = new LinkedList<>(); // protected by lock
-    private List<Coroutine> coroutinesToAdd = Collections.synchronizedList(new ArrayList<>());
+    private List<WorkflowThreadImpl> workflowThreadImpls = new LinkedList<>(); // protected by lock
+    private List<WorkflowThreadImpl> coroutinesToAdd = Collections.synchronizedList(new ArrayList<>());
 
-    public DispatcherImpl(Runnable root) {
-        Coroutine rootCoroutine = new Coroutine(this, root);
-        coroutines.add(rootCoroutine);
-        rootCoroutine.start();
+    public DeterministicRunnerImpl(Runnable root) {
+        WorkflowThreadImpl rootWorkflowThreadImpl = new WorkflowThreadImpl(this, root);
+        workflowThreadImpls.add(rootWorkflowThreadImpl);
+        rootWorkflowThreadImpl.start();
     }
 
     @Override
@@ -28,14 +25,14 @@ public class DispatcherImpl implements Dispatcher {
         lock.lock();
         try {
             Throwable unhandledException = null;
-            // Keep repeating until at least one of the coroutines makes progress.
+            // Keep repeating until at least one of the workflowThreadImpls makes progress.
             boolean progress;
             do {
                 coroutinesToAdd.clear();
                 progress = false;
-                ListIterator<Coroutine> ci = coroutines.listIterator();
+                ListIterator<WorkflowThreadImpl> ci = workflowThreadImpls.listIterator();
                 while (ci.hasNext()) {
-                    Coroutine c = ci.next();
+                    WorkflowThreadImpl c = ci.next();
                     progress = c.runUntilBlocked() || progress;
                     if (c.isDone()) {
                         ci.remove();
@@ -49,8 +46,8 @@ public class DispatcherImpl implements Dispatcher {
                     close();
                     throw unhandledException;
                 }
-                coroutines.addAll(coroutinesToAdd);
-            } while (progress && !coroutines.isEmpty());
+                workflowThreadImpls.addAll(coroutinesToAdd);
+            } while (progress && !workflowThreadImpls.isEmpty());
         } finally {
             lock.unlock();
         }
@@ -60,7 +57,7 @@ public class DispatcherImpl implements Dispatcher {
     public boolean isDone() {
         lock.lock();
         try {
-            return coroutines.isEmpty();
+            return workflowThreadImpls.isEmpty();
         } finally {
             lock.unlock();
         }
@@ -70,10 +67,10 @@ public class DispatcherImpl implements Dispatcher {
     public void close() {
         lock.lock();
         try {
-            for (Coroutine c : coroutines) {
+            for (WorkflowThreadImpl c : workflowThreadImpls) {
                 c.stop();
             }
-            coroutines.clear();
+            workflowThreadImpls.clear();
         } finally {
             lock.unlock();
         }
@@ -85,8 +82,8 @@ public class DispatcherImpl implements Dispatcher {
         return null;
     }
 
-    public Coroutine newCoroutine(Runnable r) {
-        Coroutine result = new Coroutine(this, r);
+    public WorkflowThreadImpl newThread(Runnable r) {
+        WorkflowThreadImpl result = new WorkflowThreadImpl(this, r);
         coroutinesToAdd.add(result); // This is synchronized collection.
         return result;
     }

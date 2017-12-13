@@ -6,9 +6,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-class CoroutineContextImpl implements CoroutineContext {
+class WorkflowThreadContext {
 
-    private final DispatcherImpl dispatcher;
     private Status status = Status.CREATED;
     private Throwable unhandledException;
     private Lock lock = new ReentrantLock();
@@ -21,39 +20,45 @@ class CoroutineContextImpl implements CoroutineContext {
     private boolean destroyRequested;
     private boolean inRunUntilBlocked;
 
-    CoroutineContextImpl(DispatcherImpl dispatcher) {
-        this.dispatcher = dispatcher;
-    }
-
-    public void initialYield() {
+    public void initialYield() throws InterruptedException {
         if (getStatus() != Status.CREATED) {
             throw new IllegalStateException("not in CREATED but in " + getStatus() + " state");
         }
         yield("created", () -> true);
     }
 
-    @Override
-    public void yield(String reason, Supplier<Boolean> unblockFunction) {
+    public void yield(String reason, Supplier<Boolean> unblockFunction) throws InterruptedException {
         if (unblockFunction == null) {
             throw new IllegalArgumentException("null unblockFunction");
         }
         // Evaluates unblockFunction out of the lock to avoid deadlocks.
-        while (!inRunUntilBlocked || !unblockFunction.get()) {
-            lock.lock();
-            try {
+        lock.lock();
+        try {
+            // TODO: Verify that calling unblockFunction under the lock is a sane thing to do.
+            while (!inRunUntilBlocked || !unblockFunction.get()) {
+                if (status == Status.INTERRUPTED) {
+                    throw new InterruptedException();
+                }
                 status = Status.YIELDED;
                 runCondition.signal();
                 yieldCondition.await();
+                if (status == Status.INTERRUPTED) {
+                    throw new InterruptedException();
+                }
                 mayBeEvaluate(reason);
-            } catch (InterruptedException e) {
-                throw new Error("Unexpected interrupt", e);
-            } finally {
-                lock.unlock();
             }
+        } finally {
+            setStatus(Status.RUNNING);
+            lock.unlock();
         }
-        setStatus(Status.RUNNING);
     }
 
+    /**
+     * Execute evaluation function by the thread that owns this context if
+     * {@link #evaluateInCoroutineContext(Consumer)} was called.
+     *
+     * @param reason human readable reason for current thread blockage passed to yield call.
+     */
     private void mayBeEvaluate(String reason) {
         if (status == Status.EVALUATING) {
             try {
@@ -67,6 +72,12 @@ class CoroutineContextImpl implements CoroutineContext {
         }
     }
 
+    /**
+     * Call function by the thread that owns this context and is currently blocked in a yield.
+     * Used to get information about current state of the thread like current stack trace.
+     *
+     * @param function to evaluate. Consumes reason for yielding parameter.
+     */
     public void evaluateInCoroutineContext(Consumer<String> function) {
         lock.lock();
         try {
@@ -97,7 +108,6 @@ class CoroutineContextImpl implements CoroutineContext {
         }
     }
 
-    @Override
     public boolean destroyRequested() {
         lock.lock();
         try {
@@ -105,11 +115,6 @@ class CoroutineContextImpl implements CoroutineContext {
         } finally {
             lock.unlock();
         }
-    }
-
-    @Override
-    public DispatcherImpl getDispatcher() {
-        return dispatcher;
     }
 
     public Status getStatus() {
@@ -198,8 +203,16 @@ class CoroutineContextImpl implements CoroutineContext {
             lock.unlock();
         }
         evaluateInCoroutineContext((r) -> {
-            throw new DestroyCoroutineError();
+            throw new DestroyWorkflowThreadError();
         });
     }
 
+    public void interrupt() {
+        lock.lock();
+        try {
+            status = Status.INTERRUPTED;
+        } finally {
+            lock.unlock();
+        }
+    }
 }

@@ -5,7 +5,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class DispatcherTest {
+public class DeterministicRunnerTest {
 
     private String status;
     private boolean unblock1;
@@ -21,16 +21,20 @@ public class DispatcherTest {
     }
 
     @Test
-    public void testRootCoroutine() throws Throwable {
-        Dispatcher d = new DispatcherImpl(() -> {
+    public void testRootThread() throws Throwable {
+        DeterministicRunner d = new DeterministicRunnerImpl(() -> {
             status = "started";
-            Coroutine.getContext().yield("reason1",
-                    () -> unblock1
-            );
-            status = "after1";
-            Coroutine.getContext().yield("reason2",
-                    () -> unblock2
-            );
+            try {
+                WorkflowThread.yield("reason1",
+                        () -> unblock1
+                );
+                status = "after1";
+                WorkflowThread.yield("reason2",
+                        () -> unblock2
+                );
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
             status = "done";
         });
         assertEquals("initial", status);
@@ -50,12 +54,16 @@ public class DispatcherTest {
     }
 
     @Test
-    public void testRootCoroutineFailure() throws Throwable {
-        Dispatcher d = new DispatcherImpl(() -> {
+    public void testRootThreadFailure() throws Throwable {
+        DeterministicRunner d = new DeterministicRunnerImpl(() -> {
             status = "started";
-            Coroutine.getContext().yield("reason1",
-                    () -> unblock1
-            );
+            try {
+                WorkflowThread.yield("reason1",
+                        () -> unblock1
+                );
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
             throw new RuntimeException("simulated");
         });
         assertEquals("initial", status);
@@ -73,17 +81,17 @@ public class DispatcherTest {
 
 //    @Test
 //    public void testDispatcherStop() throws Throwable {
-//        Dispatcher d = new DispatcherImpl(() -> {
+//        DeterministicRunner d = new DeterministicRunnerImpl(() -> {
 //            status = "started";
-//            Coroutine.getContext().yield("reason1",
+//            WorkflowThreadImpl.getContext().yield("reason1",
 //                    () -> unblock1
 //            );
 //            status = "after1";
 //            try {
-//                Coroutine.getContext().yield("reason2",
+//                WorkflowThreadImpl.getContext().yield("reason2",
 //                        () -> unblock2
 //                );
-//            } catch (DestroyCoroutineError e) {
+//            } catch (DestroyWorkflowThreadError e) {
 //                failure = e;
 //                throw e;
 //            }
