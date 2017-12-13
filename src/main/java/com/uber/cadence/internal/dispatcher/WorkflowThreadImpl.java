@@ -46,7 +46,7 @@ class WorkflowThreadImpl implements WorkflowThread {
 
     private final Thread thread;
     private final WorkflowThreadContext context;
-    private final DeterministicRunner runner;
+    private final DeterministicRunnerImpl runner;
 
     static WorkflowThreadImpl currentThread() {
         WorkflowThreadImpl result = currentThreadThreadLocal.get();
@@ -61,7 +61,7 @@ class WorkflowThreadImpl implements WorkflowThread {
     }
 
     public static WorkflowThread newThread(Runnable runnable) {
-        return new WorkflowThreadImpl(currentThread().getRunner(), runnable);
+        return currentThread().getRunner().newThread(runnable);
     }
 
     public void interrupt() {
@@ -91,7 +91,7 @@ class WorkflowThreadImpl implements WorkflowThread {
         return context;
     }
 
-    public DeterministicRunner getRunner() {
+    public DeterministicRunnerImpl getRunner() {
         return runner;
     }
 
@@ -122,7 +122,7 @@ class WorkflowThreadImpl implements WorkflowThread {
         return thread.getId();
     }
 
-    public WorkflowThreadImpl(DeterministicRunner runner, Runnable runnable) {
+    public WorkflowThreadImpl(DeterministicRunnerImpl runner, Runnable runnable) {
         this.runner = runner;
         this.context = new WorkflowThreadContext();
         RunnableWrapper cr = new RunnableWrapper(context, runnable);

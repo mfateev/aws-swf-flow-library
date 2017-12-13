@@ -11,12 +11,12 @@ import java.util.concurrent.locks.ReentrantLock;
 class DeterministicRunnerImpl implements DeterministicRunner {
 
     private final Lock lock = new ReentrantLock();
-    private List<WorkflowThreadImpl> workflowThreadImpls = new LinkedList<>(); // protected by lock
-    private List<WorkflowThreadImpl> coroutinesToAdd = Collections.synchronizedList(new ArrayList<>());
+    private List<WorkflowThreadImpl> threads = new LinkedList<>(); // protected by lock
+    private List<WorkflowThreadImpl> threadsToAdd = Collections.synchronizedList(new ArrayList<>());
 
     public DeterministicRunnerImpl(Runnable root) {
         WorkflowThreadImpl rootWorkflowThreadImpl = new WorkflowThreadImpl(this, root);
-        workflowThreadImpls.add(rootWorkflowThreadImpl);
+        threads.add(rootWorkflowThreadImpl);
         rootWorkflowThreadImpl.start();
     }
 
@@ -25,12 +25,12 @@ class DeterministicRunnerImpl implements DeterministicRunner {
         lock.lock();
         try {
             Throwable unhandledException = null;
-            // Keep repeating until at least one of the workflowThreadImpls makes progress.
+            // Keep repeating until at least one of the threads makes progress.
             boolean progress;
             do {
-                coroutinesToAdd.clear();
+                threadsToAdd.clear();
                 progress = false;
-                ListIterator<WorkflowThreadImpl> ci = workflowThreadImpls.listIterator();
+                ListIterator<WorkflowThreadImpl> ci = threads.listIterator();
                 while (ci.hasNext()) {
                     WorkflowThreadImpl c = ci.next();
                     progress = c.runUntilBlocked() || progress;
@@ -46,8 +46,8 @@ class DeterministicRunnerImpl implements DeterministicRunner {
                     close();
                     throw unhandledException;
                 }
-                workflowThreadImpls.addAll(coroutinesToAdd);
-            } while (progress && !workflowThreadImpls.isEmpty());
+                threads.addAll(threadsToAdd);
+            } while (progress && !threads.isEmpty());
         } finally {
             lock.unlock();
         }
@@ -57,7 +57,7 @@ class DeterministicRunnerImpl implements DeterministicRunner {
     public boolean isDone() {
         lock.lock();
         try {
-            return workflowThreadImpls.isEmpty();
+            return threads.isEmpty();
         } finally {
             lock.unlock();
         }
@@ -67,10 +67,10 @@ class DeterministicRunnerImpl implements DeterministicRunner {
     public void close() {
         lock.lock();
         try {
-            for (WorkflowThreadImpl c : workflowThreadImpls) {
+            for (WorkflowThreadImpl c : threads) {
                 c.stop();
             }
-            workflowThreadImpls.clear();
+            threads.clear();
         } finally {
             lock.unlock();
         }
@@ -84,7 +84,7 @@ class DeterministicRunnerImpl implements DeterministicRunner {
 
     public WorkflowThreadImpl newThread(Runnable r) {
         WorkflowThreadImpl result = new WorkflowThreadImpl(this, r);
-        coroutinesToAdd.add(result); // This is synchronized collection.
+        threadsToAdd.add(result); // This is synchronized collection.
         return result;
     }
 }

@@ -12,7 +12,7 @@ public class WorkflowThreadImplTest {
     private Throwable failure;
 
     @Test
-    public void testRootThread() {
+    public void testThread() {
         status = "initial";
         WorkflowThreadImpl c = new WorkflowThreadImpl(null, () -> {
             status = "started";
@@ -51,7 +51,7 @@ public class WorkflowThreadImplTest {
     }
 
     @Test
-    public void testRootThreadFailure() {
+    public void testThreadFailure() {
         status = "initial";
         WorkflowThreadImpl c = new WorkflowThreadImpl(null, () -> {
             status = "started";
@@ -77,7 +77,7 @@ public class WorkflowThreadImplTest {
     }
 
     @Test
-    public void testRootThreadSelfInterrupt() {
+    public void testThreadSelfInterrupt() {
         status = "initial";
         WorkflowThreadImpl c = new WorkflowThreadImpl(null, () -> {
             status = "started";
@@ -103,7 +103,7 @@ public class WorkflowThreadImplTest {
     }
 
     @Test
-    public void testRootThreadStop() {
+    public void testThreadStop() {
         status = "initial";
         WorkflowThreadImpl c = new WorkflowThreadImpl(null, () -> {
             status = "started";

@@ -20,6 +20,7 @@ class WorkflowThreadContext {
     private boolean destroyRequested;
     private boolean interrupted;
     private boolean inRunUntilBlocked;
+    private boolean remainedBlocked;
 
     public void initialYield() throws InterruptedException {
         if (getStatus() != Status.CREATED) {
@@ -44,6 +45,7 @@ class WorkflowThreadContext {
             }
         } finally {
             setStatus(Status.RUNNING);
+            remainedBlocked = false;
             lock.unlock();
         }
     }
@@ -176,6 +178,9 @@ class WorkflowThreadContext {
         }
     }
 
+    /**
+     * @return true if thread made some progress. Which is yield was unblocked and some code after it was executed.
+     */
     public boolean runUntilBlocked() {
         lock.lock();
         try {
@@ -189,6 +194,7 @@ class WorkflowThreadContext {
             if (status != status.CREATED) {
                 status = Status.RUNNING;
             }
+            remainedBlocked = true;
             yieldCondition.signal();
             while (status == status.RUNNING || status == Status.CREATED) {
                 runCondition.await();
@@ -196,13 +202,13 @@ class WorkflowThreadContext {
                     throw new IllegalStateException("Cannot runUntilBlocked while evaluating");
                 }
             }
+            return !remainedBlocked;
         } catch (InterruptedException e) {
             throw new Error("Unexpected interrupt", e);
         } finally {
             inRunUntilBlocked = false;
             lock.unlock();
         }
-        return false; // TODO PROGRESS
     }
 
     public void destroy() {
