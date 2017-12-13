@@ -5,7 +5,5 @@ enum Status {
     RUNNING,
     YIELDED,
     EVALUATING,
-    INTERRUPTED,
-    FAILED,
     DONE
 }

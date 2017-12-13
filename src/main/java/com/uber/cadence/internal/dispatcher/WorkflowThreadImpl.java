@@ -30,17 +30,14 @@ class WorkflowThreadImpl implements WorkflowThread {
                 // Otherwise r starts executing without control of the dispatcher.
                 context.initialYield();
                 r.run();
-                context.setStatus(Status.DONE);
             } catch (DestroyWorkflowThreadError e) {
                 if (!context.destroyRequested()) {
-                    context.setStatus(Status.FAILED);
                     context.setUnhandledException(e);
-                } else {
-                    context.setStatus(Status.DONE);
                 }
             } catch (Throwable e) {
-                context.setStatus(Status.FAILED);
                 context.setUnhandledException(e);
+            } finally {
+                context.setStatus(Status.DONE);
             }
         }
     }
@@ -56,7 +53,8 @@ class WorkflowThreadImpl implements WorkflowThread {
         if (result == null) {
             throw new IllegalStateException("Called from non coroutine thread");
         }
-        if (result.getContext().getStatus() != Status.RUNNING) {
+        WorkflowThreadContext context = result.getContext();
+        if (context.getStatus() != Status.RUNNING) {
             throw new IllegalStateException("Called from non running coroutine thread");
         }
         return result;
@@ -67,11 +65,15 @@ class WorkflowThreadImpl implements WorkflowThread {
     }
 
     public void interrupt() {
-       context.interrupt();
+        context.interrupt();
     }
 
     public boolean isInterrupted() {
-        return context.getStatus() == Status.INTERRUPTED;
+        return context.isInterrupted();
+    }
+
+    public boolean resetInterrupted() {
+        return context.resetInterrupted();
     }
 
     public boolean isDestroyRequested() {
@@ -105,7 +107,7 @@ class WorkflowThreadImpl implements WorkflowThread {
     }
 
     public boolean isAlive() {
-        return thread.isAlive()  && !isDestroyRequested();
+        return thread.isAlive() && !isDone();
     }
 
     public void setName(String name) {
@@ -178,7 +180,7 @@ class WorkflowThreadImpl implements WorkflowThread {
         context.destroy();
         if (!context.isDone()) {
             throw new RuntimeException("Couldn't destroy the thread. " +
-                    "The blocked thread stack trace\n: " + getStackTrace());
+                    "The blocked thread stack trace: " + getStackTrace());
         }
         try {
             thread.join();
@@ -197,7 +199,7 @@ class WorkflowThreadImpl implements WorkflowThread {
         for (StackTraceElement se : st) {
             pw.println("\tat " + se);
         }
-        return pw.toString();
+        return sw.toString();
     }
 
 }

@@ -33,7 +33,7 @@ public interface WorkflowThread {
     }
 
     static boolean interrupted() {
-        return currentThread().isInterrupted();
+        return WorkflowThreadImpl.currentThread().resetInterrupted();
     }
 
     static void yield(String reason, Supplier<Boolean> unblockCondition) throws InterruptedException, DestroyWorkflowThreadError {

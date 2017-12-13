@@ -18,6 +18,7 @@ class WorkflowThreadContext {
     private Condition evaluationCondition = lock.newCondition();
     private Consumer<String> evaluationFunction;
     private boolean destroyRequested;
+    private boolean interrupted;
     private boolean inRunUntilBlocked;
 
     public void initialYield() throws InterruptedException {
@@ -35,22 +36,31 @@ class WorkflowThreadContext {
         lock.lock();
         try {
             // TODO: Verify that calling unblockFunction under the lock is a sane thing to do.
-            while (!inRunUntilBlocked || !unblockFunction.get()) {
-                if (status == Status.INTERRUPTED) {
-                    throw new InterruptedException();
-                }
+            while (!inRunUntilBlocked || throwInterrupted() || !unblockFunction.get()) {
                 status = Status.YIELDED;
                 runCondition.signal();
                 yieldCondition.await();
-                if (status == Status.INTERRUPTED) {
-                    throw new InterruptedException();
-                }
                 mayBeEvaluate(reason);
             }
         } finally {
             setStatus(Status.RUNNING);
             lock.unlock();
         }
+    }
+
+    /**
+     * Throws InterruptedException if interrupted is true resetting it to false.
+     * Should be called under the lock.
+     *
+     * @return true just to be able to use in the while expression.
+     * @throws InterruptedException if interrupted is true
+     */
+    private boolean throwInterrupted() throws InterruptedException {
+        if (interrupted) {
+            interrupted = false;
+            throw new InterruptedException();
+        }
+        return false;
     }
 
     /**
@@ -142,7 +152,7 @@ class WorkflowThreadContext {
     public boolean isDone() {
         lock.lock();
         try {
-            return status == Status.DONE || status == Status.FAILED;
+            return status == Status.DONE;
         } finally {
             lock.unlock();
         }
@@ -169,7 +179,7 @@ class WorkflowThreadContext {
     public boolean runUntilBlocked() {
         lock.lock();
         try {
-            if (status == Status.FAILED || status == Status.DONE) {
+            if (status == Status.DONE) {
                 return false;
             }
             if (evaluationFunction != null) {
@@ -205,12 +215,33 @@ class WorkflowThreadContext {
         evaluateInCoroutineContext((r) -> {
             throw new DestroyWorkflowThreadError();
         });
+        runUntilBlocked();
     }
 
     public void interrupt() {
         lock.lock();
         try {
-            status = Status.INTERRUPTED;
+            interrupted = true;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public boolean isInterrupted() {
+        lock.lock();
+        try {
+            return interrupted;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public boolean resetInterrupted() {
+        lock.lock();
+        try {
+            boolean result = interrupted;
+            interrupted = false;
+            return result;
         } finally {
             lock.unlock();
         }

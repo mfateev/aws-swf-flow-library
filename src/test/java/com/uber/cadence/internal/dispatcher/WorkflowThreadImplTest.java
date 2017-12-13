@@ -77,6 +77,32 @@ public class WorkflowThreadImplTest {
     }
 
     @Test
+    public void testRootThreadSelfInterrupt() {
+        status = "initial";
+        WorkflowThreadImpl c = new WorkflowThreadImpl(null, () -> {
+            status = "started";
+            WorkflowThread.currentThread().interrupt();
+            try {
+                WorkflowThread.yield("reason1",
+                        () -> unblock1
+                );
+            } catch (InterruptedException e) {
+                if (WorkflowThread.interrupted()) {
+                    status = "still interrupted";
+                } else {
+                    status = "interrupted";
+                }
+            }
+        });
+        c.start();
+        assertEquals("initial", status);
+        c.runUntilBlocked();
+        assertTrue(c.isDone());
+        assertEquals("interrupted", status);
+        assertNull(c.getUnhandledException());
+    }
+
+    @Test
     public void testRootThreadStop() {
         status = "initial";
         WorkflowThreadImpl c = new WorkflowThreadImpl(null, () -> {

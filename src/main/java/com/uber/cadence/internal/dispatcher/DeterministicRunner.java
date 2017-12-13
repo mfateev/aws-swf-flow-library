@@ -1,13 +1,13 @@
 package com.uber.cadence.internal.dispatcher;
 
 /**
- * Executes code passed to {@link #newDispatcher(Runnable)} as well as threads created from it using
+ * Executes code passed to {@link #newRunner(Runnable)} as well as threads created from it using
  * {@link Workflow#newThread(Runnable)} deterministically. Requires use of provided wrappers for synchronization
  * and notification instead of native ones.
  */
 public interface DeterministicRunner {
 
-    static DeterministicRunner newDispatcher(Runnable root) {
+    static DeterministicRunner newRunner(Runnable root) {
         return new DeterministicRunnerImpl(root);
     }
 
