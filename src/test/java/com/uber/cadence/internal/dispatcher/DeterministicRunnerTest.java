@@ -17,6 +17,7 @@ public class DeterministicRunnerTest {
     private boolean unblockRoot;
     private Throwable failure;
     List<String> trace = new ArrayList<>();
+    private long currentTime;
 
     @Before
     public void setUp() {
@@ -26,18 +27,19 @@ public class DeterministicRunnerTest {
         failure = null;
         status = "initial";
         trace.clear();
+        currentTime = 0;
     }
 
     @Test
-    public void testRoot() throws Throwable {
+    public void testYield() throws Throwable {
         DeterministicRunner d = new DeterministicRunnerImpl(() -> {
             status = "started";
             try {
-                WorkflowThread.yield("reason1",
+                WorkflowThreadImpl.yield("reason1",
                         () -> unblock1
                 );
                 status = "after1";
-                WorkflowThread.yield("reason2",
+                WorkflowThreadImpl.yield("reason2",
                         () -> unblock2
                 );
             } catch (InterruptedException e) {
@@ -62,11 +64,51 @@ public class DeterministicRunnerTest {
     }
 
     @Test
+    public void testSleep() throws Throwable {
+        DeterministicRunnerImpl d = new DeterministicRunnerImpl(
+                () -> currentTime, // clock override
+                () -> {
+                    status = "started";
+                    try {
+                        WorkflowThread.sleep(60000);
+                        status = "afterSleep1";
+                        WorkflowThread.sleep(60000);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    status = "done";
+                });
+        currentTime = 1000;
+        assertEquals("initial", status);
+        assertEquals(1000, d.currentTimeMillis());
+        d.runUntilAllBlocked();
+        currentTime = 20000;
+        assertEquals("started", status);
+        assertEquals(20000, d.currentTimeMillis());
+        d.runUntilAllBlocked();
+        assertEquals("started", status);
+        assertFalse(d.isDone());
+
+        currentTime = 70000; // unblocks first sleep
+        d.runUntilAllBlocked();
+        assertEquals("afterSleep1", status);
+        // Just check that running again doesn't make any progress.
+        d.runUntilAllBlocked();
+        assertEquals("afterSleep1", status);
+        assertEquals(70000, d.currentTimeMillis());
+
+        currentTime = 200000; // unblock second sleep
+        d.runUntilAllBlocked();
+        assertEquals("done", status);
+        assertTrue(d.isDone());
+    }
+
+    @Test
     public void testRootFailure() throws Throwable {
         DeterministicRunner d = new DeterministicRunnerImpl(() -> {
             status = "started";
             try {
-                WorkflowThread.yield("reason1",
+                WorkflowThreadImpl.yield("reason1",
                         () -> unblock1
                 );
             } catch (InterruptedException e) {
@@ -92,12 +134,12 @@ public class DeterministicRunnerTest {
         DeterministicRunner d = new DeterministicRunnerImpl(() -> {
             status = "started";
             try {
-                WorkflowThread.yield("reason1",
+                WorkflowThreadImpl.yield("reason1",
                         () -> unblock1
                 );
                 status = "after1";
                 try {
-                    WorkflowThread.yield("reason2",
+                    WorkflowThreadImpl.yield("reason2",
                             () -> unblock2
                     );
                 } catch (DestroyWorkflowThreadError e) {
@@ -127,11 +169,11 @@ public class DeterministicRunnerTest {
             WorkflowThread thread = Workflow.newThread(() -> {
                 status = "started";
                 try {
-                    WorkflowThread.yield("reason1",
+                    WorkflowThreadImpl.yield("reason1",
                             () -> unblock1
                     );
                     status = "after1";
-                    WorkflowThread.yield("reason2",
+                    WorkflowThreadImpl.yield("reason2",
                             () -> unblock2
                     );
                 } catch (InterruptedException e) {
@@ -169,11 +211,11 @@ public class DeterministicRunnerTest {
             WorkflowThread thread = Workflow.newThread(() -> {
                 trace.add("child started");
                 try {
-                    WorkflowThread.yield("reason1",
+                    WorkflowThreadImpl.yield("reason1",
                             () -> unblock1
                     );
                     trace.add("child after1");
-                    WorkflowThread.yield("reason2",
+                    WorkflowThreadImpl.yield("reason2",
                             () -> unblock2
                     );
                 } catch (InterruptedException e) {
@@ -186,7 +228,7 @@ public class DeterministicRunnerTest {
             thread.start();
             try {
                 trace.add("root blocked");
-                WorkflowThread.yield("rootReason1",
+                WorkflowThreadImpl.yield("rootReason1",
                         () -> unblockRoot
                 );
                 assertFalse(thread.isInterrupted());
@@ -221,6 +263,56 @@ public class DeterministicRunnerTest {
         assertTrace(expected, trace);
     }
 
+    @Test
+    public void testJoinTimeout() throws Throwable {
+        DeterministicRunnerImpl d = new DeterministicRunnerImpl(
+                () -> currentTime, // clock override
+                () -> {
+                    trace.add("root started");
+
+                    WorkflowThread thread = Workflow.newThread(() -> {
+                        trace.add("child started");
+                        try {
+                            WorkflowThreadImpl.yield("blockForever",
+                                    () -> false
+                            );
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                        trace.add("child done");
+                    });
+                    thread.start();
+                    try {
+                        thread.join(60000);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    trace.add("root done");
+                });
+        currentTime = 1000;
+        long blockedUntil = d.runUntilAllBlocked();
+        assertEquals(61000, blockedUntil);
+        assertFalse(d.isDone());
+        String[] expected = new String[]{
+                "root started",
+                "child started",
+        };
+        assertTrace(expected, trace);
+        // Just check that running again doesn't make any progress.
+        blockedUntil = d.runUntilAllBlocked();
+        assertEquals(61000, blockedUntil);
+        currentTime = 70000;
+        d.runUntilAllBlocked();
+        assertFalse(d.isDone());
+        expected = new String[]{
+                "root started",
+                "child started",
+                "root done"
+        };
+        assertTrace(expected, trace);
+        d.close();
+    }
+
     void assertTrace(String[] expected, List<String> trace) {
         assertEquals(Arrays.asList(expected), trace);
     }
@@ -244,7 +336,7 @@ public class DeterministicRunnerTest {
             WorkflowThread thread = Workflow.newThread(new TestChildTreeRunnable(depth + 1));
             thread.start();
             try {
-                WorkflowThread.yield("reason1",
+                WorkflowThreadImpl.yield("reason1",
                         () -> unblock1
                 );
             } catch (InterruptedException e) {

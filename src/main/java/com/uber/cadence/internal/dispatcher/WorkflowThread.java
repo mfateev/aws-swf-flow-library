@@ -29,22 +29,10 @@ public interface WorkflowThread {
     }
 
     static void sleep(long millis) throws InterruptedException {
-        throw new UnsupportedOperationException("not implemented yet");
+        WorkflowThreadImpl.yield(millis, "sleep", () -> false   );
     }
 
     static boolean interrupted() {
         return WorkflowThreadImpl.currentThread().resetInterrupted();
-    }
-
-    /**
-     * Block current thread until unblockCondition is evaluated to true.
-     * This method is intended for framework level libraries, never use directly in a workflow implementation.
-     * @param reason reason for blocking
-     * @param unblockCondition condition that should return true to indicate that thread should unblock.
-     * @throws InterruptedException if thread was interrupted.
-     * @throws DestroyWorkflowThreadError if thread was asked to be destroyed.
-     */
-    static void yield(String reason, Supplier<Boolean> unblockCondition) throws InterruptedException, DestroyWorkflowThreadError {
-        WorkflowThreadImpl.currentThread().getContext().yield(reason, unblockCondition);
     }
 }

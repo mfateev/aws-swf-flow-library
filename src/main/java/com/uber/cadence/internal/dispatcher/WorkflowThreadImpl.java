@@ -3,6 +3,7 @@ package com.uber.cadence.internal.dispatcher;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 class WorkflowThreadImpl implements WorkflowThread {
 
@@ -48,6 +49,13 @@ class WorkflowThreadImpl implements WorkflowThread {
     private final WorkflowThreadContext context;
     private final DeterministicRunnerImpl runner;
 
+    /**
+     * If not 0 then thread is blocked on a sleep (or on an operation with a timeout).
+     * The value is the time in milliseconds (as in currentTimeMillis()) when thread will continue.
+     * Note that thread still has to be called for evaluation as other threads might interrupt the blocking call.
+     */
+    private long blockedUntil;
+
     static WorkflowThreadImpl currentThread() {
         WorkflowThreadImpl result = currentThreadThreadLocal.get();
         if (result == null) {
@@ -60,8 +68,23 @@ class WorkflowThreadImpl implements WorkflowThread {
         return result;
     }
 
+    public WorkflowThreadImpl(DeterministicRunnerImpl runner, String name, Runnable runnable) {
+        this.runner = runner;
+        this.context = new WorkflowThreadContext();
+        RunnableWrapper cr = new RunnableWrapper(context, runnable);
+        // TODO: Use thread pool instead of creating new threads.
+        if (name == null) {
+            name = "workflow-" + super.hashCode();
+        }
+        this.thread = new Thread(cr, name);
+    }
+
     public static WorkflowThread newThread(Runnable runnable) {
         return currentThread().getRunner().newThread(runnable);
+    }
+
+    public static WorkflowThread newThread(Runnable runnable, String name) {
+        return currentThread().getRunner().newThread(runnable, name);
     }
 
     public void interrupt() {
@@ -97,13 +120,13 @@ class WorkflowThreadImpl implements WorkflowThread {
 
     @Override
     public void join() throws InterruptedException {
-        WorkflowThread.yield("WorkflowThread.join", () -> isDone());
+        WorkflowThreadImpl.yield("WorkflowThread.join", () -> isDone());
     }
 
     // TODO: Timeout support
     @Override
     public void join(long millis) throws InterruptedException {
-        WorkflowThread.yield("WorkflowThread.join", () -> isDone());
+        WorkflowThreadImpl.yield(millis, "WorkflowThread.join", () -> isDone());
     }
 
     public boolean isAlive() {
@@ -122,13 +145,12 @@ class WorkflowThreadImpl implements WorkflowThread {
         return thread.getId();
     }
 
-    public WorkflowThreadImpl(DeterministicRunnerImpl runner, Runnable runnable) {
-        this.runner = runner;
-        this.context = new WorkflowThreadContext();
-        RunnableWrapper cr = new RunnableWrapper(context, runnable);
-        // TODO: Different name for each workflow thread.
-        // TODO: Use thread pool instead of creating new threads.
-        this.thread = new Thread(cr, "workflow-thread");
+    public long getBlockedUntil() {
+        return blockedUntil;
+    }
+
+    public void setBlockedUntil(long blockedUntil) {
+        this.blockedUntil = blockedUntil;
     }
 
     public Thread getThread() {
@@ -143,7 +165,8 @@ class WorkflowThreadImpl implements WorkflowThread {
             // Thread is not yet started
             return false;
         }
-        return context.runUntilBlocked();
+        boolean result = context.runUntilBlocked();
+        return result;
     }
 
     public boolean isDone() {
@@ -202,4 +225,60 @@ class WorkflowThreadImpl implements WorkflowThread {
         return sw.toString();
     }
 
+    /**
+     * Block current thread until unblockCondition is evaluated to true.
+     * This method is intended for framework level libraries, never use directly in a workflow implementation.
+     *
+     * @param reason           reason for blocking
+     * @param unblockCondition condition that should return true to indicate that thread should unblock.
+     * @throws InterruptedException       if thread was interrupted.
+     * @throws DestroyWorkflowThreadError if thread was asked to be destroyed.
+     */
+    static void yield(String reason, Supplier<Boolean> unblockCondition) throws InterruptedException, DestroyWorkflowThreadError {
+        WorkflowThreadImpl.currentThread().getContext().yield(reason, unblockCondition);
+    }
+
+    /**
+     * Block current thread until unblockCondition is evaluated to true or timeoutMillis passes.
+     *
+     * @return false if timed out.
+     */
+    static boolean yield(long timeoutMillis, String reason, Supplier<Boolean> unblockCondition) throws InterruptedException, DestroyWorkflowThreadError {
+        WorkflowThreadImpl current = WorkflowThreadImpl.currentThread();
+        long blockedUntil = Workflow.currentTimeMillis() + timeoutMillis;
+        current.setBlockedUntil(blockedUntil);
+        YieldWithTimeoutCondition condition = new YieldWithTimeoutCondition(unblockCondition, blockedUntil);
+        yield("reason", condition);
+        return !condition.isTimedOut();
+    }
+
+    static class YieldWithTimeoutCondition implements Supplier<Boolean> {
+
+        private final Supplier<Boolean> unblockCondition;
+        private final long blockedUntil;
+        private boolean timedOut;
+
+        public YieldWithTimeoutCondition(Supplier<Boolean> unblockCondition, long blockedUntil) {
+            this.unblockCondition = unblockCondition;
+            this.blockedUntil = blockedUntil;
+        }
+
+        public boolean isTimedOut() {
+            return timedOut;
+        }
+
+        @Override
+        public Boolean get() {
+            boolean result = unblockCondition.get();
+            if (result) {
+                return true;
+            }
+            result = Workflow.currentTimeMillis() >= blockedUntil;
+            if (result) {
+                timedOut = true;
+                return true;
+            }
+            return false;
+        }
+    }
 }

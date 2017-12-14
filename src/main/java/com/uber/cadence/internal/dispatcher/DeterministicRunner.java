@@ -11,19 +11,36 @@ public interface DeterministicRunner {
         return new DeterministicRunnerImpl(root);
     }
 
-    // ExecuteUntilAllBlocked executes threads one by one in deterministic order
-    // until all of them are completed or blocked.
-    // Throws exception if one of the threads didn't handle an exception.
-    void runUntilAllBlocked() throws Throwable;
+    static DeterministicRunner newRunner(WorkflowClock clock, Runnable root) {
+        return new DeterministicRunnerImpl(clock, root);
+    }
 
-    // IsDone returns true when all of threads are completed
+    /**
+     * ExecuteUntilAllBlocked executes threads one by one in deterministic order
+     * until all of them are completed or blocked.
+     *
+     * @return nearest time when at least one of the threads is expected to wake up.
+     * @throws Throwable if one of the threads didn't handle an exception.
+     */
+    long runUntilAllBlocked() throws Throwable;
+
+    /**
+     * IsDone returns true when all of threads are completed
+     */
     boolean isDone();
 
     /**
      * * Destroys all threads by throwing {@link DestroyWorkflowThreadError} without waiting for their completion
-      */
+     */
     void close();
 
-    // Stack trace of all threads owned by the DeterministicRunner instance
+    /**
+     * Stack trace of all threads owned by the DeterministicRunner instance
+     */
     String stackTrace();
+
+    /**
+     * @return time according to a {@link WorkflowClock} configured with the Runner.
+     */
+    long currentTimeMillis();
 }

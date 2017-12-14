@@ -14,14 +14,14 @@ public class WorkflowThreadImplTest {
     @Test
     public void testThread() {
         status = "initial";
-        WorkflowThreadImpl c = new WorkflowThreadImpl(null, () -> {
+        WorkflowThreadImpl c = new WorkflowThreadImpl(null, "test", () -> {
             status = "started";
             try {
-                WorkflowThread.yield("reason1",
+                WorkflowThreadImpl.yield("reason1",
                         () -> unblock1
                 );
                 status = "after1";
-                WorkflowThread.yield("reason2",
+                WorkflowThreadImpl.yield("reason2",
                         () -> unblock2
                 );
                 status = "done";
@@ -53,10 +53,10 @@ public class WorkflowThreadImplTest {
     @Test
     public void testThreadFailure() {
         status = "initial";
-        WorkflowThreadImpl c = new WorkflowThreadImpl(null, () -> {
+        WorkflowThreadImpl c = new WorkflowThreadImpl(null,  "test", () -> {
             status = "started";
             try {
-                WorkflowThread.yield("reason1",
+                WorkflowThreadImpl.yield("reason1",
                         () -> unblock1
                 );
             } catch (InterruptedException e) {
@@ -79,11 +79,11 @@ public class WorkflowThreadImplTest {
     @Test
     public void testThreadSelfInterrupt() {
         status = "initial";
-        WorkflowThreadImpl c = new WorkflowThreadImpl(null, () -> {
+        WorkflowThreadImpl c = new WorkflowThreadImpl(null,  "test", () -> {
             status = "started";
             WorkflowThread.currentThread().interrupt();
             try {
-                WorkflowThread.yield("reason1",
+                WorkflowThreadImpl.yield("reason1",
                         () -> unblock1
                 );
             } catch (InterruptedException e) {
@@ -105,10 +105,10 @@ public class WorkflowThreadImplTest {
     @Test
     public void testThreadStop() {
         status = "initial";
-        WorkflowThreadImpl c = new WorkflowThreadImpl(null, () -> {
+        WorkflowThreadImpl c = new WorkflowThreadImpl(null,  "test", () -> {
             status = "started";
             try {
-                WorkflowThread.yield("reason1",
+                WorkflowThreadImpl.yield("reason1",
                         () -> unblock1
                 );
             } catch (InterruptedException e) {
@@ -116,7 +116,7 @@ public class WorkflowThreadImplTest {
             }
             status = "after1";
             try {
-                WorkflowThread.yield("reason2",
+                WorkflowThreadImpl.yield("reason2",
                         () -> unblock2
                 );
             } catch (InterruptedException e) {

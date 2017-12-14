@@ -13,24 +13,33 @@ class DeterministicRunnerImpl implements DeterministicRunner {
     private final Lock lock = new ReentrantLock();
     private List<WorkflowThreadImpl> threads = new LinkedList<>(); // protected by lock
     private List<WorkflowThreadImpl> threadsToAdd = Collections.synchronizedList(new ArrayList<>());
+    private final WorkflowClock clock;
 
     public DeterministicRunnerImpl(Runnable root) {
-        WorkflowThreadImpl rootWorkflowThreadImpl = new WorkflowThreadImpl(this, root);
+        this(() -> System.currentTimeMillis(), root);
+    }
+
+    public DeterministicRunnerImpl(WorkflowClock clock, Runnable root) {
+        this.clock = clock;
+        // TODO: thread name
+        WorkflowThreadImpl rootWorkflowThreadImpl = new WorkflowThreadImpl(this, "workflow-root", root);
         threads.add(rootWorkflowThreadImpl);
         rootWorkflowThreadImpl.start();
     }
 
     @Override
-    public void runUntilAllBlocked() throws Throwable {
+    public long runUntilAllBlocked() throws Throwable {
         lock.lock();
         try {
             Throwable unhandledException = null;
             // Keep repeating until at least one of the threads makes progress.
             boolean progress;
+            long blockedUntil;
             do {
                 threadsToAdd.clear();
                 progress = false;
                 ListIterator<WorkflowThreadImpl> ci = threads.listIterator();
+                blockedUntil = 0;
                 while (ci.hasNext()) {
                     WorkflowThreadImpl c = ci.next();
                     progress = c.runUntilBlocked() || progress;
@@ -40,6 +49,11 @@ class DeterministicRunnerImpl implements DeterministicRunner {
                             unhandledException = c.getUnhandledException();
                             break;
                         }
+                    } else {
+                        long t = c.getBlockedUntil();
+                        if (t > blockedUntil) {
+                            blockedUntil = t;
+                        }
                     }
                 }
                 if (unhandledException != null) {
@@ -48,6 +62,10 @@ class DeterministicRunnerImpl implements DeterministicRunner {
                 }
                 threads.addAll(threadsToAdd);
             } while (progress && !threads.isEmpty());
+            if (blockedUntil < currentTimeMillis()) {
+                blockedUntil = 0;
+            }
+            return blockedUntil;
         } finally {
             lock.unlock();
         }
@@ -82,8 +100,17 @@ class DeterministicRunnerImpl implements DeterministicRunner {
         return null;
     }
 
+    @Override
+    public long currentTimeMillis() {
+        return clock.currentTimeMillis();
+    }
+
     public WorkflowThreadImpl newThread(Runnable r) {
-        WorkflowThreadImpl result = new WorkflowThreadImpl(this, r);
+        return newThread(r, null);
+    }
+
+    public WorkflowThreadImpl newThread(Runnable r, String name) {
+        WorkflowThreadImpl result = new WorkflowThreadImpl(this, name, r);
         threadsToAdd.add(result); // This is synchronized collection.
         return result;
     }
