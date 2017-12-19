@@ -14,18 +14,17 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
+import com.amazonaws.services.simpleworkflow.flow.generic.ActivityImplementationFactory;
 import com.uber.cadence.PollForActivityTaskResponse;
 import com.uber.cadence.WorkflowService;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import com.amazonaws.services.simpleworkflow.flow.generic.ActivityImplementationFactory;
 
 public class ActivityTaskPoller extends SynchronousActivityTaskPoller {
 

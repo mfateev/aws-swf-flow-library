@@ -19,13 +19,9 @@ import com.amazonaws.services.simpleworkflow.flow.ChildWorkflowTerminatedExcepti
 import com.amazonaws.services.simpleworkflow.flow.ChildWorkflowTimedOutException;
 import com.amazonaws.services.simpleworkflow.flow.StartChildWorkflowFailedException;
 import com.amazonaws.services.simpleworkflow.flow.WorkflowContext;
-import com.amazonaws.services.simpleworkflow.flow.core.ExternalTaskCompletionHandle;
-import com.amazonaws.services.simpleworkflow.flow.core.Promise;
-import com.amazonaws.services.simpleworkflow.flow.core.Settable;
 import com.amazonaws.services.simpleworkflow.flow.generic.ContinueAsNewWorkflowExecutionParameters;
 import com.amazonaws.services.simpleworkflow.flow.generic.GenericAsyncWorkflowClient;
 import com.amazonaws.services.simpleworkflow.flow.generic.StartChildWorkflowExecutionParameters;
-import com.amazonaws.services.simpleworkflow.flow.generic.StartChildWorkflowReply;
 import com.uber.cadence.ChildPolicy;
 import com.uber.cadence.ChildWorkflowExecutionCanceledEventAttributes;
 import com.uber.cadence.ChildWorkflowExecutionCompletedEventAttributes;

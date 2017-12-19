@@ -2,16 +2,6 @@ package com.amazonaws.services.simpleworkflow.flow;
 
 import com.uber.cadence.WorkflowService;
 import com.uber.cadence.serviceclient.WorkflowServiceTChannel;
-import com.uber.tchannel.api.SubChannel;
-import com.uber.tchannel.api.TChannel;
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.transport.TTransport;
-
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
 
 public class WorkflowServiceBuilder {
 

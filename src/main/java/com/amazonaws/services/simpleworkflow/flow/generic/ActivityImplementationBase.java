@@ -14,24 +14,18 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.generic;
 
-import com.amazonaws.services.simpleworkflow.flow.ActivityTask;
-import com.uber.cadence.PollForActivityTaskResponse;
-import java.util.Map;
-import java.util.concurrent.CancellationException;
-
 import com.amazonaws.services.simpleworkflow.flow.ActivityExecutionContext;
 import com.amazonaws.services.simpleworkflow.flow.ActivityFailureException;
-import com.amazonaws.services.simpleworkflow.flow.ActivityWorker;
-import com.amazonaws.services.simpleworkflow.flow.DataConverter;
+import com.amazonaws.services.simpleworkflow.flow.ActivityTask;
 import com.amazonaws.services.simpleworkflow.flow.worker.ActivityTypeExecutionOptions;
+
+import java.util.concurrent.CancellationException;
 
 /**
  * Extend this class to implement an activity. There are two types of activity
  * implementation: synchronous and asynchronous. Synchronous ties thread that
- * calls {@link #execute(Map, ActivityExecutionContext)} method.
- * 
- * @see ActivityWorker
- * 
+ * calls {@link #execute(ActivityExecutionContext)} method.
+ **
  * @author fateev
  */
 public abstract class ActivityImplementationBase extends ActivityImplementation {
@@ -54,15 +48,14 @@ public abstract class ActivityImplementationBase extends ActivityImplementation 
     /**
      * Execute activity.
      * 
-     * @see #isManualActivityCompletion()
+     * @see ActivityTypeExecutionOptions#isManualActivityCompletion()
      * 
      * @param input
      *            activity input.
      * @return result of activity execution
-     * @throws Exception
+     * @throws ActivityFailureException
      *             any other exception is converted to status, reason and
-     *             details using
-     *             {@link DataConverter#failureToTaskFailed(Throwable)}.
+     *             details using DataConverter
      */
 
     protected abstract byte[] execute(byte[] input, ActivityExecutionContext context)

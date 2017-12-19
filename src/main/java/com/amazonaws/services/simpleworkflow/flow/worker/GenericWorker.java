@@ -14,6 +14,17 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
+import com.amazonaws.services.simpleworkflow.flow.WorkerBase;
+import com.amazonaws.services.simpleworkflow.flow.common.FlowConstants;
+import com.uber.cadence.BadRequestError;
+import com.uber.cadence.DomainAlreadyExistsError;
+import com.uber.cadence.InternalServiceError;
+import com.uber.cadence.RegisterDomainRequest;
+import com.uber.cadence.WorkflowService;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.thrift.TException;
+
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.lang.management.ManagementFactory;
 import java.util.concurrent.CountDownLatch;
@@ -23,14 +34,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-
-import com.uber.cadence.*;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import com.amazonaws.services.simpleworkflow.flow.WorkerBase;
-import com.amazonaws.services.simpleworkflow.flow.common.FlowConstants;
-import org.apache.thrift.TException;
 
 public abstract class GenericWorker implements WorkerBase {
 

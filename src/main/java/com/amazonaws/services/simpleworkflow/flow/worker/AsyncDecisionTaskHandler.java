@@ -14,17 +14,14 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
-import java.util.List;
-
+import com.uber.cadence.Decision;
 import com.uber.cadence.PollForDecisionTaskResponse;
+import com.uber.cadence.RespondDecisionTaskCompletedRequest;
+import com.uber.cadence.WorkflowType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinition;
-import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinitionFactory;
-import com.uber.cadence.Decision;
-import com.uber.cadence.RespondDecisionTaskCompletedRequest;
-import com.uber.cadence.WorkflowType;
+import java.util.List;
 
 public class AsyncDecisionTaskHandler extends DecisionTaskHandler {
 
@@ -63,10 +60,10 @@ public class AsyncDecisionTaskHandler extends DecisionTaskHandler {
         return completedRequest;
     }
 
-    @Override
-    public WorkflowDefinition loadWorkflowThroughReplay(DecisionTaskWithHistoryIterator decisionTaskIterator) throws Exception {
-        // TODO(Cadence): Decide if needed in this form.
-        throw new UnsupportedOperationException("not impelemented");
+//    @Override
+//    public WorkflowDefinition loadWorkflowThroughReplay(DecisionTaskWithHistoryIterator decisionTaskIterator) throws Exception {
+//        // TODO(Cadence): Decide if needed in this form.
+//        throw new UnsupportedOperationException("not impelemented");
 //        HistoryHelper historyHelper = new HistoryHelper(decisionTaskIterator);
 //        AsyncDecider decider = createDecider(historyHelper);
 //        decider.decide();
@@ -75,7 +72,7 @@ public class AsyncDecisionTaskHandler extends DecisionTaskHandler {
 //            throw new IllegalStateException("Cannot load failed workflow", decisionsHelper.getWorkflowFailureCause());
 //        }
 //        return decider.getWorkflowDefinition();
-    }
+//    }
 
     @Override
     public String getAsynchronousThreadDump(DecisionTaskWithHistoryIterator decisionTaskIterator) throws Exception {

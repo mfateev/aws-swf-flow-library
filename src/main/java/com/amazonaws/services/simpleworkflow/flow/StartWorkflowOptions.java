@@ -14,8 +14,6 @@
  */
 package com.amazonaws.services.simpleworkflow.flow;
 
-import com.uber.cadence.ChildPolicy;
-
 import java.util.List;
 
 public class StartWorkflowOptions {

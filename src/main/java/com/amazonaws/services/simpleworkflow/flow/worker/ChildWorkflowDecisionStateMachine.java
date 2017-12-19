@@ -14,7 +14,11 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
-import com.uber.cadence.*;
+import com.uber.cadence.Decision;
+import com.uber.cadence.DecisionType;
+import com.uber.cadence.HistoryEvent;
+import com.uber.cadence.RequestCancelExternalWorkflowExecutionDecisionAttributes;
+import com.uber.cadence.StartChildWorkflowExecutionDecisionAttributes;
 
 class ChildWorkflowDecisionStateMachine extends DecisionStateMachineBase {
 

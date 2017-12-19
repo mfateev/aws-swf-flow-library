@@ -15,7 +15,6 @@
 package com.amazonaws.services.simpleworkflow.flow.generic;
 
 import com.amazonaws.services.simpleworkflow.flow.ActivitySchedulingOptions;
-import com.amazonaws.services.simpleworkflow.flow.common.FlowConstants;
 import com.uber.cadence.ActivityType;
 
 public class ExecuteActivityParameters implements Cloneable {

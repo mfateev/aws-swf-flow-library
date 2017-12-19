@@ -14,9 +14,9 @@
  */
 package com.amazonaws.services.simpleworkflow.flow;
 
-import java.lang.Thread.UncaughtExceptionHandler;
-
 import com.uber.cadence.WorkflowService;
+
+import java.lang.Thread.UncaughtExceptionHandler;
 
 public interface WorkerBase extends SuspendableWorker {
 

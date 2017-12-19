@@ -14,20 +14,17 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.generic;
 
-import java.util.Map;
-import java.util.concurrent.CancellationException;
-
 import com.amazonaws.services.simpleworkflow.flow.ActivityExecutionContext;
 import com.amazonaws.services.simpleworkflow.flow.ActivityFailureException;
-import com.amazonaws.services.simpleworkflow.flow.ActivityWorker;
 import com.amazonaws.services.simpleworkflow.flow.worker.ActivityTypeExecutionOptions;
+
+import java.util.concurrent.CancellationException;
 
 /**
  * Base class for activity implementation. Extending
  * {@link ActivityImplementationBase} instead of {@link ActivityImplementation}
  * is recommended.
  * 
- * @see ActivityWorker
  * @see ActivityImplementationBase
  * 
  * @author fateev, suskin
@@ -45,9 +42,7 @@ public abstract class ActivityImplementation {
      *            {@link com.uber.cadence.PollForActivityTaskResponse#getInput()} to get activity input
      *            arguments.
      * @return result of activity execution if {@link ActivityTypeExecutionOptions#isManualActivityCompletion()} is set
-     *         to false. Use
-     *         {@link ActivityWorker#respondActivityTaskCompleted(String, Map)}
-     *         to return result in asynchronous case.
+     *         to false.
      */
     public abstract byte[] execute(ActivityExecutionContext context) throws ActivityFailureException, CancellationException;
 

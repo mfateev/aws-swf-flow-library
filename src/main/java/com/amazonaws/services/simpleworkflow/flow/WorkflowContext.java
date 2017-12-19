@@ -16,8 +16,6 @@ package com.amazonaws.services.simpleworkflow.flow;
 
 import com.amazonaws.services.simpleworkflow.flow.generic.ContinueAsNewWorkflowExecutionParameters;
 
-import java.util.List;
-
 public interface WorkflowContext {
 
     com.uber.cadence.WorkflowExecution getWorkflowExecution();

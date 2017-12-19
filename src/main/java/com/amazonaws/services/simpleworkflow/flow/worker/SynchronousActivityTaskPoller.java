@@ -14,6 +14,11 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
+import com.amazonaws.services.simpleworkflow.flow.ActivityExecutionContext;
+import com.amazonaws.services.simpleworkflow.flow.ActivityFailureException;
+import com.amazonaws.services.simpleworkflow.flow.common.WorkflowExecutionUtils;
+import com.amazonaws.services.simpleworkflow.flow.generic.ActivityImplementation;
+import com.amazonaws.services.simpleworkflow.flow.generic.ActivityImplementationFactory;
 import com.uber.cadence.ActivityType;
 import com.uber.cadence.EntityNotExistsError;
 import com.uber.cadence.PollForActivityTaskRequest;
@@ -23,22 +28,15 @@ import com.uber.cadence.RespondActivityTaskCompletedRequest;
 import com.uber.cadence.RespondActivityTaskFailedRequest;
 import com.uber.cadence.TaskList;
 import com.uber.cadence.WorkflowService;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.thrift.TException;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.management.ManagementFactory;
-import java.nio.charset.Charset;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import com.amazonaws.services.simpleworkflow.flow.ActivityExecutionContext;
-import com.amazonaws.services.simpleworkflow.flow.ActivityFailureException;
-import com.amazonaws.services.simpleworkflow.flow.common.WorkflowExecutionUtils;
-import com.amazonaws.services.simpleworkflow.flow.generic.ActivityImplementation;
-import com.amazonaws.services.simpleworkflow.flow.generic.ActivityImplementationFactory;
-import org.apache.thrift.TException;
 
 public class SynchronousActivityTaskPoller implements TaskPoller {
 

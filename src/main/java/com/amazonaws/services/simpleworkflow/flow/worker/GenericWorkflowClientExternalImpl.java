@@ -14,16 +14,23 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
-import java.util.UUID;
-
 import com.amazonaws.services.simpleworkflow.flow.WorkflowExecutionAlreadyStartedException;
-import com.amazonaws.services.simpleworkflow.flow.common.FlowHelpers;
 import com.amazonaws.services.simpleworkflow.flow.generic.GenericWorkflowClientExternal;
 import com.amazonaws.services.simpleworkflow.flow.generic.SignalExternalWorkflowParameters;
 import com.amazonaws.services.simpleworkflow.flow.generic.StartWorkflowExecutionParameters;
 import com.amazonaws.services.simpleworkflow.flow.generic.TerminateWorkflowExecutionParameters;
-import com.uber.cadence.*;
+import com.uber.cadence.RequestCancelWorkflowExecutionRequest;
+import com.uber.cadence.SignalWorkflowExecutionRequest;
+import com.uber.cadence.StartWorkflowExecutionRequest;
+import com.uber.cadence.StartWorkflowExecutionResponse;
+import com.uber.cadence.TaskList;
+import com.uber.cadence.TerminateWorkflowExecutionRequest;
+import com.uber.cadence.WorkflowExecution;
+import com.uber.cadence.WorkflowExecutionAlreadyStartedError;
+import com.uber.cadence.WorkflowService;
 import org.apache.thrift.TException;
+
+import java.util.UUID;
 
 public class GenericWorkflowClientExternalImpl implements GenericWorkflowClientExternal {
 

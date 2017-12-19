@@ -14,10 +14,7 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.generic;
 
-import java.util.List;
-
 import com.amazonaws.services.simpleworkflow.flow.StartWorkflowOptions;
-import com.amazonaws.services.simpleworkflow.flow.common.FlowConstants;
 import com.uber.cadence.ChildPolicy;
 import com.uber.cadence.WorkflowType;
 

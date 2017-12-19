@@ -14,17 +14,16 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
+import com.amazonaws.services.simpleworkflow.flow.common.WorkflowExecutionUtils;
 import com.uber.cadence.EventType;
 import com.uber.cadence.HistoryEvent;
 import com.uber.cadence.PollForDecisionTaskResponse;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Queue;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.amazonaws.services.simpleworkflow.flow.common.WorkflowExecutionUtils;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Queue;
 
 class HistoryHelper {
 

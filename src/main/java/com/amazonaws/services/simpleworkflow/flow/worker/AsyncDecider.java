@@ -14,11 +14,10 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CancellationException;
-
 import com.amazonaws.services.simpleworkflow.flow.AsyncDecisionContext;
+import com.amazonaws.services.simpleworkflow.flow.WorkflowException;
+import com.amazonaws.services.simpleworkflow.flow.generic.ContinueAsNewWorkflowExecutionParameters;
+import com.amazonaws.services.simpleworkflow.flow.worker.HistoryHelper.EventsIterator;
 import com.uber.cadence.EventType;
 import com.uber.cadence.HistoryEvent;
 import com.uber.cadence.PollForDecisionTaskResponse;
@@ -28,9 +27,9 @@ import com.uber.cadence.WorkflowExecutionSignaledEventAttributes;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.amazonaws.services.simpleworkflow.flow.WorkflowException;
-import com.amazonaws.services.simpleworkflow.flow.generic.ContinueAsNewWorkflowExecutionParameters;
-import com.amazonaws.services.simpleworkflow.flow.worker.HistoryHelper.EventsIterator;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CancellationException;
 
 class AsyncDecider {
 

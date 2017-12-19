@@ -14,24 +14,6 @@
  */
 package com.amazonaws.services.simpleworkflow.flow;
 
-import java.util.Iterator;
-import java.util.List;
-
-import com.amazonaws.services.simpleworkflow.flow.worker.DecisionTaskWithHistoryIterator;
-import com.uber.cadence.PollForDecisionTaskResponse;
-import com.uber.cadence.WorkflowService;
-import com.amazonaws.services.simpleworkflow.flow.core.AsyncTaskInfo;
-import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinition;
-import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinitionFactoryFactory;
-import com.amazonaws.services.simpleworkflow.flow.pojo.POJOWorkflowDefinition;
-import com.amazonaws.services.simpleworkflow.flow.pojo.POJOWorkflowDefinitionFactoryFactory;
-import com.amazonaws.services.simpleworkflow.flow.pojo.POJOWorkflowImplementationFactory;
-import com.amazonaws.services.simpleworkflow.flow.worker.AsyncDecisionTaskHandler;
-import com.uber.cadence.HistoryEvent;
-import com.uber.cadence.RespondDecisionTaskCompletedRequest;
-import com.uber.cadence.WorkflowExecution;
-import com.uber.cadence.WorkflowType;
-
 // TODO (Cadence): Fix replayer
 public class WorkflowReplayer<T> {
 

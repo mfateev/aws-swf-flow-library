@@ -14,8 +14,6 @@
  */
 package com.amazonaws.services.simpleworkflow.flow;
 
-import java.util.concurrent.CancellationException;
-
 import com.amazonaws.services.simpleworkflow.flow.common.WorkflowExecutionUtils;
 import com.uber.cadence.RecordActivityTaskHeartbeatRequest;
 import com.uber.cadence.RecordActivityTaskHeartbeatResponse;
@@ -24,6 +22,8 @@ import com.uber.cadence.RespondActivityTaskCompletedRequest;
 import com.uber.cadence.RespondActivityTaskFailedRequest;
 import com.uber.cadence.WorkflowService;
 import org.apache.thrift.TException;
+
+import java.util.concurrent.CancellationException;
 
 class ManualActivityCompletionClientImpl extends ManualActivityCompletionClient {
 

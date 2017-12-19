@@ -14,17 +14,17 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
+import com.amazonaws.services.simpleworkflow.flow.ActivityExecutionContext;
 import com.amazonaws.services.simpleworkflow.flow.ActivityTask;
 import com.uber.cadence.PollForActivityTaskResponse;
 import com.uber.cadence.RecordActivityTaskHeartbeatRequest;
 import com.uber.cadence.RecordActivityTaskHeartbeatResponse;
 import com.uber.cadence.WorkflowExecution;
-import com.uber.cadence.WorkflowService.Iface;
-import java.util.concurrent.CancellationException;
-
 import com.uber.cadence.WorkflowService;
-import com.amazonaws.services.simpleworkflow.flow.ActivityExecutionContext;
+import com.uber.cadence.WorkflowService.Iface;
 import org.apache.thrift.TException;
+
+import java.util.concurrent.CancellationException;
 
 /**
  * Base implementation of an {@link ActivityExecutionContext}.

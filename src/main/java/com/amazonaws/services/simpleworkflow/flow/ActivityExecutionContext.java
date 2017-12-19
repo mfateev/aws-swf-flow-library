@@ -14,12 +14,10 @@
  */
 package com.amazonaws.services.simpleworkflow.flow;
 
-import com.uber.cadence.PollForActivityTaskResponse;
-import com.uber.cadence.WorkflowService.Iface;
-import java.util.concurrent.CancellationException;
-
-import com.amazonaws.services.simpleworkflow.flow.annotations.ManualActivityCompletion;
 import com.amazonaws.services.simpleworkflow.flow.generic.ActivityImplementation;
+import com.uber.cadence.WorkflowService.Iface;
+
+import java.util.concurrent.CancellationException;
 
 /**
  * Context object passed to an activity implementation.
@@ -32,7 +30,7 @@ public abstract class ActivityExecutionContext {
 
     /**
      * @return task token that is required to report task completion when
-     *         {@link ManualActivityCompletion} is used.
+     *         manual activity completion is used.
      */
     public abstract byte[] getTaskToken();
 

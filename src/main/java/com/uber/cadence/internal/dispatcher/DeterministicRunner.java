@@ -1,7 +1,5 @@
 package com.uber.cadence.internal.dispatcher;
 
-import com.amazonaws.services.simpleworkflow.flow.DecisionContext;
-
 /**
  * Executes code passed to {@link #newRunner(Runnable)} as well as threads created from it using
  * {@link Workflow#newThread(Runnable)} deterministically. Requires use of provided wrappers for synchronization

@@ -14,13 +14,9 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
-import com.amazonaws.services.simpleworkflow.flow.core.AsyncTaskInfo;
-import com.amazonaws.services.simpleworkflow.flow.generic.WorkflowDefinition;
 import com.uber.cadence.RespondDecisionTaskCompletedRequest;
+
+import java.util.Iterator;
 
 /**
  * Base class for workflow task handlers.
@@ -44,6 +40,6 @@ public abstract class DecisionTaskHandler {
 
     public abstract String getAsynchronousThreadDump(DecisionTaskWithHistoryIterator decisionTaskIterator) throws Exception;
 
-    public abstract WorkflowDefinition loadWorkflowThroughReplay(DecisionTaskWithHistoryIterator decisionTaskIterator) throws Exception;
+//    public abstract WorkflowDefinition loadWorkflowThroughReplay(DecisionTaskWithHistoryIterator decisionTaskIterator) throws Exception;
 
 }

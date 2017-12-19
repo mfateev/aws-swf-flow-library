@@ -14,9 +14,6 @@
  */
 package com.amazonaws.services.simpleworkflow.flow.worker;
 
-import com.amazonaws.services.simpleworkflow.flow.core.ExternalTaskCompletionHandle;
-import com.amazonaws.services.simpleworkflow.flow.core.Settable;
-
 import java.util.function.BiConsumer;
 
 class OpenRequestInfo<T, C> {
