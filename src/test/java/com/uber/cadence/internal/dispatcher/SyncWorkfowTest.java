@@ -3,6 +3,7 @@ package com.uber.cadence.internal.dispatcher;
 import com.amazonaws.services.simpleworkflow.flow.ActivityExecutionContext;
 import com.amazonaws.services.simpleworkflow.flow.ActivityFailureException;
 import com.amazonaws.services.simpleworkflow.flow.WorkflowExecutionAlreadyStartedException;
+import com.amazonaws.services.simpleworkflow.flow.common.WorkflowExecutionUtils;
 import com.amazonaws.services.simpleworkflow.flow.generic.ActivityImplementation;
 import com.amazonaws.services.simpleworkflow.flow.generic.ActivityImplementationFactory;
 import com.amazonaws.services.simpleworkflow.flow.generic.GenericWorkflowClientExternal;
@@ -11,6 +12,8 @@ import com.amazonaws.services.simpleworkflow.flow.worker.ActivityTypeExecutionOp
 import com.amazonaws.services.simpleworkflow.flow.worker.GenericActivityWorker;
 import com.amazonaws.services.simpleworkflow.flow.worker.GenericWorkflowClientExternalImpl;
 import com.uber.cadence.ActivityType;
+import com.uber.cadence.WorkflowExecution;
+import com.uber.cadence.WorkflowExecutionCompletedEventAttributes;
 import com.uber.cadence.WorkflowService;
 import com.uber.cadence.WorkflowType;
 import com.uber.cadence.serviceclient.WorkflowServiceTChannel;
@@ -29,7 +32,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
+
+import static org.junit.Assert.assertEquals;
 
 public class SyncWorkfowTest {
 
@@ -103,7 +109,7 @@ public class SyncWorkfowTest {
     }
 
     @Test
-    public void test() throws InterruptedException {
+    public void test() throws InterruptedException, WorkflowExecutionAlreadyStartedException, TimeoutException {
         WorkflowType type = new WorkflowType().setName("test1");
         definitionMap.put(type, (input) -> {
             return Workflow.executeActivity("activity1", "activityInput".getBytes());
@@ -127,11 +133,8 @@ public class SyncWorkfowTest {
         startParameters.setInput("input".getBytes());
         startParameters.setWorkflowId("workflow1");
         startParameters.setWorkflowType(type);
-        try {
-            clientExternal.startWorkflow(startParameters);
-        } catch (WorkflowExecutionAlreadyStartedException e) {
-            log.info("Already started " + startParameters.getWorkflowId());
-        }
-        Thread.sleep(30000);
+        WorkflowExecution started = clientExternal.startWorkflow(startParameters);
+        WorkflowExecutionCompletedEventAttributes result = WorkflowExecutionUtils.waitForWorkflowExecutionResult(service, domain, started, 5);
+        assertEquals("activityResult", new String(result.getResult()));
     }
 }

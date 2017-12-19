@@ -19,6 +19,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectMapper.DefaultTyping;
 import com.uber.cadence.ActivityType;
 import com.uber.cadence.Decision;
+import com.uber.cadence.DescribeWorkflowExecutionRequest;
+import com.uber.cadence.DescribeWorkflowExecutionResponse;
 import com.uber.cadence.EventType;
 import com.uber.cadence.GetWorkflowExecutionHistoryRequest;
 import com.uber.cadence.GetWorkflowExecutionHistoryResponse;
@@ -30,6 +32,7 @@ import com.uber.cadence.WorkflowExecution;
 import com.uber.cadence.WorkflowExecutionCloseStatus;
 import com.uber.cadence.WorkflowExecutionCompletedEventAttributes;
 import com.uber.cadence.WorkflowExecutionContinuedAsNewEventAttributes;
+import com.uber.cadence.WorkflowExecutionInfo;
 import com.uber.cadence.WorkflowService.Iface;
 import com.uber.cadence.WorkflowType;
 import org.apache.thrift.TException;
@@ -111,7 +114,7 @@ public class WorkflowExecutionUtils {
         if (closeEvent == null) {
             throw new IllegalStateException("Workflow is still running");
         }
-        if (closeEvent.getEventType().equals(EventType.WorkflowExecutionCompleted.toString())) {
+        if (closeEvent.getEventType() == EventType.WorkflowExecutionCompleted) {
             return closeEvent.getWorkflowExecutionCompletedEventAttributes();
         }
         throw new RuntimeException("Workflow end state is not completed: " + prettyPrintHistoryEvent(closeEvent));
@@ -143,40 +146,40 @@ public class WorkflowExecutionUtils {
     }
 
     public static boolean isWorkflowExecutionCompletedEvent(HistoryEvent event) {
-        return ((event != null) && (event.getEventType().equals(EventType.WorkflowExecutionCompleted.toString())
-                || event.getEventType().equals(EventType.WorkflowExecutionCanceled.toString())
-                || event.getEventType().equals(EventType.WorkflowExecutionFailed.toString())
-                || event.getEventType().equals(EventType.WorkflowExecutionTimedOut.toString())
-                || event.getEventType().equals(EventType.WorkflowExecutionContinuedAsNew.toString()) || event.getEventType().equals(
-                EventType.WorkflowExecutionTerminated.toString())));
+        return ((event != null) && event.getEventType() == EventType.WorkflowExecutionCompleted
+                || event.getEventType() == EventType.WorkflowExecutionCanceled
+                || event.getEventType() == EventType.WorkflowExecutionFailed
+                || event.getEventType() == EventType.WorkflowExecutionTimedOut
+                || event.getEventType() == EventType.WorkflowExecutionContinuedAsNew
+                || event.getEventType() == EventType.WorkflowExecutionTerminated);
     }
 
     public static boolean isActivityTaskClosedEvent(HistoryEvent event) {
-        return ((event != null) && (event.getEventType().equals(EventType.ActivityTaskCompleted.toString())
-                || event.getEventType().equals(EventType.ActivityTaskCanceled.toString())
-                || event.getEventType().equals(EventType.ActivityTaskFailed.toString()) || event.getEventType().equals(
-                EventType.ActivityTaskTimedOut.toString())));
+        return ((event != null) && (event.getEventType() == EventType.ActivityTaskCompleted
+                || event.getEventType() == EventType.ActivityTaskCanceled
+                || event.getEventType() == EventType.ActivityTaskFailed
+                || event.getEventType() == EventType.ActivityTaskTimedOut));
     }
 
     public static boolean isExternalWorkflowClosedEvent(HistoryEvent event) {
-        return ((event != null) && (event.getEventType().equals(EventType.ChildWorkflowExecutionCompleted.toString())
-                || event.getEventType().equals(EventType.ChildWorkflowExecutionCanceled.toString())
-                || event.getEventType().equals(EventType.ChildWorkflowExecutionFailed.toString())
-                || event.getEventType().equals(EventType.ChildWorkflowExecutionTerminated.toString()) || event.getEventType().equals(
-                EventType.ChildWorkflowExecutionTimedOut.toString())));
+        return ((event != null) && (event.getEventType() == EventType.ChildWorkflowExecutionCompleted
+                || event.getEventType() == EventType.ChildWorkflowExecutionCanceled
+                || event.getEventType() == EventType.ChildWorkflowExecutionFailed
+                || event.getEventType() == EventType.ChildWorkflowExecutionTerminated
+                || event.getEventType() == EventType.ChildWorkflowExecutionTimedOut));
     }
 
     public static WorkflowExecution getWorkflowIdFromExternalWorkflowCompletedEvent(HistoryEvent event) {
         if (event != null) {
-            if (event.getEventType().equals(EventType.ChildWorkflowExecutionCompleted.toString())) {
+            if (event.getEventType() == EventType.ChildWorkflowExecutionCompleted) {
                 return event.getChildWorkflowExecutionCompletedEventAttributes().getWorkflowExecution();
-            } else if (event.getEventType().equals(EventType.ChildWorkflowExecutionCanceled.toString())) {
+            } else if (event.getEventType() == EventType.ChildWorkflowExecutionCanceled) {
                 return event.getChildWorkflowExecutionCanceledEventAttributes().getWorkflowExecution();
-            } else if (event.getEventType().equals(EventType.ChildWorkflowExecutionFailed.toString())) {
+            } else if (event.getEventType() == EventType.ChildWorkflowExecutionFailed) {
                 return event.getChildWorkflowExecutionFailedEventAttributes().getWorkflowExecution();
-            } else if (event.getEventType().equals(EventType.ChildWorkflowExecutionTerminated.toString())) {
+            } else if (event.getEventType() == EventType.ChildWorkflowExecutionTerminated) {
                 return event.getChildWorkflowExecutionTerminatedEventAttributes().getWorkflowExecution();
-            } else if (event.getEventType().equals(EventType.ChildWorkflowExecutionTimedOut.toString())) {
+            } else if (event.getEventType() == EventType.ChildWorkflowExecutionTimedOut) {
                 return event.getChildWorkflowExecutionTimedOutEventAttributes().getWorkflowExecution();
             }
         }
@@ -343,17 +346,20 @@ public class WorkflowExecutionUtils {
         }
     }
 
-    //TODO: Apparently Cadence doesn't support this method. Here is issue to add it:
-    // https://github.com/uber/cadence/issues/384
-//    public static WorkflowExecutionInfo describeWorkflowInstance(Iface service, String domain,
-//            WorkflowExecution workflowExecution) {
-//        DescribeWorkflowExecutionRequest describeRequest = new DescribeWorkflowExecutionRequest();
-//        describeRequest.setDomain(domain);
-//        describeRequest.setExecution(workflowExecution);
-//        WorkflowExecutionDetail executionDetail = service.describeWorkflowExecution(describeRequest);
-//        WorkflowExecutionInfo instanceMetadata = executionDetail.getExecutionInfo();
-//        return instanceMetadata;
-//    }
+    public static WorkflowExecutionInfo describeWorkflowInstance(Iface service, String domain,
+                                                                 WorkflowExecution workflowExecution) {
+        DescribeWorkflowExecutionRequest describeRequest = new DescribeWorkflowExecutionRequest();
+        describeRequest.setDomain(domain);
+        describeRequest.setExecution(workflowExecution);
+        DescribeWorkflowExecutionResponse executionDetail = null;
+        try {
+            executionDetail = service.DescribeWorkflowExecution(describeRequest);
+        } catch (TException e) {
+            throw new RuntimeException(e);
+        }
+        WorkflowExecutionInfo instanceMetadata = executionDetail.getWorkflowExecutionInfo();
+        return instanceMetadata;
+    }
 
     /**
      * Returns workflow instance history in a human readable format.
