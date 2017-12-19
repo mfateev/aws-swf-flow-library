@@ -112,10 +112,11 @@ public class SyncWorkfowTest {
     public void test() throws InterruptedException, WorkflowExecutionAlreadyStartedException, TimeoutException {
         WorkflowType type = new WorkflowType().setName("test1");
         definitionMap.put(type, (input) -> {
-            return Workflow.executeActivity("activity1", "activityInput".getBytes());
+            byte[] a1 = Workflow.executeActivity("activity1", "activityInput".getBytes());
+            return Workflow.executeActivity("activity2", a1);
         });
-        ActivityType activityType = new ActivityType().setName("activity1");
-        activityMap.put(activityType, new ActivityImplementation() {
+        ActivityType activity1Type = new ActivityType().setName("activity1");
+        activityMap.put(activity1Type, new ActivityImplementation() {
             @Override
             public ActivityTypeExecutionOptions getExecutionOptions() {
                 return new ActivityTypeExecutionOptions();
@@ -123,9 +124,22 @@ public class SyncWorkfowTest {
 
             @Override
             public byte[] execute(ActivityExecutionContext context) throws ActivityFailureException, CancellationException {
-                return "activityResult".getBytes();
+                return "activity1".getBytes();
             }
         });
+        ActivityType activity2Type = new ActivityType().setName("activity2");
+        activityMap.put(activity2Type, new ActivityImplementation() {
+            @Override
+            public ActivityTypeExecutionOptions getExecutionOptions() {
+                return new ActivityTypeExecutionOptions();
+            }
+
+            @Override
+            public byte[] execute(ActivityExecutionContext context) throws ActivityFailureException, CancellationException {
+                return (new String(context.getTask().getInput()) + " - activity2").getBytes();
+            }
+        });
+
         StartWorkflowExecutionParameters startParameters = new StartWorkflowExecutionParameters();
         startParameters.setExecutionStartToCloseTimeoutSeconds(60);
         startParameters.setTaskStartToCloseTimeoutSeconds(2);
@@ -135,6 +149,6 @@ public class SyncWorkfowTest {
         startParameters.setWorkflowType(type);
         WorkflowExecution started = clientExternal.startWorkflow(startParameters);
         WorkflowExecutionCompletedEventAttributes result = WorkflowExecutionUtils.waitForWorkflowExecutionResult(service, domain, started, 5);
-        assertEquals("activityResult", new String(result.getResult()));
+        assertEquals("activity1 - activity2", new String(result.getResult()));
     }
 }

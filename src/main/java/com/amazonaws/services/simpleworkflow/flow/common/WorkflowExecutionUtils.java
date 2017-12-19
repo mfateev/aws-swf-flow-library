@@ -124,10 +124,10 @@ public class WorkflowExecutionUtils {
                                                      WorkflowExecution workflowExecution) {
 
         // TODO: Uncomment as soon as describe is added by Cadence
-//        WorkflowExecutionInfo executionInfo = describeWorkflowInstance(service, domain, workflowExecution);
-//        if (executionInfo == null || !executionInfo.isSetCloseStatus()) {
-//            return null;
-//        }
+        WorkflowExecutionInfo executionInfo = describeWorkflowInstance(service, domain, workflowExecution);
+        if (executionInfo == null || !executionInfo.isSetCloseStatus()) {
+            return null;
+        }
 
         Iterator<HistoryEvent> events = getHistory(service, domain, workflowExecution);
         return getInstanceCloseEvent(events);
