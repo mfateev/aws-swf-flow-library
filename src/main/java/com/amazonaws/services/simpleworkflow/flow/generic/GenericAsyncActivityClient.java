@@ -41,6 +41,6 @@ public interface GenericAsyncActivityClient {
      * @param callback Callback that is called upon activity completion or failure.
      * @return cancellation handle. Invoke {@link Consumer#accept(Object)} to cancel activity task.
      */
-    Consumer<Throwable> scheduleActivityTask(String activity, byte[] input, BiConsumer<byte[], Throwable> callback);
+//    Consumer<Throwable> scheduleActivityTask(String activity, byte[] input, BiConsumer<byte[], Throwable> callback);
 
 }

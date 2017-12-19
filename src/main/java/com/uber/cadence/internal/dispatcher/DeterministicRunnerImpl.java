@@ -11,20 +11,26 @@ import java.util.concurrent.locks.ReentrantLock;
 class DeterministicRunnerImpl implements DeterministicRunner {
 
     private final Lock lock = new ReentrantLock();
+    private final SyncDecisionContext decisionContext;
     private List<WorkflowThreadImpl> threads = new LinkedList<>(); // protected by lock
     private List<WorkflowThreadImpl> threadsToAdd = Collections.synchronizedList(new ArrayList<>());
     private final WorkflowClock clock;
 
     public DeterministicRunnerImpl(Runnable root) {
-        this(() -> System.currentTimeMillis(), root);
+        this(null, () -> System.currentTimeMillis(), root);
     }
 
-    public DeterministicRunnerImpl(WorkflowClock clock, Runnable root) {
+    public DeterministicRunnerImpl(SyncDecisionContext decisionContext, WorkflowClock clock, Runnable root) {
+        this.decisionContext = decisionContext;
         this.clock = clock;
         // TODO: thread name
         WorkflowThreadImpl rootWorkflowThreadImpl = new WorkflowThreadImpl(this, "workflow-root", root);
         threads.add(rootWorkflowThreadImpl);
         rootWorkflowThreadImpl.start();
+    }
+
+    public SyncDecisionContext getDecisionContext() {
+        return decisionContext;
     }
 
     @Override

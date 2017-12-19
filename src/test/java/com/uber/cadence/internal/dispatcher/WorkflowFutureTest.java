@@ -80,6 +80,7 @@ public class WorkflowFutureTest {
     @Test
     public void testGetTimeout() throws Throwable {
         DeterministicRunner r = DeterministicRunner.newRunner(
+                null,
                 () -> currentTime,
                 () -> {
                     WorkflowFuture<String> f = new WorkflowFuture<>();

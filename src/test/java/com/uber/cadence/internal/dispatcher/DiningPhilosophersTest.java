@@ -125,6 +125,7 @@ public class DiningPhilosophersTest {
         trace = new ArrayList<>();
         random = new Random(1234); // Use seeded for determinism
         DeterministicRunner runner = DeterministicRunner.newRunner(
+                null,
                 () -> currentTime,
                 new DiningSimulation()
         );

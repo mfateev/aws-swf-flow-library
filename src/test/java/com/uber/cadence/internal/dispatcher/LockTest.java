@@ -43,7 +43,7 @@ public class LockTest {
     @Test
     public void testLocking() throws Throwable {
         List<String> trace = new ArrayList<>();
-        DeterministicRunner r = DeterministicRunner.newRunner(() -> currentTime, () -> {
+        DeterministicRunner r = DeterministicRunner.newRunner(null, () -> currentTime, () -> {
             trace.add("root begin");
             Workflow.newThread(
                     () -> {

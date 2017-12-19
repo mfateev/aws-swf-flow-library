@@ -21,59 +21,59 @@ import com.uber.cadence.ActivityType;
 public class ExecuteActivityParameters implements Cloneable {
     private String activityId;
     private ActivityType activityType;
-    private String control;
+//    private String control;
     private int heartbeatTimeoutSeconds;
     private byte[] input;
     private int scheduleToCloseTimeoutSeconds;
     private int scheduleToStartTimeoutSeconds;
     private int startToCloseTimeoutSeconds;
     private String taskList;
-    private int taskPriority;
+//    private int taskPriority;
     
     public ExecuteActivityParameters() {
     }
     
-    /**
-     * Returns the value of the Control property for this object.
-     * <p>
-     * <b>Constraints:</b><br/>
-     * <b>Length: </b>0 - 100000<br/>
-     *
-     * @return The value of the Control property for this object.
-     */
-    public String getControl() {
-        return control;
-    }
-    
-    /**
-     * Sets the value of the Control property for this object.
-     * <p>
-     * <b>Constraints:</b><br/>
-     * <b>Length: </b>0 - 100000<br/>
-     *
-     * @param control The new value for the Control property for this object.
-     */
-    public void setControl(String control) {
-        this.control = control;
-    }
-    
-    /**
-     * Sets the value of the Control property for this object.
-     * <p>
-     * Returns a reference to this object so that method calls can be chained together.
-     * <p>
-     * <b>Constraints:</b><br/>
-     * <b>Length: </b>0 - 100000<br/>
-     *
-     * @param control The new value for the Control property for this object.
-     *
-     * @return A reference to this updated object so that method calls can be chained 
-     *         together. 
-     */
-    public ExecuteActivityParameters withControl(String control) {
-        this.control = control;
-        return this;
-    }
+//    /**
+//     * Returns the value of the Control property for this object.
+//     * <p>
+//     * <b>Constraints:</b><br/>
+//     * <b>Length: </b>0 - 100000<br/>
+//     *
+//     * @return The value of the Control property for this object.
+//     */
+//    public String getControl() {
+//        return control;
+//    }
+//
+//    /**
+//     * Sets the value of the Control property for this object.
+//     * <p>
+//     * <b>Constraints:</b><br/>
+//     * <b>Length: </b>0 - 100000<br/>
+//     *
+//     * @param control The new value for the Control property for this object.
+//     */
+//    public void setControl(String control) {
+//        this.control = control;
+//    }
+//
+//    /**
+//     * Sets the value of the Control property for this object.
+//     * <p>
+//     * Returns a reference to this object so that method calls can be chained together.
+//     * <p>
+//     * <b>Constraints:</b><br/>
+//     * <b>Length: </b>0 - 100000<br/>
+//     *
+//     * @param control The new value for the Control property for this object.
+//     *
+//     * @return A reference to this updated object so that method calls can be chained
+//     *         together.
+//     */
+//    public ExecuteActivityParameters withControl(String control) {
+//        this.control = control;
+//        return this;
+//    }
     
     /**
      * Returns the value of the ActivityType property for this object.
@@ -343,18 +343,18 @@ public class ExecuteActivityParameters implements Cloneable {
         return this;
     }
 
-    public int getTaskPriority() {
-        return taskPriority;
-    }
-
-    public void setTaskPriority(int taskPriority) {
-        this.taskPriority = taskPriority;
-    }
-
-    public ExecuteActivityParameters withTaskPriority(int taskPriority) {
-        this.taskPriority = taskPriority;
-        return this;
-    }
+//    public int getTaskPriority() {
+//        return taskPriority;
+//    }
+//
+//    public void setTaskPriority(int taskPriority) {
+//        this.taskPriority = taskPriority;
+//    }
+//
+//    public ExecuteActivityParameters withTaskPriority(int taskPriority) {
+//        this.taskPriority = taskPriority;
+//        return this;
+//    }
 
     public ExecuteActivityParameters createExecuteActivityParametersFromOptions(ActivitySchedulingOptions options, 
     		ActivitySchedulingOptions optionsOverride) {
@@ -386,10 +386,10 @@ public class ExecuteActivityParameters implements Cloneable {
     			scheduleActivityParameters.setTaskList(taskList);
     		}
     		
-            Integer taskPriority = options.getTaskPriority();
-            if (taskPriority != null) {
-                scheduleActivityParameters.setTaskPriority(taskPriority);
-            }
+//            Integer taskPriority = options.getTaskPriority();
+//            if (taskPriority != null) {
+//                scheduleActivityParameters.setTaskPriority(taskPriority);
+//            }
     	}
     	
     	if (optionsOverride != null) {    
@@ -418,10 +418,10 @@ public class ExecuteActivityParameters implements Cloneable {
     			scheduleActivityParameters.setTaskList(taskList);
     		}
     		
-            Integer taskPriority = optionsOverride.getTaskPriority();
-            if (taskPriority != null) {
-                scheduleActivityParameters.setTaskPriority(taskPriority);
-            }
+//            Integer taskPriority = optionsOverride.getTaskPriority();
+//            if (taskPriority != null) {
+//                scheduleActivityParameters.setTaskPriority(taskPriority);
+//            }
     	}
     	
     	return scheduleActivityParameters;
@@ -442,13 +442,13 @@ public class ExecuteActivityParameters implements Cloneable {
         sb.append("ActivityType: " + activityType + ", ");
         sb.append("ActivityId: " + activityId + ", ");
         sb.append("Input: " + input + ", ");
-        sb.append("Control: " + control + ", ");
+//        sb.append("Control: " + control + ", ");
         sb.append("HeartbeatTimeout: " + heartbeatTimeoutSeconds + ", ");
         sb.append("ScheduleToStartTimeout: " + scheduleToStartTimeoutSeconds + ", ");
         sb.append("ScheduleToCloseTimeout: " + scheduleToCloseTimeoutSeconds + ", ");
         sb.append("StartToCloseTimeout: " + startToCloseTimeoutSeconds + ", ");
         sb.append("TaskList: " + taskList + ", ");
-        sb.append("TaskPriority: " + taskPriority);
+//        sb.append("TaskPriority: " + taskPriority);
         sb.append("}");
         return sb.toString();
     }
@@ -458,13 +458,13 @@ public class ExecuteActivityParameters implements Cloneable {
         result.setActivityType(activityType);
         result.setActivityId(activityId);
         result.setInput(input);
-        result.setControl(control);
+//        result.setControl(control);
         result.setHeartbeatTimeoutSeconds(heartbeatTimeoutSeconds);
         result.setScheduleToStartTimeoutSeconds(scheduleToStartTimeoutSeconds);
         result.setScheduleToCloseTimeoutSeconds(scheduleToCloseTimeoutSeconds);
         result.setStartToCloseTimeoutSeconds(startToCloseTimeoutSeconds);
         result.setTaskList(taskList);
-        result.setTaskPriority(taskPriority);
+//        result.setTaskPriority(taskPriority);
         return result;
     }
 }

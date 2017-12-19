@@ -34,4 +34,8 @@ public class Workflow {
     public static long currentTimeMillis() {
         return WorkflowThreadImpl.currentThread().getRunner().currentTimeMillis();
     }
+
+    public static byte[] executeActivity(String name, byte[] input)  {
+        return WorkflowThreadImpl.currentThread().getDecisionContext().executeActivity(name, input);
+    }
 }

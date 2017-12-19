@@ -66,6 +66,7 @@ public class DeterministicRunnerTest {
     @Test
     public void testSleep() throws Throwable {
         DeterministicRunnerImpl d = new DeterministicRunnerImpl(
+                null,
                 () -> currentTime, // clock override
                 () -> {
                     status = "started";
@@ -266,6 +267,7 @@ public class DeterministicRunnerTest {
     @Test
     public void testJoinTimeout() throws Throwable {
         DeterministicRunnerImpl d = new DeterministicRunnerImpl(
+                null,
                 () -> currentTime, // clock override
                 () -> {
                     trace.add("root started");

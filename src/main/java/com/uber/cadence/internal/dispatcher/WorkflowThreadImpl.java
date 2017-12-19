@@ -118,6 +118,8 @@ class WorkflowThreadImpl implements WorkflowThread {
         return runner;
     }
 
+    public SyncDecisionContext getDecisionContext() { return runner.getDecisionContext(); }
+
     @Override
     public void join() throws InterruptedException {
         WorkflowThreadImpl.yield("WorkflowThread.join", () -> isDone());
