@@ -28,4 +28,10 @@ public interface AsyncWorkflow {
     byte[] getWorkflowState() throws WorkflowException;
 
     void close();
+
+    /**
+     * @return time at which workflow can make progress.
+     * For example when {@link com.uber.cadence.internal.dispatcher.WorkflowThread#sleep(long)} expires.
+     */
+    long getNextWakeUpTime();
 }

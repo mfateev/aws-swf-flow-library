@@ -15,9 +15,15 @@ class DeterministicRunnerImpl implements DeterministicRunner {
     private List<WorkflowThreadImpl> threads = new LinkedList<>(); // protected by lock
     private List<WorkflowThreadImpl> threadsToAdd = Collections.synchronizedList(new ArrayList<>());
     private final WorkflowClock clock;
+    /**
+     * Time at which any thread that runs under dispatcher can make progress.
+     * For example when {@link WorkflowThread#sleep(long)} expires.
+     * 0 means no blocked threads.
+     */
+    private long nextWakeUpTime;
 
     public DeterministicRunnerImpl(Runnable root) {
-        this(null, () -> System.currentTimeMillis(), root);
+        this(null, System::currentTimeMillis, root);
     }
 
     public DeterministicRunnerImpl(SyncDecisionContext decisionContext, WorkflowClock clock, Runnable root) {
@@ -34,18 +40,17 @@ class DeterministicRunnerImpl implements DeterministicRunner {
     }
 
     @Override
-    public long runUntilAllBlocked() throws Throwable {
+    public void runUntilAllBlocked() throws Throwable {
         lock.lock();
         try {
             Throwable unhandledException = null;
             // Keep repeating until at least one of the threads makes progress.
             boolean progress;
-            long blockedUntil;
             do {
                 threadsToAdd.clear();
                 progress = false;
                 ListIterator<WorkflowThreadImpl> ci = threads.listIterator();
-                blockedUntil = 0;
+                nextWakeUpTime = 0;
                 while (ci.hasNext()) {
                     WorkflowThreadImpl c = ci.next();
                     progress = c.runUntilBlocked() || progress;
@@ -57,8 +62,8 @@ class DeterministicRunnerImpl implements DeterministicRunner {
                         }
                     } else {
                         long t = c.getBlockedUntil();
-                        if (t > blockedUntil) {
-                            blockedUntil = t;
+                        if (t > nextWakeUpTime) {
+                            nextWakeUpTime = t;
                         }
                     }
                 }
@@ -68,10 +73,9 @@ class DeterministicRunnerImpl implements DeterministicRunner {
                 }
                 threads.addAll(threadsToAdd);
             } while (progress && !threads.isEmpty());
-            if (blockedUntil < currentTimeMillis()) {
-                blockedUntil = 0;
+            if (nextWakeUpTime < currentTimeMillis()) {
+                nextWakeUpTime = 0;
             }
-            return blockedUntil;
         } finally {
             lock.unlock();
         }
@@ -109,6 +113,11 @@ class DeterministicRunnerImpl implements DeterministicRunner {
     @Override
     public long currentTimeMillis() {
         return clock.currentTimeMillis();
+    }
+
+    @Override
+    public long getNextWakeUpTime() {
+        return nextWakeUpTime;
     }
 
     public WorkflowThreadImpl newThread(Runnable r) {

@@ -80,4 +80,9 @@ public class SyncWorkflow implements AsyncWorkflow {
     public void close() {
         runnable.close();
     }
+
+    @Override
+    public long getNextWakeUpTime() {
+        return runner.getNextWakeUpTime();
+    }
 }

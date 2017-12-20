@@ -292,8 +292,8 @@ public class DeterministicRunnerTest {
                     trace.add("root done");
                 });
         currentTime = 1000;
-        long blockedUntil = d.runUntilAllBlocked();
-        assertEquals(61000, blockedUntil);
+        d.runUntilAllBlocked();
+        assertEquals(61000, d.getNextWakeUpTime());
         assertFalse(d.isDone());
         String[] expected = new String[]{
                 "root started",
@@ -301,8 +301,8 @@ public class DeterministicRunnerTest {
         };
         assertTrace(expected, trace);
         // Just check that running again doesn't make any progress.
-        blockedUntil = d.runUntilAllBlocked();
-        assertEquals(61000, blockedUntil);
+        d.runUntilAllBlocked();
+        assertEquals(61000, d.getNextWakeUpTime());
         currentTime = 70000;
         d.runUntilAllBlocked();
         assertFalse(d.isDone());

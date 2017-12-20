@@ -20,10 +20,11 @@ import java.util.function.Consumer;
 /**
  * Clock that must be used inside workflow definition code to ensure replay
  * determinism.
+ * TODO: Refactor to become a helper for managing timers instead of the generic clock class.
  */
 public interface AsyncWorkflowClock {
 
-    public static class IdCancellationCallbackPair {
+    class IdCancellationCallbackPair {
         private final String id;
         private final Consumer<Throwable> cancellationCallback;
 
@@ -45,7 +46,7 @@ public interface AsyncWorkflowClock {
      * @return time of the {@link com.uber.cadence.PollForDecisionTaskResponse} start event of the decision
      * being processed or replayed.
      */
-    public long currentTimeMillis();
+    long currentTimeMillis();
 
     /**
      * <code>true</code> indicates if workflow is replaying already processed
@@ -53,7 +54,7 @@ public interface AsyncWorkflowClock {
      * making forward process for the first time. For example can be used to
      * avoid duplicating log records due to replay.
      */
-    public boolean isReplaying();
+    boolean isReplaying();
 
     /**
      * Create a Value that becomes ready after the specified delay.
@@ -63,15 +64,8 @@ public interface AsyncWorkflowClock {
      *                     CancellationException is passed as a parameter in case of a cancellation.
      * @return pair that contains timer id and cancellation callback. Invoke {@link Consumer#accept(Object)} to cancel timer.
      */
-    public abstract IdCancellationCallbackPair createTimer(long delaySeconds, Consumer<Throwable> callback);
+    IdCancellationCallbackPair createTimer(long delaySeconds, Consumer<Throwable> callback);
 
-    /**
-     * Create a Value that becomes ready after the specified delay.
-     *
-     * @param userContext context object that is passed to the callback when timer fires.
-     * @param callback    Callback that is called  value passed as context parameter after the specified delay.
-     * @return pair that contains timer id and cancellation callback. Invoke {@link Consumer#accept(Object)} to cancel timer.
-     */
-    public abstract <T> IdCancellationCallbackPair createTimer(long delaySeconds, final T userContext, BiConsumer<T, Throwable> callback);
+    void cancelAllTimers();
 
 }

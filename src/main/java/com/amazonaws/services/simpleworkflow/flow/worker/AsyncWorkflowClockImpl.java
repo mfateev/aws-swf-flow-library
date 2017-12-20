@@ -1,12 +1,12 @@
 /*
  * Copyright 2012-2016 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"). You may not
  * use this file except in compliance with the License. A copy of the License is
  * located at
- * 
+ *
  * http://aws.amazon.com/apache2.0
- * 
+ *
  * or in the "license" file accompanying this file. This file is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
  * express or implied. See the License for the specific language governing
@@ -24,13 +24,14 @@ import org.apache.commons.logging.LogFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 class AsyncWorkflowClockImpl implements AsyncWorkflowClock {
-
-    private static final Log log = LogFactory.getLog(AsyncWorkflowClockImpl.class);
 
     private final class TimerCancellationHandler implements Consumer<Throwable> {
 
@@ -60,6 +61,8 @@ class AsyncWorkflowClockImpl implements AsyncWorkflowClock {
 
     private final Map<String, OpenRequestInfo<?, ?>> scheduledTimers = new HashMap<String, OpenRequestInfo<?, ?>>();
 
+    private final SortedMap<Long, String> timersByFiringTime = new TreeMap<>();
+
     private long replayCurrentTimeMilliseconds;
 
     private boolean replaying = true;
@@ -84,32 +87,65 @@ class AsyncWorkflowClockImpl implements AsyncWorkflowClock {
 
     @Override
     public IdCancellationCallbackPair createTimer(long delaySeconds, Consumer<Throwable> callback) {
-        return createTimer(delaySeconds, null, (userContext, failure) -> {
-            callback.accept(failure);
-        });
-    }
-
-    @Override
-    public <T> IdCancellationCallbackPair createTimer(long delaySeconds, T userContext, BiConsumer<T, Throwable> callback) {
         if (delaySeconds < 0) {
             throw new IllegalArgumentException("Negative delaySeconds: " + delaySeconds);
         }
         if (delaySeconds == 0) {
-            callback.accept(userContext, null);
+            callback.accept(null);
             return new IdCancellationCallbackPair("immediate", throwable -> {
             });
         }
-        final OpenRequestInfo<T, Object> context = new OpenRequestInfo<>(userContext);
-        final StartTimerDecisionAttributes timer = new StartTimerDecisionAttributes();
-        timer.setStartToFireTimeoutSeconds(delaySeconds);
-        final String timerId = decisions.getNextId();
-        timer.setTimerId(timerId);
-        decisions.startTimer(timer, userContext);
-        context.setCompletionHandle((ctx, throwable) -> {
-            callback.accept(ctx, null);
-        });
-        scheduledTimers.put(timerId, context);
-        return new IdCancellationCallbackPair(timerId, new TimerCancellationHandler(timerId));
+        long firingTime = currentTimeMillis() + TimeUnit.SECONDS.toMillis(delaySeconds);
+        // As the timer resolution is 1 second it doesn't really make sense to update a timer
+        // that is less than one second before the already existing.
+        if (timersByFiringTime.size() > 0) {
+            long nextTimerFiringTime = timersByFiringTime.firstKey();
+            if (firingTime > nextTimerFiringTime
+                    || nextTimerFiringTime - firingTime < TimeUnit.SECONDS.toMillis(1)) {
+                return null;
+            }
+        }
+        IdCancellationCallbackPair result = null;
+        if (!timersByFiringTime.containsKey(firingTime)) {
+            final OpenRequestInfo<Object, Long> context = new OpenRequestInfo<>(firingTime);
+            final StartTimerDecisionAttributes timer = new StartTimerDecisionAttributes();
+            timer.setStartToFireTimeoutSeconds(delaySeconds);
+            final String timerId = decisions.getNextId();
+            timer.setTimerId(timerId);
+            decisions.startTimer(timer, null);
+            context.setCompletionHandle((ctx, throwable) -> {
+                callback.accept(null);
+            });
+            scheduledTimers.put(timerId, context);
+            timersByFiringTime.put(firingTime, timerId);
+            result = new IdCancellationCallbackPair(timerId, new TimerCancellationHandler(timerId));
+        }
+        SortedMap<Long, String> toCancel = timersByFiringTime.subMap(0l, firingTime);
+        for (String timerId : toCancel.values()) {
+            OpenRequestInfo<?, ?> pair = scheduledTimers.get(timerId);
+            decisions.cancelTimer(timerId, () -> {
+                OpenRequestInfo<?, ?> scheduled = scheduledTimers.remove(timerId);
+                BiConsumer<?, Throwable> context = scheduled.getCompletionCallback();
+                CancellationException exception = new CancellationException("Cancelled as next unblock time changed");
+                context.accept(null, exception);
+            });
+        }
+        toCancel.clear();
+        return result;
+    }
+
+    @Override
+    public void cancelAllTimers() {
+        for (String timerId : timersByFiringTime.values()) {
+            OpenRequestInfo<?, ?> pair = scheduledTimers.get(timerId);
+            decisions.cancelTimer(timerId, () -> {
+                OpenRequestInfo<?, ?> scheduled = scheduledTimers.remove(timerId);
+                BiConsumer<?, Throwable> context = scheduled.getCompletionCallback();
+                CancellationException exception = new CancellationException("Cancelled as next unblock time changed");
+                context.accept(null, exception);
+            });
+        }
+        timersByFiringTime.clear();
     }
 
     void setReplaying(boolean replaying) {
@@ -123,10 +159,10 @@ class AsyncWorkflowClockImpl implements AsyncWorkflowClock {
             OpenRequestInfo scheduled = scheduledTimers.remove(timerId);
             if (scheduled != null) {
                 BiConsumer completionCallback = scheduled.getCompletionCallback();
-                completionCallback.accept(scheduled.getUserContext(), null);
+                completionCallback.accept(null, null);
+                long firingTime = (long) scheduled.getUserContext();
+                timersByFiringTime.remove(firingTime);
             }
-        } else {
-            log.debug("handleTimerFired not complete");
         }
     }
 
@@ -140,8 +176,6 @@ class AsyncWorkflowClockImpl implements AsyncWorkflowClock {
                 CancellationException exception = new CancellationException("Cancelled by request");
                 completionCallback.accept(null, exception);
             }
-        } else {
-            log.debug("handleTimerCanceled not complete");
         }
     }
 

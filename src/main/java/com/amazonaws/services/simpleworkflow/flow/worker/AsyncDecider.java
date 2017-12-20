@@ -1,12 +1,12 @@
 /*
  * Copyright 2012-2016 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"). You may not
  * use this file except in compliance with the License. A copy of the License is
  * located at
- * 
+ *
  * http://aws.amazon.com/apache2.0
- * 
+ *
  * or in the "license" file accompanying this file. This file is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
  * express or implied. See the License for the specific language governing
@@ -30,6 +30,7 @@ import org.apache.commons.logging.LogFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeUnit;
 
 class AsyncDecider {
 
@@ -83,117 +84,117 @@ class AsyncDecider {
 
     private void processEvent(HistoryEvent event, EventType eventType) throws Throwable {
         switch (eventType) {
-        case ActivityTaskCanceled:
-            activityClient.handleActivityTaskCanceled(event);
-            break;
-        case ActivityTaskCompleted:
-            activityClient.handleActivityTaskCompleted(event);
-            break;
-        case ActivityTaskFailed:
-            activityClient.handleActivityTaskFailed(event);
-            break;
-        case ActivityTaskStarted:
-            activityClient.handleActivityTaskStarted(event.getActivityTaskStartedEventAttributes());
-            break;
-        case ActivityTaskTimedOut:
-            activityClient.handleActivityTaskTimedOut(event);
-            break;
-        case ExternalWorkflowExecutionCancelRequested:
-            workflowClient.handleChildWorkflowExecutionCancelRequested(event);
-            break;
-        case ChildWorkflowExecutionCanceled:
-            workflowClient.handleChildWorkflowExecutionCanceled(event);
-            break;
-        case ChildWorkflowExecutionCompleted:
-            workflowClient.handleChildWorkflowExecutionCompleted(event);
-            break;
-        case ChildWorkflowExecutionFailed:
-            workflowClient.handleChildWorkflowExecutionFailed(event);
-            break;
-        case ChildWorkflowExecutionStarted:
-            workflowClient.handleChildWorkflowExecutionStarted(event);
-            break;
-        case ChildWorkflowExecutionTerminated:
-            workflowClient.handleChildWorkflowExecutionTerminated(event);
-            break;
-        case ChildWorkflowExecutionTimedOut:
-            workflowClient.handleChildWorkflowExecutionTimedOut(event);
-            break;
-        case DecisionTaskCompleted:
-            handleDecisionTaskCompleted(event);
-            break;
-        case DecisionTaskScheduled:
-            // NOOP
-            break;
-        case DecisionTaskStarted:
-            handleDecisionTaskStarted(event);
-            break;
-        case DecisionTaskTimedOut:
-            // Handled in the processEvent(event)
-            break;
+            case ActivityTaskCanceled:
+                activityClient.handleActivityTaskCanceled(event);
+                break;
+            case ActivityTaskCompleted:
+                activityClient.handleActivityTaskCompleted(event);
+                break;
+            case ActivityTaskFailed:
+                activityClient.handleActivityTaskFailed(event);
+                break;
+            case ActivityTaskStarted:
+                activityClient.handleActivityTaskStarted(event.getActivityTaskStartedEventAttributes());
+                break;
+            case ActivityTaskTimedOut:
+                activityClient.handleActivityTaskTimedOut(event);
+                break;
+            case ExternalWorkflowExecutionCancelRequested:
+                workflowClient.handleChildWorkflowExecutionCancelRequested(event);
+                break;
+            case ChildWorkflowExecutionCanceled:
+                workflowClient.handleChildWorkflowExecutionCanceled(event);
+                break;
+            case ChildWorkflowExecutionCompleted:
+                workflowClient.handleChildWorkflowExecutionCompleted(event);
+                break;
+            case ChildWorkflowExecutionFailed:
+                workflowClient.handleChildWorkflowExecutionFailed(event);
+                break;
+            case ChildWorkflowExecutionStarted:
+                workflowClient.handleChildWorkflowExecutionStarted(event);
+                break;
+            case ChildWorkflowExecutionTerminated:
+                workflowClient.handleChildWorkflowExecutionTerminated(event);
+                break;
+            case ChildWorkflowExecutionTimedOut:
+                workflowClient.handleChildWorkflowExecutionTimedOut(event);
+                break;
+            case DecisionTaskCompleted:
+                handleDecisionTaskCompleted(event);
+                break;
+            case DecisionTaskScheduled:
+                // NOOP
+                break;
+            case DecisionTaskStarted:
+                handleDecisionTaskStarted(event);
+                break;
+            case DecisionTaskTimedOut:
+                // Handled in the processEvent(event)
+                break;
 //        case ExternalWorkflowExecutionSignaled:
 //            workflowClient.handleExternalWorkflowExecutionSignaled(event);
 //            break;
-        case StartChildWorkflowExecutionFailed:
-            workflowClient.handleStartChildWorkflowExecutionFailed(event);
-            break;
-        case TimerFired:
-            handleTimerFired(event);
-            break;
-        case WorkflowExecutionCancelRequested:
-            handleWorkflowExecutionCancelRequested(event);
-            break;
-        case WorkflowExecutionSignaled:
-            handleWorkflowExecutionSignaled(event);
-            break;
-        case WorkflowExecutionStarted:
-            handleWorkflowExecutionStarted(event);
-            break;
-        case WorkflowExecutionTerminated:
-            // NOOP
-            break;
-        case WorkflowExecutionTimedOut:
-            // NOOP
-            break;
-        case ActivityTaskScheduled:
-            decisionsHelper.handleActivityTaskScheduled(event);
-            break;
-        case ActivityTaskCancelRequested:
-            decisionsHelper.handleActivityTaskCancelRequested(event);
-            break;
-        case RequestCancelActivityTaskFailed:
-            decisionsHelper.handleRequestCancelActivityTaskFailed(event);
-            break;
-        case MarkerRecorded:
-            break;
-        case WorkflowExecutionCompleted:
-            break;
-        case WorkflowExecutionFailed:
-            break;
-        case WorkflowExecutionCanceled:
-            break;
-        case WorkflowExecutionContinuedAsNew:
-            break;
-        case TimerStarted:
-            handleTimerStarted(event);
-            break;
-        case TimerCanceled:
-            workflowClock.handleTimerCanceled(event);
-            break;
+            case StartChildWorkflowExecutionFailed:
+                workflowClient.handleStartChildWorkflowExecutionFailed(event);
+                break;
+            case TimerFired:
+                handleTimerFired(event);
+                break;
+            case WorkflowExecutionCancelRequested:
+                handleWorkflowExecutionCancelRequested(event);
+                break;
+            case WorkflowExecutionSignaled:
+                handleWorkflowExecutionSignaled(event);
+                break;
+            case WorkflowExecutionStarted:
+                handleWorkflowExecutionStarted(event);
+                break;
+            case WorkflowExecutionTerminated:
+                // NOOP
+                break;
+            case WorkflowExecutionTimedOut:
+                // NOOP
+                break;
+            case ActivityTaskScheduled:
+                decisionsHelper.handleActivityTaskScheduled(event);
+                break;
+            case ActivityTaskCancelRequested:
+                decisionsHelper.handleActivityTaskCancelRequested(event);
+                break;
+            case RequestCancelActivityTaskFailed:
+                decisionsHelper.handleRequestCancelActivityTaskFailed(event);
+                break;
+            case MarkerRecorded:
+                break;
+            case WorkflowExecutionCompleted:
+                break;
+            case WorkflowExecutionFailed:
+                break;
+            case WorkflowExecutionCanceled:
+                break;
+            case WorkflowExecutionContinuedAsNew:
+                break;
+            case TimerStarted:
+                handleTimerStarted(event);
+                break;
+            case TimerCanceled:
+                workflowClock.handleTimerCanceled(event);
+                break;
 //        case SignalExternalWorkflowExecutionInitiated:
 //            decisionsHelper.handleSignalExternalWorkflowExecutionInitiated(event);
 //            break;
-        case RequestCancelExternalWorkflowExecutionInitiated:
-            decisionsHelper.handleRequestCancelExternalWorkflowExecutionInitiated(event);
-            break;
-        case RequestCancelExternalWorkflowExecutionFailed:
-            decisionsHelper.handleRequestCancelExternalWorkflowExecutionFailed(event);
-            break;
-        case StartChildWorkflowExecutionInitiated:
-            decisionsHelper.handleStartChildWorkflowExecutionInitiated(event);
-            break;
-        case CancelTimerFailed:
-            decisionsHelper.handleCancelTimerFailed(event);
+            case RequestCancelExternalWorkflowExecutionInitiated:
+                decisionsHelper.handleRequestCancelExternalWorkflowExecutionInitiated(event);
+                break;
+            case RequestCancelExternalWorkflowExecutionFailed:
+                decisionsHelper.handleRequestCancelExternalWorkflowExecutionFailed(event);
+                break;
+            case StartChildWorkflowExecutionInitiated:
+                decisionsHelper.handleStartChildWorkflowExecutionInitiated(event);
+                break;
+            case CancelTimerFailed:
+                decisionsHelper.handleCancelTimerFailed(event);
         }
     }
 
@@ -203,14 +204,12 @@ class AsyncDecider {
         }
         try {
             completed = workflow.eventLoop();
-        }
-        catch (CancellationException e) {
+        } catch (CancellationException e) {
             if (!cancelRequested) {
                 failure = e;
             }
             completed = true;
-        }
-        catch (Throwable e) {
+        } catch (Throwable e) {
             failure = e;
             completed = true;
         }
@@ -220,19 +219,33 @@ class AsyncDecider {
         if (completed && !unhandledDecision) {
             if (failure != null) {
                 decisionsHelper.failWorkflowExecution(failure);
-            }
-            else if (cancelRequested) {
+            } else if (cancelRequested) {
                 decisionsHelper.cancelWorkflowExecution();
-            }
-            else {
+            } else {
                 ContinueAsNewWorkflowExecutionParameters continueAsNewOnCompletion = workflowContext.getContinueAsNewOnCompletion();
                 if (continueAsNewOnCompletion != null) {
                     decisionsHelper.continueAsNewWorkflowExecution(continueAsNewOnCompletion);
-                }
-                else {
+                } else {
                     byte[] workflowOutput = workflow.getOutput();
                     decisionsHelper.completeWorkflowExecution(workflowOutput);
                 }
+            }
+        } else {
+            long nextWakeUpTime = workflow.getNextWakeUpTime();
+            if (nextWakeUpTime == 0) { // No time based waiting
+                workflowClock.cancelAllTimers();
+            }
+            long delayMilliseconds = nextWakeUpTime - workflowClock.currentTimeMillis();
+            if (nextWakeUpTime > workflowClock.currentTimeMillis()) {
+                long delaySeconds = TimeUnit.MILLISECONDS.toSeconds(delayMilliseconds);
+                if (delaySeconds == 0) {
+                    delaySeconds = 1; //TODO: Deal with subsecond delays.
+                }
+                workflowClock.createTimer(delaySeconds, (t) -> {
+                    // Intentionally left empty.
+                    // Timer ensures that decision is scheduled at the time workflow can make progress.
+                    // But no specific timer related action is necessary.
+                });
             }
         }
     }
@@ -268,7 +281,7 @@ class AsyncDecider {
         assert (event.getEventType().equals(EventType.WorkflowExecutionSignaled.toString()));
         final WorkflowExecutionSignaledEventAttributes signalAttributes = event.getWorkflowExecutionSignaledEventAttributes();
         if (completed) {
-           throw new IllegalStateException("Signal received after workflow is closed. TODO: Change signal handling from callback to a queue to fix the issue.");
+            throw new IllegalStateException("Signal received after workflow is closed. TODO: Change signal handling from callback to a queue to fix the issue.");
         }
     }
 
@@ -294,8 +307,7 @@ class AsyncDecider {
                     if (eventType == EventType.DecisionTaskCompleted) {
                         decisionsHelper.setWorkflowContextData(event.getDecisionTaskCompletedEventAttributes().getExecutionContext());
                         concurrentToDecision = false;
-                    }
-                    else if (eventType == EventType.DecisionTaskStarted) {
+                    } else if (eventType == EventType.DecisionTaskStarted) {
                         decisionsHelper.handleDecisionTaskStartedEvent();
 
                         if (!eventsIterator.isNextDecisionTimedOut()) {
@@ -304,15 +316,12 @@ class AsyncDecider {
                             workflowClock.setReplayCurrentTimeMilliseconds(replayCurrentTimeMilliseconds);
                             break;
                         }
-                    }
-                    else if (eventType == EventType.DecisionTaskScheduled || eventType == EventType.DecisionTaskTimedOut) {
+                    } else if (eventType == EventType.DecisionTaskScheduled || eventType == EventType.DecisionTaskTimedOut) {
                         // skip
-                    }
-                    else {
+                    } else {
                         if (concurrentToDecision) {
                             decisionStartToCompletionEvents.add(event);
-                        }
-                        else {
+                        } else {
                             if (isDecisionEvent(eventType)) {
                                 lastDecisionIndex = decisionCompletionToStartEvents.size();
                             }
@@ -374,42 +383,30 @@ class AsyncDecider {
             }
             decisionsHelper.failWorkflowDueToUnexpectedError(e);
         }
-        finally {
-            try {
-                decisionsHelper.setWorkflowContextData(workflow.getWorkflowState());
-            }
-            catch (WorkflowException e) {
-                decisionsHelper.setWorkflowContextData(e.getDetails());
-            }
-            catch (Throwable e) {
-                decisionsHelper.setWorkflowContextData(String.valueOf(e.getMessage()).getBytes(TaskPoller.UTF8_CHARSET));
-            }
-            workflow.close();
-        }
     }
 
     private boolean isDecisionEvent(EventType eventType) {
         switch (eventType) {
-        case ActivityTaskScheduled:
-        case ActivityTaskCancelRequested:
-        case RequestCancelActivityTaskFailed:
-        case MarkerRecorded:
-        case WorkflowExecutionCompleted:
-        case WorkflowExecutionFailed:
-        case WorkflowExecutionCanceled:
-        case WorkflowExecutionContinuedAsNew:
-        case TimerStarted:
-        case TimerCanceled:
-        case CancelTimerFailed:
+            case ActivityTaskScheduled:
+            case ActivityTaskCancelRequested:
+            case RequestCancelActivityTaskFailed:
+            case MarkerRecorded:
+            case WorkflowExecutionCompleted:
+            case WorkflowExecutionFailed:
+            case WorkflowExecutionCanceled:
+            case WorkflowExecutionContinuedAsNew:
+            case TimerStarted:
+            case TimerCanceled:
+            case CancelTimerFailed:
 //        case SignalExternalWorkflowExecutionInitiated:
 //        case SignalExternalWorkflowExecutionFailed:
-        case RequestCancelExternalWorkflowExecutionInitiated:
-        case RequestCancelExternalWorkflowExecutionFailed:
-        case StartChildWorkflowExecutionInitiated:
-        case StartChildWorkflowExecutionFailed:
-            return true;
-        default:
-            return false;
+            case RequestCancelExternalWorkflowExecutionInitiated:
+            case RequestCancelExternalWorkflowExecutionFailed:
+            case StartChildWorkflowExecutionInitiated:
+            case StartChildWorkflowExecutionFailed:
+                return true;
+            default:
+                return false;
         }
     }
 

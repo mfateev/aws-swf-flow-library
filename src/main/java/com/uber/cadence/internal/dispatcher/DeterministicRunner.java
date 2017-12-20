@@ -22,7 +22,7 @@ public interface DeterministicRunner {
      * @return nearest time when at least one of the threads is expected to wake up.
      * @throws Throwable if one of the threads didn't handle an exception.
      */
-    long runUntilAllBlocked() throws Throwable;
+    void runUntilAllBlocked() throws Throwable;
 
     /**
      * IsDone returns true when all of threads are completed
@@ -43,4 +43,11 @@ public interface DeterministicRunner {
      * @return time according to a {@link WorkflowClock} configured with the Runner.
      */
     long currentTimeMillis();
+
+    /**
+     * @return time at which workflow can make progress.
+     * For example when {@link WorkflowThread#sleep(long)} expires.
+     * 0 means that no time related blockages.
+     */
+    long getNextWakeUpTime();
 }

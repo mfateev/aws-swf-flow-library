@@ -20,19 +20,24 @@ import com.uber.cadence.serviceclient.WorkflowServiceTChannel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.lang.ref.Reference;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
@@ -48,8 +53,18 @@ public class SyncWorkfowTest {
     private static final Log log;
 
     static {
-        BasicConfigurator.configure();
-        Logger.getRootLogger().setLevel(Level.DEBUG);
+        LogManager.resetConfiguration();
+
+        final PatternLayout layout = new PatternLayout();
+        layout.setConversionPattern("%-4r %-30c{1} %x: %m%n");
+
+        final ConsoleAppender dst = new ConsoleAppender(layout, ConsoleAppender.SYSTEM_OUT);
+        dst.setThreshold(Level.DEBUG);
+
+        final Logger root = Logger.getRootLogger();
+        root.removeAllAppenders();
+        root.addAppender(dst);
+        root.setLevel(Level.DEBUG);
 
         Logger.getLogger("io.netty").setLevel(Level.INFO);
         log = LogFactory.getLog(SyncWorkfowTest.class);
@@ -112,8 +127,19 @@ public class SyncWorkfowTest {
     public void test() throws InterruptedException, WorkflowExecutionAlreadyStartedException, TimeoutException {
         WorkflowType type = new WorkflowType().setName("test1");
         definitionMap.put(type, (input) -> {
-            byte[] a1 = Workflow.executeActivity("activity1", "activityInput".getBytes());
-            return Workflow.executeActivity("activity2", a1);
+            AtomicReference<byte[]> a1 = new AtomicReference<>();
+            WorkflowThread t = Workflow.newThread(() -> {
+                a1.set(Workflow.executeActivity("activity1", "activityInput".getBytes()));
+            });
+            t.start();
+            try {
+                t.join(3000);
+                long time = Workflow.currentTimeMillis();
+                WorkflowThread.sleep(1000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            return Workflow.executeActivity("activity2", a1.get());
         });
         ActivityType activity1Type = new ActivityType().setName("activity1");
         activityMap.put(activity1Type, new ActivityImplementation() {
@@ -148,7 +174,7 @@ public class SyncWorkfowTest {
         startParameters.setWorkflowId("workflow1");
         startParameters.setWorkflowType(type);
         WorkflowExecution started = clientExternal.startWorkflow(startParameters);
-        WorkflowExecutionCompletedEventAttributes result = WorkflowExecutionUtils.waitForWorkflowExecutionResult(service, domain, started, 5);
+        WorkflowExecutionCompletedEventAttributes result = WorkflowExecutionUtils.waitForWorkflowExecutionResult(service, domain, started, 10);
         assertEquals("activity1 - activity2", new String(result.getResult()));
     }
 }
